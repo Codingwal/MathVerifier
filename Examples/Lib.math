@@ -1,0 +1,17 @@
+def Steady(f € R -> R):
+    A x € R : 
+        lim[h -> 0] (f(x + h) - f(x)) / h = (f(x - h) - f(x)) / h
+{
+}
+
+theorem Commutative(a € R; b € R)
+    => a + b = b + a
+{
+}
+
+theorem SteadySum(f € R -> R; d € R -> R):
+    f is Steady
+    A x € R : d(x) = a * f(x + b) + c * f(x)
+    => d is Steady
+{
+}
