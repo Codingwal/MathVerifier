@@ -38,7 +38,7 @@ public class Parser
     {
         Token consumed = Consume();
         if (consumed.type != type)
-            Logger.Error($"Expected token of type \"{type}\"");
+            Logger.Error($"Expected token of type \"{type}\" but found \"{consumed}\"");
         return consumed;
     }
 
@@ -149,11 +149,50 @@ public class Parser
 
     private Statement ParseStatement()
     {
-        while (Peek().type != TokenType.NEWLINE)
-            Consume();
-
+        Statement stmt = new(ParseExpression());
         ConsumeExpect(TokenType.NEWLINE);
+        return stmt;
+    }
 
-        return new Statement();
+    private Expression ParseExpression(int minPrec = 0)
+    {
+        Expression lhs = new(ParseTerm());
+
+        while (true)
+        {
+            BinExpr binExpr = new();
+            int prec = Token.GetPrecedence(Peek().type);
+
+            if (prec < minPrec)
+                break;
+
+            binExpr.op = Consume();
+            binExpr.lhs = lhs;
+            binExpr.rhs = ParseExpression(prec + 1);
+            lhs.expr = binExpr;
+        }
+        return lhs;
+    }
+    private Term ParseTerm()
+    {
+        switch (Peek().type)
+        {
+            case TokenType.BRACKET_OPEN:
+                Consume();
+                Term term = new(ParseExpression());
+                ConsumeExpect(TokenType.BRACKET_CLOSE);
+                return term;
+            case TokenType.NUMBER:
+                return new(Consume().GetDouble());
+            case TokenType.STRING:
+                return new(Consume().GetString());
+            case TokenType.ALL:
+            case TokenType.EXISTS:
+                Consume();
+                return new(ParseExpression(Token.GetPrecedence(TokenType.COLON + 1)));
+            default:
+                Logger.Error($"Invalid term \"{Peek()}\"");
+                throw new();
+        }
     }
 };

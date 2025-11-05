@@ -11,55 +11,65 @@ static class ASTUtility
     }
 }
 
-public struct Invalid
+public class Term
 {
-};
-
-public struct Equality
+    public OneOf<Expression, string, double> term;
+    public Term(OneOf<Expression, string, double> term)
+    {
+        this.term = term;
+    }
+    public string ToString(int i)
+    {
+        return term.Match(
+             expr => expr.ToString(i),
+             str => $"{ASTUtility.GetPrefix(i)}\"{str}\"\n",
+             num => ASTUtility.GetPrefix(i) + num.ToString() + "\n"
+        );
+    }
+}
+public class BinExpr
 {
-
+    public Expression lhs;
+    public Token op;
+    public Expression rhs;
+    public string ToString(int i)
+    {
+        string str = ASTUtility.GetPrefix(i) + "BinExpr:\n";
+        string prefix = ASTUtility.GetPrefix(i + 1);
+        str += prefix + "lhs:\n" + lhs.ToString(i + 2);
+        str += prefix + $"operator: {op}\n";
+        str += prefix + "rhs:\n" + rhs.ToString(i + 2);
+        return str;
+    }
+}
+public struct Expression
+{
+    public OneOf<BinExpr, Term> expr;
+    public Expression(OneOf<BinExpr, Term> expr)
+    {
+        this.expr = expr;
+    }
     public readonly string ToString(int i)
     {
-        throw new NotImplementedException();
+        return expr.Match(
+            binExpr => binExpr.ToString(i),
+            term => term.ToString(i)
+        );
     }
-};
-
-public struct ElementOf
-{
-    public string set;
-    public ElementOf(string set)
-    {
-        this.set = set;
-    }
-
-    public readonly string ToString(int i)
-    {
-        return ASTUtility.GetPrefix(i) + "Element of \"" + set + "\"\n";
-    }
-};
+}
 
 public struct Statement
 {
-    public OneOf<Invalid, ElementOf, Equality> data;
-
-    public Statement()
+    public Expression expr;
+    public Statement(Expression expr)
     {
-        data = new Invalid();
+        this.expr = expr;
     }
-    public Statement(OneOf<Invalid, ElementOf, Equality> data)
-    {
-        this.data = data;
-    }
-
     public readonly string ToString(int i)
     {
-        return ASTUtility.GetPrefix(i) + data.Match(
-               invalid => "Invalid\n",
-               elementOf => elementOf.ToString(0),
-               equality => equality.ToString(0)
-           );
+        return expr.ToString(i);
     }
-};
+}
 
 public struct Theorem
 {
@@ -100,7 +110,7 @@ public struct Theorem
 
         return str;
     }
-};
+}
 
 public struct Definition
 {
@@ -134,7 +144,7 @@ public struct Definition
 
         return str;
     }
-};
+}
 
 public struct Data
 {
@@ -156,4 +166,4 @@ public struct Data
         }
         return str;
     }
-};
+}

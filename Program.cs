@@ -7,7 +7,7 @@ public static class MathVerifier
         string fileName = args[0];
 
         Console.WriteLine("Tokenizing...\n");
-        var tokens = Tokenizer.Tokenize(fileName);
+        var tokens = Lexer.Tokenize(fileName);
         Console.WriteLine("Finished Tokenizing\n");
 
         // Print tokens

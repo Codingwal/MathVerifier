@@ -26,6 +26,10 @@ public struct Token
         SEMICOLON,
         COMMA,
         COLON,
+        PLUS,
+        MINUS,
+        STAR,
+        BACKSLASH,
 
         // Keywords
         THEOREM,
@@ -49,6 +53,10 @@ public struct Token
         {";", TokenType.SEMICOLON},
         {",", TokenType.COMMA},
         {":", TokenType.COLON},
+        {"+", TokenType.PLUS},
+        {"-", TokenType.MINUS},
+        {"*", TokenType.STAR},
+        {"/", TokenType.BACKSLASH},
 
         {"theorem", TokenType.THEOREM},
         {"define", TokenType.DEFINE},
@@ -57,8 +65,33 @@ public struct Token
         {"end", TokenType.END},
     };
 
+    /// <remarks> Returns -1 if the token is not an operator </remarks>
+    public static int GetPrecedence(TokenType type)
+    {
+        return type switch
+        {
+            TokenType.IMPLIES => 0,
+
+            TokenType.COLON => 1,
+
+            TokenType.ELEMENT_OF => 2,
+            TokenType.EQUALS => 2,
+            TokenType.COMMA => 2, // Temporary
+
+            TokenType.PLUS => 3,
+            TokenType.MINUS => 3,
+
+            TokenType.STRING => 4, // Operator object
+
+            TokenType.STAR => 5,
+            TokenType.BACKSLASH => 5,
+
+            _ => -1,
+        };
+    }
+
     public TokenType type;
-    private OneOf<string, double> data;
+    public OneOf<string, double> data;
 
     public Token(TokenType type)
     {
