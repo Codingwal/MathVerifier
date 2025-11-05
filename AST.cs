@@ -8,6 +8,26 @@ public class Term
         this.term = term;
     }
 }
+public class QuantifiedExpr // It exists... / For all...
+{
+    public enum QuantifiedExprType
+    {
+        NONE,
+        EXISTS,
+        ALL
+    }
+    public QuantifiedExprType type;
+    public List<string> objects;
+    public List<Statement> rules;
+    public Statement stmt;
+    public QuantifiedExpr()
+    {
+        type = QuantifiedExprType.NONE;
+        objects = new();
+        rules = new();
+        stmt = new();
+    }
+}
 public class BinExpr
 {
     public Expression lhs;
@@ -16,8 +36,8 @@ public class BinExpr
 }
 public struct Expression : ICustomFormatting
 {
-    public OneOf<BinExpr, Term> expr;
-    public Expression(OneOf<BinExpr, Term> expr)
+    public OneOf<BinExpr, Term, QuantifiedExpr> expr;
+    public Expression(OneOf<BinExpr, Term, QuantifiedExpr> expr)
     {
         this.expr = expr;
     }

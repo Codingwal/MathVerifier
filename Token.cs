@@ -72,11 +72,8 @@ public struct Token : ICustomFormatting
         {
             TokenType.IMPLIES => 0,
 
-            TokenType.COLON => 1,
-
             TokenType.ELEMENT_OF => 2,
             TokenType.EQUALS => 2,
-            TokenType.COMMA => 2, // Temporary
 
             TokenType.PLUS => 3,
             TokenType.MINUS => 3,

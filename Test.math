@@ -1,12 +1,14 @@
-theorem Commutative(a; b) :
-    a e R
-    b e R
-    => a + b = b + a
-{
-}
+// theorem Commutative(a; b) :
+//    a e R
+//    b e R
+//    => a + b = b + a
+// {
+// }
 
 define Group(M) (o) :
     M e Set
     o e Operator
     A x, y, z e M: (x o y) o z = x o (y o z)
+    E neutral e M: A x e M: x o neutral = x
+    E neutral e M: A x e M: neutral o x = x 
 end

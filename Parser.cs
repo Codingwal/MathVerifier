@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using OneOf.Types;
 using TokenType = Token.TokenType;
 
 public class Parser
@@ -38,7 +40,7 @@ public class Parser
     {
         Token consumed = Consume();
         if (consumed.type != type)
-            Logger.Error($"Expected token of type \"{type}\" but found \"{consumed}\"");
+            Logger.Error($"Expected token of type \"{type}\" but found \"{consumed}\" in line {line + 1}");
         return consumed;
     }
 
@@ -59,7 +61,7 @@ public class Parser
                     Consume();
                     break;
                 default:
-                    Logger.Error($"Invalid token \"{Peek()}\"");
+                    Logger.Error($"Invalid token \"{Peek()}\" outside of theorem/definition in line {line + 1}");
                     break;
             }
         }
@@ -188,11 +190,54 @@ public class Parser
                 return new(Consume().GetString());
             case TokenType.ALL:
             case TokenType.EXISTS:
-                Consume();
-                return new(ParseExpression(Token.GetPrecedence(TokenType.COLON + 1)));
+                return new(new Expression(ParseQuantifiedExpr()));
             default:
-                Logger.Error($"Invalid term \"{Peek()}\"");
+                Logger.Error($"Invalid term \"{Peek()}\" in line {line + 1}");
                 throw new();
         }
+    }
+    private QuantifiedExpr ParseQuantifiedExpr()
+    {
+        QuantifiedExpr expr = new()
+        {
+            type = Consume().type switch
+            {
+                TokenType.ALL => QuantifiedExpr.QuantifiedExprType.ALL,
+                TokenType.EXISTS => QuantifiedExpr.QuantifiedExprType.EXISTS,
+                _ => throw new()
+            }
+        };
+        List<string> tmp = new();
+        while (true)
+        {
+            string objName = ConsumeExpect(TokenType.STRING).GetString();
+            expr.objects.Add(objName);
+            tmp.Add(objName);
+
+            if (Peek().type == TokenType.ELEMENT_OF)
+            {
+                Consume();
+                Expression set = ParseExpression();
+                foreach (string str in tmp)
+                {
+                    BinExpr e = new()
+                    {
+                        lhs = new(new Term(str)),
+                        op = new(TokenType.ELEMENT_OF),
+                        rhs = set,
+                    };
+                    expr.rules.Add(new(new(e)));
+                }
+                tmp.Clear();
+            }
+            if (Peek().type == TokenType.COLON)
+            {
+                Consume();
+                break;
+            }
+            ConsumeExpect(TokenType.COMMA);
+        }
+        expr.stmt = new(ParseExpression());
+        return expr;
     }
 };

@@ -22,10 +22,14 @@ class Lexer
                     continue;
                 }
 
-                if (char.IsNumber(str[i])) // Number
+                if (str[i] == '/' && str[i] == '/')
+                {
+                    break;
+                }
+                else if (char.IsNumber(str[i])) // Number
                 {
                     string numStr = "";
-                    while (char.IsNumber(str[i]) || str[i] == '.')
+                    while (i < str.Length && (char.IsNumber(str[i]) || str[i] == '.'))
                     {
                         numStr += str[i];
                         i++;

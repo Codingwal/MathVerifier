@@ -11,9 +11,9 @@ public static class MathVerifier
         Console.WriteLine("Finished Tokenizing\n");
 
         // Print tokens
-        // Console.WriteLine("-------------------------");
-        // Console.WriteLine(Formatter.Format(tokens));
-        // Console.WriteLine("-------------------------");
+        Console.WriteLine("\n-------------------------");
+        Console.Write(Formatter.Format(tokens));
+        Console.WriteLine("-------------------------\n");
 
         Console.WriteLine("Parsing...\n");
         Parser parser = new(tokens);
@@ -21,8 +21,8 @@ public static class MathVerifier
         Console.WriteLine("Finished Parsing\n");
 
         // Print AST
-        Console.WriteLine("-------------------------");
-        Console.WriteLine(Formatter.Format(ast));
-        Console.WriteLine("-------------------------");
+        Console.WriteLine("\n-------------------------");
+        Console.Write(Formatter.Format(ast));
+        Console.WriteLine("-------------------------\n");
     }
 }
