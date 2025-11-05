@@ -8,6 +8,7 @@ class Lexer
 
         StreamReader reader = new(fileName);
 
+        int line = 0;
         while (reader.Peek() >= 0)
         {
             string str = reader.ReadLine()!;
@@ -51,25 +52,29 @@ class Lexer
                 else
                 {
                     string literal = "";
-                    while (i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]))
-                    {
+                    for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]); i++)
                         literal += str[i];
-                        i++;
-                        if (Token.str2Token.ContainsKey(literal))
-                        {
-                            lineTokens.Add(new Token(Token.str2Token[literal]));
-                            break;
-                        }
-                    }
 
-                    if (!Token.str2Token.ContainsKey(literal))
-                        lineTokens.Add(new Token(literal));
+                    int j = 0;
+                    for (int k = literal.Length; j < k;)
+                    {
+                        if (Token.str2Token.ContainsKey(literal[j..k]))
+                        {
+                            lineTokens.Add(new Token(Token.str2Token[literal[j..k]]));
+                            j = k;
+                            k = literal.Length;
+                        }
+                        else
+                            k--;
+                    }
+                    if (j != literal.Length)
+                        Logger.Error($"Invalid symbol \"{literal[j..]}\" in line {line + 1}");
                 }
             }
             lineTokens.Add(new Token(TokenType.NEWLINE));
             tokens.Add(lineTokens);
+            line++;
         }
-
         // Add EOF token
         tokens.Add(new List<Token>() { new(TokenType.END_OF_FILE) });
 
@@ -77,4 +82,4 @@ class Lexer
 
         return tokens;
     }
-};
+}
