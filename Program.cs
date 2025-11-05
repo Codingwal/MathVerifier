@@ -12,12 +12,7 @@ public static class MathVerifier
 
         // Print tokens
         // Console.WriteLine("-------------------------");
-        // Console.WriteLine("Tokens:");
-        // foreach (var lineTokens in tokens)
-        // {
-        //     foreach (var token in lineTokens)
-        //         Console.WriteLine("Token: " + token.ToString());
-        // }
+        // Console.WriteLine(Formatter.Format(tokens));
         // Console.WriteLine("-------------------------");
 
         Console.WriteLine("Parsing...\n");
@@ -27,7 +22,7 @@ public static class MathVerifier
 
         // Print AST
         Console.WriteLine("-------------------------");
-        Console.Write(ast.ToString());
+        Console.WriteLine(Formatter.Format(ast));
         Console.WriteLine("-------------------------");
     }
 }

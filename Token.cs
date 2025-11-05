@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using OneOf;
 
-public struct Token
+public struct Token : ICustomFormatting
 {
     public enum TokenType
     {
@@ -129,5 +129,10 @@ public struct Token
         else if (type == TokenType.NUMBER)
             str += " (" + GetDouble() + ")";
         return str;
+    }
+
+    public readonly string Format(string prefix)
+    {
+        return $"{prefix}{ToString()}\n";
     }
 }
