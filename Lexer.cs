@@ -51,12 +51,18 @@ class Lexer
                 else
                 {
                     string literal = "";
-                    for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]); i++)
+                    while (i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]))
+                    {
                         literal += str[i];
+                        i++;
+                        if (Token.str2Token.ContainsKey(literal))
+                        {
+                            lineTokens.Add(new Token(Token.str2Token[literal]));
+                            break;
+                        }
+                    }
 
-                    if (Token.str2Token.ContainsKey(literal))
-                        lineTokens.Add(new Token(Token.str2Token[literal]));
-                    else
+                    if (!Token.str2Token.ContainsKey(literal))
                         lineTokens.Add(new Token(literal));
                 }
             }
@@ -65,7 +71,7 @@ class Lexer
         }
 
         // Add EOF token
-        tokens.Add(new List<Token>() { new Token(TokenType.END_OF_FILE) });
+        tokens.Add(new List<Token>() { new(TokenType.END_OF_FILE) });
 
         reader.Close();
 
