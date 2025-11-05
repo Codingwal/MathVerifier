@@ -1,4 +1,4 @@
-public static class MathVerifier
+public static class Program
 {
     public static void Main(string[] args)
     {
@@ -6,23 +6,31 @@ public static class MathVerifier
             Logger.Error("Missing name of file to parse");
         string fileName = args[0];
 
-        Console.WriteLine("Tokenizing...\n");
+        // Tokenize
+        Console.WriteLine("Tokenizing...");
         var tokens = Lexer.Tokenize(fileName);
-        Console.WriteLine("Finished Tokenizing\n");
+        Console.WriteLine("Finished tokenizing");
 
         // Print tokens
-        Console.WriteLine("\n-------------------------");
-        Console.Write(Formatter.Format(tokens));
-        Console.WriteLine("-------------------------\n");
+        // Console.WriteLine("\n-------------------------");
+        // Console.Write(Formatter.Format(tokens));
+        // Console.WriteLine("-------------------------\n");
 
-        Console.WriteLine("Parsing...\n");
+        // Parse
+        Console.WriteLine("Parsing...");
         Parser parser = new(tokens);
         var ast = parser.Parse();
-        Console.WriteLine("Finished Parsing\n");
+        Console.WriteLine("Finished parsing");
 
         // Print AST
-        Console.WriteLine("\n-------------------------");
-        Console.Write(Formatter.Format(ast));
-        Console.WriteLine("-------------------------\n");
+        // Console.WriteLine("\n-------------------------");
+        // Console.Write(Formatter.Format(ast));
+        // Console.WriteLine("-------------------------\n");
+
+        // Verify
+        Console.WriteLine("Verifying...");
+        Verifier verifier = new(ast);
+        verifier.Verify();
+        Console.WriteLine("Finished verifying");
     }
 }
