@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using OneOf;
 
 public struct Token : ICustomFormatting
 {
@@ -88,7 +87,7 @@ public struct Token : ICustomFormatting
     }
 
     public TokenType type;
-    public OneOf<string, double> data;
+    public Variant<string, double> data;
 
     public Token(TokenType type)
     {
@@ -110,12 +109,12 @@ public struct Token : ICustomFormatting
     public readonly string GetString()
     {
         Debug.Assert(type == TokenType.STRING);
-        return data.AsT0;
+        return data.As<string>();
     }
     public readonly double GetDouble()
     {
         Debug.Assert(type == TokenType.NUMBER);
-        return data.AsT1;
+        return data.As<double>();
     }
 
     public override readonly string ToString()

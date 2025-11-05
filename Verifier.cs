@@ -32,6 +32,6 @@ public class Verifier
     }
     private void AddStatement(Statement stmt)
     {
-        if (stmt.expr.expr.IsT2)
+        // if (stmt.expr.expr.)
     }
 }

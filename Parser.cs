@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using OneOf.Types;
 using TokenType = Token.TokenType;
 
 public class Parser

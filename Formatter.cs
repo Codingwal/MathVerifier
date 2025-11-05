@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Reflection;
-using OneOf;
 
 public interface ICustomFormatting
 {
@@ -24,9 +23,9 @@ public class Formatter
         {
             return $"{prefix}{Convert.ToString(obj)}\n";
         }
-        else if (obj is IOneOf oneOf)
+        else if (obj is IVariant variant)
         {
-            return Format(oneOf.Value, prefix);
+            return Format(variant.Value, prefix);
         }
         else if (obj is IEnumerable enumerable)
         {

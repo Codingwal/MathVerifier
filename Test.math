@@ -1,12 +1,12 @@
 define R(x)():
-    inverse: E y e R: x + y = 0
-    commutative: A y e R: x + y = y + x
+    E y e R: x + y = 0
+    A y e R: x + y = y + x
 end
 
-theorem Test(a, b):
+theorem Test(a; b):
     a e R
     b e R
     => a + b = b + a
 {
-    a + b = b + a | a.commutative(b)
+    a + b = b + a
 }

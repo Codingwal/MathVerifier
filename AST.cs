@@ -1,9 +1,7 @@
-using OneOf;
-
 public class Term
 {
-    public OneOf<Expression, string, double> term;
-    public Term(OneOf<Expression, string, double> term)
+    public Variant<Expression, string, double> term;
+    public Term(Variant<Expression, string, double> term)
     {
         this.term = term;
     }
@@ -36,8 +34,8 @@ public class BinExpr
 }
 public struct Expression : ICustomFormatting
 {
-    public OneOf<BinExpr, Term, QuantifiedExpr> expr;
-    public Expression(OneOf<BinExpr, Term, QuantifiedExpr> expr)
+    public Variant<BinExpr, Term, QuantifiedExpr> expr;
+    public Expression(Variant<BinExpr, Term, QuantifiedExpr> expr)
     {
         this.expr = expr;
     }
@@ -91,7 +89,7 @@ public struct Definition
 
 public struct Data
 {
-    public List<OneOf<Theorem, Definition>> data;
+    public List<Variant<Theorem, Definition>> data;
     public Data()
     {
         data = new();
