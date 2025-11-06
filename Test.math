@@ -3,10 +3,16 @@ define R(x)():
     A y e R: x + y = y + x
 end
 
-theorem Test(a; b):
+theorem Commutative(a; b):
     a e R
     b e R
     => a + b = b + a
 {
-    a + b = b + a
+    sorry
+}
+
+theorem Test():
+    => 1 + 2 = 2 + 1
+{
+    1 + 2 = 2 + 1
 }

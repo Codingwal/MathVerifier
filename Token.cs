@@ -29,6 +29,7 @@ public struct Token : ICustomFormatting
         MINUS,
         STAR,
         BACKSLASH,
+        PIPE,
 
         // Keywords
         THEOREM,
@@ -36,6 +37,8 @@ public struct Token : ICustomFormatting
         LET,
         IS,
         END,
+        CHECK,
+        SORRY,
     };
 
     public static Dictionary<string, TokenType> str2Token = new()
@@ -56,12 +59,15 @@ public struct Token : ICustomFormatting
         {"-", TokenType.MINUS},
         {"*", TokenType.STAR},
         {"/", TokenType.BACKSLASH},
+        {"|", TokenType.BACKSLASH},
 
         {"theorem", TokenType.THEOREM},
         {"define", TokenType.DEFINE},
         {"let", TokenType.LET},
         {"is", TokenType.IS},
         {"end", TokenType.END},
+        {"check", TokenType.CHECK},
+        {"sorry", TokenType.SORRY},
     };
 
     /// <remarks> Returns -1 if the token is not an operator </remarks>
@@ -117,6 +123,10 @@ public struct Token : ICustomFormatting
         return data.As<double>();
     }
 
+    public readonly bool Equals(Token other)
+    {
+        return type == other.type && data.Equals(other.data);
+    }
     public override readonly string ToString()
     {
         string str = type.ToString();

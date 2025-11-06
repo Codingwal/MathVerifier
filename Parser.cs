@@ -139,21 +139,70 @@ public class Parser
         ConsumeExpect(TokenType.NEWLINE);
         while (Peek().type != TokenType.CURLY_CLOSE)
         {
-            theorem.proof.Add(ParseStatement());
+            if (Peek().type == TokenType.SORRY)
+            {
+                Consume();
+                ConsumeExpect(TokenType.NEWLINE);
+                theorem.proof.Add(new() { stmt = new(new Command(Command.CommandType.SORRY)) });
+            }
+            else
+                theorem.proof.Add(ParseProvenStatement());
         }
         ConsumeExpect(TokenType.CURLY_CLOSE);
         ConsumeExpect(TokenType.NEWLINE);
 
         return theorem;
     }
-
+    private ProvenStatement ParseProvenStatement()
+    {
+        if (Peek().type == TokenType.CHECK)
+        {
+            Consume();
+            return new() { stmt = new(new Command(Command.CommandType.CHECK)), };
+        }
+        else
+        {
+            ProvenStatement stmt = new()
+            {
+                stmt = new(ParseExpression())
+            };
+            if (Peek().type == TokenType.PIPE)
+            {
+                Consume();
+                if (Peek().type == TokenType.SORRY)
+                    stmt.theorem = new Command(Command.CommandType.SORRY);
+                else
+                    stmt.theorem = ParseFuncCall();
+            }
+            ConsumeExpect(TokenType.NEWLINE);
+            return stmt;
+        }
+    }
     private Statement ParseStatement()
     {
-        Statement stmt = new(ParseExpression());
+        Statement stmt;
+        if (Peek().type == TokenType.CHECK)
+        {
+            Consume();
+            stmt = new(new Command(Command.CommandType.CHECK));
+        }
+        else
+            stmt = new(ParseExpression());
         ConsumeExpect(TokenType.NEWLINE);
         return stmt;
     }
-
+    private FuncCall ParseFuncCall()
+    {
+        FuncCall funcCall = new()
+        {
+            name = ConsumeExpect(TokenType.STRING).GetString()
+        };
+        ConsumeExpect(TokenType.BRACKET_OPEN);
+        while (Peek().type != TokenType.BRACKET_CLOSE)
+            funcCall.args.Add(ParseExpression());
+        ConsumeExpect(TokenType.BRACKET_CLOSE);
+        return funcCall;
+    }
     private Expression ParseExpression(int minPrec = 0)
     {
         Expression lhs = new(ParseTerm());
@@ -224,7 +273,7 @@ public class Parser
                         op = new(TokenType.ELEMENT_OF),
                         rhs = set,
                     };
-                    expr.rules.Add(new(new(e)));
+                    expr.rules.Add(new(new Expression(e)));
                 }
                 tmp.Clear();
             }

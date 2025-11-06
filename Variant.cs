@@ -20,6 +20,7 @@ public readonly struct Variant<T0, T1> : IVariant
         1 => t1!,
         _ => throw new InvalidOperationException("Unexpected index"),
     };
+    public readonly int Index => index;
     public Variant(T0 value)
     {
         t0 = value;
@@ -56,6 +57,16 @@ public readonly struct Variant<T0, T1> : IVariant
         if (!Is<T>())
             throw new InvalidOperationException($"Can't get Variant as {typeof(T)} because it is of type {GetObjectType()}");
         return (T)Value;
+    }
+    public readonly bool TryAs<T>(out T value)
+    {
+        if (Is<T>())
+        {
+            value = As<T>();
+            return true;
+        }
+        value = default!;
+        return false;
     }
     public readonly T Match<T>(Func<T0, T> t0Handler, Func<T1, T> t1Handler)
     {
@@ -117,20 +128,34 @@ public readonly struct Variant<T0, T1, T2> : IVariant
         2 => t2!,
         _ => throw new InvalidOperationException("Unexpected index"),
     };
+    public readonly int Index => index;
+    public Variant()
+    {
+        index = -1;
+        t0 = default;
+        t1 = default;
+        t2 = default;
+    }
     public Variant(T0 value)
     {
-        t0 = value;
         index = 0;
+        t0 = value;
+        t1 = default;
+        t2 = default;
     }
     public Variant(T1 value)
     {
-        t1 = value;
         index = 1;
+        t0 = default;
+        t1 = value;
+        t2 = default;
     }
     public Variant(T2 value)
     {
-        t2 = value;
         index = 2;
+        t0 = default;
+        t1 = default;
+        t2 = value;
     }
     public static implicit operator Variant<T0, T1, T2>(T0 value)
     {
@@ -163,6 +188,16 @@ public readonly struct Variant<T0, T1, T2> : IVariant
         if (!Is<T>())
             throw new InvalidOperationException($"Can't get Variant as {typeof(T)} because it is of type {GetObjectType()}");
         return (T)Value;
+    }
+    public readonly bool TryAs<T>(out T value)
+    {
+        if (Is<T>())
+        {
+            value = As<T>();
+            return true;
+        }
+        value = default!;
+        return false;
     }
     public readonly T Match<T>(Func<T0, T> t0Handler, Func<T1, T> t1Handler, Func<T2, T> t2Handler)
     {

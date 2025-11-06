@@ -25,7 +25,7 @@ public class Formatter
         }
         else if (obj is IVariant variant)
         {
-            return Format(variant.Value, prefix);
+            return $"{prefix}[{variant.GetObjectType()}]\n{Format(variant.Value, prefix)}";
         }
         else if (obj is IEnumerable enumerable)
         {

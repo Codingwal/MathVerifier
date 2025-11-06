@@ -1,3 +1,22 @@
+public struct None
+{
+
+}
+
+public struct Command
+{
+    public enum CommandType
+    {
+        NONE,
+        CHECK,
+        SORRY,
+    }
+    public CommandType type;
+    public Command(CommandType type)
+    {
+        this.type = type;
+    }
+}
 public class Term
 {
     public Variant<Expression, string, double> term;
@@ -47,11 +66,28 @@ public struct Expression : ICustomFormatting
 
 public struct Statement
 {
-    public Expression expr;
-    public Statement(Expression expr)
+
+    public Variant<Expression, Command> stmt;
+    public readonly Expression Expr => stmt.As<Expression>();
+    public Statement(Variant<Expression, Command> stmt)
     {
-        this.expr = expr;
+        this.stmt = stmt;
     }
+}
+public struct FuncCall
+{
+    public string name;
+    public List<Expression> args;
+    public FuncCall()
+    {
+        name = "";
+        args = new();
+    }
+}
+public struct ProvenStatement
+{
+    public Statement stmt;
+    public Variant<FuncCall, Command, None> theorem;
 }
 
 public struct Theorem
@@ -60,7 +96,7 @@ public struct Theorem
     public List<string> parameters;
     public List<Statement> requirements;
     public Statement hypothesis;
-    public List<Statement> proof;
+    public List<ProvenStatement> proof;
 
     public Theorem()
     {
