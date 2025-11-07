@@ -142,8 +142,8 @@ public class Parser
             if (Peek().type == TokenType.SORRY)
             {
                 Consume();
+                theorem.proof.Add(new() { stmt = new(line, new Command(Command.CommandType.SORRY)) });
                 ConsumeExpect(TokenType.NEWLINE);
-                theorem.proof.Add(new() { stmt = new(new Command(Command.CommandType.SORRY)) });
             }
             else
                 theorem.proof.Add(ParseProvenStatement());
@@ -158,22 +158,29 @@ public class Parser
         if (Peek().type == TokenType.CHECK)
         {
             Consume();
-            return new() { stmt = new(new Command(Command.CommandType.CHECK)), };
+            ConsumeExpect(TokenType.NEWLINE);
+            return new() { stmt = new(line - 1, new Command(Command.CommandType.CHECK)), };
         }
         else
         {
             ProvenStatement stmt = new()
             {
-                stmt = new(ParseExpression())
+                stmt = new(line, ParseExpression())
             };
             if (Peek().type == TokenType.PIPE)
             {
                 Consume();
                 if (Peek().type == TokenType.SORRY)
+                {
+                    Consume();
                     stmt.theorem = new Command(Command.CommandType.SORRY);
+                }
                 else
                     stmt.theorem = ParseFuncCall();
             }
+            else
+                stmt.theorem = new None();
+                
             ConsumeExpect(TokenType.NEWLINE);
             return stmt;
         }
@@ -184,10 +191,10 @@ public class Parser
         if (Peek().type == TokenType.CHECK)
         {
             Consume();
-            stmt = new(new Command(Command.CommandType.CHECK));
+            stmt = new(line, new Command(Command.CommandType.CHECK));
         }
         else
-            stmt = new(ParseExpression());
+            stmt = new(line, ParseExpression());
         ConsumeExpect(TokenType.NEWLINE);
         return stmt;
     }
@@ -199,7 +206,11 @@ public class Parser
         };
         ConsumeExpect(TokenType.BRACKET_OPEN);
         while (Peek().type != TokenType.BRACKET_CLOSE)
+        {
             funcCall.args.Add(ParseExpression());
+            if (Peek().type != TokenType.BRACKET_CLOSE)
+                ConsumeExpect(TokenType.SEMICOLON);
+        }
         ConsumeExpect(TokenType.BRACKET_CLOSE);
         return funcCall;
     }
@@ -273,7 +284,7 @@ public class Parser
                         op = new(TokenType.ELEMENT_OF),
                         rhs = set,
                     };
-                    expr.rules.Add(new(new Expression(e)));
+                    expr.rules.Add(new(line, new Expression(e)));
                 }
                 tmp.Clear();
             }
@@ -284,7 +295,7 @@ public class Parser
             }
             ConsumeExpect(TokenType.COMMA);
         }
-        expr.stmt = new(ParseExpression());
+        expr.stmt = new(line, ParseExpression());
         return expr;
     }
 };

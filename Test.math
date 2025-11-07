@@ -14,5 +14,6 @@ theorem Commutative(a; b):
 theorem Test():
     => 1 + 2 = 2 + 1
 {
-    1 + 2 = 2 + 1
+    1 + 2 = 1 + 2
+    1 + 2 = 2 + 1   | Commutative(1; 2)
 }

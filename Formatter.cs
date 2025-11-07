@@ -23,10 +23,6 @@ public class Formatter
         {
             return $"{prefix}{Convert.ToString(obj)}\n";
         }
-        else if (obj is IVariant variant)
-        {
-            return $"{prefix}[{variant.GetObjectType()}]\n{Format(variant.Value, prefix)}";
-        }
         else if (obj is IEnumerable enumerable)
         {
             string str = "";

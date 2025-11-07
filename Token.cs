@@ -59,7 +59,7 @@ public struct Token : ICustomFormatting
         {"-", TokenType.MINUS},
         {"*", TokenType.STAR},
         {"/", TokenType.BACKSLASH},
-        {"|", TokenType.BACKSLASH},
+        {"|", TokenType.PIPE},
 
         {"theorem", TokenType.THEOREM},
         {"define", TokenType.DEFINE},
@@ -100,6 +100,7 @@ public struct Token : ICustomFormatting
         Debug.Assert(type != TokenType.STRING);
         Debug.Assert(type != TokenType.NUMBER);
         this.type = type;
+        data = new();
     }
     public Token(string str)
     {

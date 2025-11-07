@@ -2,7 +2,6 @@ public struct None
 {
 
 }
-
 public struct Command
 {
     public enum CommandType
@@ -66,11 +65,12 @@ public struct Expression : ICustomFormatting
 
 public struct Statement
 {
-
+    public int line;
     public Variant<Expression, Command> stmt;
     public readonly Expression Expr => stmt.As<Expression>();
-    public Statement(Variant<Expression, Command> stmt)
+    public Statement(int line, Variant<Expression, Command> stmt)
     {
+        this.line = line;
         this.stmt = stmt;
     }
 }
