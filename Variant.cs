@@ -1,64 +1,34 @@
-public interface IVariant
-{
-    public object Value { get; }
-    public bool Is<T>();
-    public Type GetObjectType();
-    public T As<T>();
-    public bool Equals(object other);
-    public string ToString();
-    public int GetHashCode();
-}
 
-public readonly struct Variant<T0, T1> : IVariant
+public abstract class VariantBase : ICustomFormatting
 {
-    private readonly int index;
-    private readonly T0? t0;
-    private readonly T1? t1;
-    public readonly object Value => index switch
+    public abstract int Index { get; }
+    public abstract int ArgCount { get; }
+    public abstract object Value { get; }
+    public abstract Type GetObjectType();
+    public bool HasValue()
     {
-        0 => t0!,
-        1 => t1!,
-        _ => throw new InvalidOperationException("Unexpected index"),
-    };
-    public readonly int Index => index;
-    public Variant(T0 value)
-    {
-        t0 = value;
-        index = 0;
+        return Index > 0;
     }
-    public Variant(T1 value)
+    public override bool Equals(object? obj)
     {
-        t1 = value;
-        index = 1;
+        if (obj == null) return false;
+        if (obj.GetType() != GetType()) return false;
+        var other = (VariantBase)obj;
+        if (!HasValue() && !other.HasValue()) return true;
+        if (other.Index != Index) return false;
+        return Value.Equals(other.Value);
     }
-    public static implicit operator Variant<T0, T1>(T0 value)
-    {
-        return new(value);
-    }
-    public static implicit operator Variant<T0, T1>(T1 value)
-    {
-        return new(value);
-    }
-    public readonly bool Is<T>()
+    public bool Is<T>()
     {
         return typeof(T) == GetObjectType();
     }
-    public readonly Type GetObjectType()
-    {
-        return index switch
-        {
-            0 => typeof(T0),
-            1 => typeof(T1),
-            _ => throw new InvalidOperationException("Unexpected index"),
-        };
-    }
-    public readonly T As<T>()
+    public T As<T>()
     {
         if (!Is<T>())
             throw new InvalidOperationException($"Can't get Variant as {typeof(T)} because it is of type {GetObjectType()}");
         return (T)Value;
     }
-    public readonly bool TryAs<T>(out T value)
+    public bool TryAs<T>(out T value)
     {
         if (Is<T>())
         {
@@ -66,42 +36,6 @@ public readonly struct Variant<T0, T1> : IVariant
             return true;
         }
         value = default!;
-        return false;
-    }
-    public readonly T Match<T>(Func<T0, T> t0Handler, Func<T1, T> t1Handler)
-    {
-        return index switch
-        {
-            0 => t0Handler(As<T0>()),
-            1 => t1Handler(As<T1>()),
-            _ => throw new InvalidOperationException("Unexpected index"),
-        };
-    }
-    public readonly void Switch(Action<T0> t0Handler, Action<T1> t1Handler)
-    {
-        switch (index)
-        {
-            case 0:
-                t0Handler(As<T0>());
-                return;
-            case 1:
-                t1Handler(As<T1>());
-                return;
-            default:
-                throw new InvalidOperationException();
-        }
-    }
-    public bool Equals(Variant<T0, T1> other)
-    {
-        if (index != other.index) return false;
-        return Value.Equals(other.Value);
-    }
-    public override bool Equals(object? obj)
-    {
-        if (obj == null)
-            return false;
-        if (obj is Variant<T0, T1> other)
-            return Equals(other);
         return false;
     }
     public override string ToString()
@@ -111,111 +45,79 @@ public readonly struct Variant<T0, T1> : IVariant
     public override int GetHashCode()
     {
         int num = Value.GetHashCode();
-        return (num * 397) ^ index;
+        return (num * 397) ^ Index;
+    }
+
+    public string Format(string prefix)
+    {
+        if (HasValue())
+            return $"{prefix}[{GetObjectType()}]\n{Formatter.Format(Value, prefix)}";
+        else
+            return $"{prefix}[No value]\n";
     }
 }
 
-public readonly struct Variant<T0, T1, T2> : IVariant
+public class Variant<T1, T2> : VariantBase
 {
     private readonly int index;
-    private readonly T0? t0;
     private readonly T1? t1;
     private readonly T2? t2;
-    public readonly object Value => index switch
+    public override int Index => index;
+    public override int ArgCount => 2;
+    public override object Value => index switch
     {
-        0 => t0!,
         1 => t1!,
         2 => t2!,
         _ => throw new InvalidOperationException("Unexpected index"),
     };
-    public readonly int Index => index;
     public Variant()
     {
-        index = -1;
-        t0 = default;
-        t1 = default;
-        t2 = default;
-    }
-    public Variant(T0 value)
-    {
         index = 0;
-        t0 = value;
         t1 = default;
         t2 = default;
     }
     public Variant(T1 value)
     {
         index = 1;
-        t0 = default;
         t1 = value;
         t2 = default;
     }
     public Variant(T2 value)
     {
         index = 2;
-        t0 = default;
         t1 = default;
         t2 = value;
     }
-    public static implicit operator Variant<T0, T1, T2>(T0 value)
+    public static implicit operator Variant<T1, T2>(T1 value)
     {
         return new(value);
     }
-    public static implicit operator Variant<T0, T1, T2>(T1 value)
+    public static implicit operator Variant<T1, T2>(T2 value)
     {
         return new(value);
     }
-    public static implicit operator Variant<T0, T1, T2>(T2 value)
-    {
-        return new(value);
-    }
-    public readonly bool Is<T>()
-    {
-        return typeof(T) == GetObjectType();
-    }
-    public readonly Type GetObjectType()
+    public override Type GetObjectType()
     {
         return index switch
         {
-            0 => typeof(T0),
             1 => typeof(T1),
             2 => typeof(T2),
             _ => throw new InvalidOperationException("Unexpected index"),
         };
     }
-    public readonly T As<T>()
-    {
-        if (!Is<T>())
-            throw new InvalidOperationException($"Can't get Variant as {typeof(T)} because it is of type {GetObjectType()}");
-        return (T)Value;
-    }
-    public readonly bool TryAs<T>(out T value)
-    {
-        if (Is<T>())
-        {
-            value = As<T>();
-            return true;
-        }
-        value = default!;
-        return false;
-    }
-    public readonly T Match<T>(Func<T0, T> t0Handler, Func<T1, T> t1Handler, Func<T2, T> t2Handler)
+    public T Match<T>(Func<T1, T> t1Handler, Func<T2, T> t2Handler)
     {
         return index switch
         {
-            0 => t0Handler(As<T0>()),
             1 => t1Handler(As<T1>()),
             2 => t2Handler(As<T2>()),
             _ => throw new InvalidOperationException("Unexpected index"),
         };
     }
-    public readonly void Switch(Action<T0> t0Handler, Action<T1> t1Handler, Action<T2> t2Handler)
+    public void Switch(Action<T1> t1Handler, Action<T2> t2Handler)
     {
         switch (index)
         {
-            case 0:
-                t0Handler(As<T0>());
-                return;
             case 1:
                 t1Handler(As<T1>());
                 return;
@@ -226,26 +128,98 @@ public readonly struct Variant<T0, T1, T2> : IVariant
                 throw new InvalidOperationException();
         }
     }
-    public bool Equals(Variant<T0, T1, T2> other)
+}
+
+public class Variant<T1, T2, T3> : VariantBase
+{
+    private readonly int index;
+    private readonly T1? t1;
+    private readonly T2? t2;
+    private readonly T3? t3;
+    public override int Index => index;
+    public override int ArgCount => 3;
+    public override object Value => index switch
     {
-        if (index != other.index) return false;
-        return Value.Equals(other.Value);
+        1 => t1!,
+        2 => t2!,
+        3 => t3!,
+        _ => throw new InvalidOperationException("Unexpected index"),
+    };
+    public Variant()
+    {
+        index = 0;
+        t1 = default;
+        t2 = default;
+        t3 = default;
     }
-    public override bool Equals(object? obj)
+    public Variant(T1 value)
     {
-        if (obj == null)
-            return false;
-        if (obj is Variant<T0, T1, T2> other)
-            return Equals(other);
-        return false;
+        index = 1;
+        t1 = value;
+        t2 = default;
+        t3 = default;
     }
-    public override string ToString()
+    public Variant(T2 value)
     {
-        return Value.ToString()!;
+        index = 2;
+        t1 = default;
+        t2 = value;
+        t3 = default;
     }
-    public override int GetHashCode()
+    public Variant(T3 value)
     {
-        int num = Value.GetHashCode();
-        return (num * 397) ^ index;
+        index = 3;
+        t1 = default;
+        t2 = default;
+        t3 = value;
+    }
+    public static implicit operator Variant<T1, T2, T3>(T1 value)
+    {
+        return new(value);
+    }
+    public static implicit operator Variant<T1, T2, T3>(T2 value)
+    {
+        return new(value);
+    }
+    public static implicit operator Variant<T1, T2, T3>(T3 value)
+    {
+        return new(value);
+    }
+    public override Type GetObjectType()
+    {
+        return index switch
+        {
+            1 => typeof(T1),
+            2 => typeof(T2),
+            3 => typeof(T3),
+            _ => throw new InvalidOperationException("Unexpected index"),
+        };
+    }
+    public T Match<T>(Func<T1, T> t1Handler, Func<T2, T> t2Handler, Func<T3, T> t3Handler)
+    {
+        return index switch
+        {
+            1 => t1Handler(As<T1>()),
+            2 => t2Handler(As<T2>()),
+            3 => t3Handler(As<T3>()),
+            _ => throw new InvalidOperationException("Unexpected index"),
+        };
+    }
+    public void Switch(Action<T1> t1Handler, Action<T2> t2Handler, Action<T3> t3Handler)
+    {
+        switch (index)
+        {
+            case 1:
+                t1Handler(As<T1>());
+                return;
+            case 2:
+                t2Handler(As<T2>());
+                return;
+            case 3:
+                t3Handler(As<T3>());
+                return;
+            default:
+                throw new InvalidOperationException();
+        }
     }
 }
