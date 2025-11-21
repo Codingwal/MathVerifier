@@ -1,79 +1,17 @@
-public struct None
-{
+global using Statement = Variant<QuantifiedStatement, LogicalOperator, RelationalOperator, SetStatement>;
+global using Term = Variant<Expression, FuncCall, string, double>;
 
-}
-public struct Command
+using TokenType = Token.TokenType;
+
+// Miscellaneous
+public enum Command
 {
-    public enum CommandType
-    {
-        NONE,
-        CHECK,
-        SORRY,
-    }
-    public CommandType type;
-    public Command(CommandType type)
-    {
-        this.type = type;
-    }
-}
-public class Term
-{
-    public Variant<Expression, string, double> term;
-    public Term(Variant<Expression, string, double> term)
-    {
-        this.term = term;
-    }
-}
-public class QuantifiedExpr // It exists... / For all...
-{
-    public enum QuantifiedExprType
-    {
-        NONE,
-        EXISTS,
-        ALL
-    }
-    public QuantifiedExprType type;
-    public List<string> objects;
-    public List<Statement> rules;
-    public Statement stmt;
-    public QuantifiedExpr()
-    {
-        type = QuantifiedExprType.NONE;
-        objects = new();
-        rules = new();
-        stmt = new();
-    }
-}
-public class BinExpr
-{
-    public Expression lhs;
-    public Token op;
-    public Expression rhs;
-}
-public struct Expression : ICustomFormatting
-{
-    public Variant<BinExpr, Term, QuantifiedExpr> expr;
-    public Expression(Variant<BinExpr, Term, QuantifiedExpr> expr)
-    {
-        this.expr = expr;
-    }
-    public readonly string Format(string prefix)
-    {
-        return Formatter.Format(expr, prefix);
-    }
+    NONE,
+    CHECK,
+    SORRY,
 }
 
-public struct Statement
-{
-    public int line;
-    public Variant<Expression, Command> stmt;
-    public readonly Expression Expr => stmt.As<Expression>();
-    public Statement(int line, Variant<Expression, Command> stmt)
-    {
-        this.line = line;
-        this.stmt = stmt;
-    }
-}
+// Expressions
 public struct FuncCall
 {
     public string name;
@@ -84,20 +22,70 @@ public struct FuncCall
         args = new();
     }
 }
-public struct ProvenStatement
+public struct BinExpr
 {
+    public Expression lhs;
+    public Token op;
+    public Expression rhs;
+}
+public struct Expression
+{
+    public Variant<BinExpr, Term> expr;
+    public Expression(Variant<BinExpr, Term> expr)
+    {
+        this.expr = expr;
+    }
+}
+
+// Statements
+public struct SetStatement
+{
+    public Expression lhs;
+    public TokenType op;
+    public Expression rhs;
+}
+public struct RelationalOperator
+{
+    public Expression lhs;
+    public TokenType op;
+    public Expression rhs;
+}
+public struct LogicalOperator
+{
+    public Statement lhs;
+    public TokenType op;
+    public Statement rhs;
+}
+public struct QuantifiedStatement
+{
+    public TokenType op;
+    public List<string> objects;
+    public List<Statement> rules;
     public Statement stmt;
-    public Variant<FuncCall, Command, None> theorem;
+    public QuantifiedStatement()
+    {
+        op = TokenType.UNDEFINED;
+        objects = new();
+        rules = new();
+        stmt = new();
+    }
+}
+
+// High-level
+public struct StatementLine
+{
+    public int line;
+    public Variant<Statement, Command> stmt;
+    public Variant<FuncCall, Command>? proof;
 }
 
 public struct Theorem
 {
     public string name;
     public List<string> parameters;
-    public List<Statement> requirements;
-    public Statement hypothesis;
-    public List<ProvenStatement> proof;
-
+    public List<StatementLine> requirements;
+    public StatementLine hypothesis;
+    public List<StatementLine> proof;
     public Theorem()
     {
         name = "";
@@ -113,7 +101,7 @@ public struct Definition
     public string name;
     public string obj;
     public List<string> parameters;
-    public List<Statement> rules;
+    public List<StatementLine> rules;
     public Definition()
     {
         name = "";

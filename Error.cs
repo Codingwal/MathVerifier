@@ -9,4 +9,9 @@ public class Logger
         // Console.Write($"Error: {message}\n");
         // Environment.Exit(1);
     }
+    public static void Assert(bool condition, string message)
+    {
+        if (!condition)
+            Error(message);
+    }
 }

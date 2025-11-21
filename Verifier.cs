@@ -1,5 +1,6 @@
 using TokenType = Token.TokenType;
 
+/*
 public class Verifier
 {
     private readonly Data ast;
@@ -220,3 +221,4 @@ public class Verifier
         return newExpr;
     }
 }
+*/
