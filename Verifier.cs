@@ -1,17 +1,20 @@
 using TokenType = Token.TokenType;
 
-/*
 public class Verifier
 {
     private readonly Data ast;
+    private List<string> objects;
     private List<Statement> statements;
+    private Stack<Statement> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     private int num; // Used so that expressions copied from a definition use different variable names 
     public Verifier(Data ast)
     {
         this.ast = ast;
+        objects = new();
         statements = new();
+        statementStack = new();
         theorems = new();
         definitions = new();
         num = 0;
@@ -32,11 +35,14 @@ public class Verifier
     }
     private void VerifyTheorem(Theorem theorem)
     {
+        foreach (var param in theorem.parameters)
+            objects.Add(param);
+
         foreach (var stmt in theorem.requirements)
         {
             if (stmt.stmt.TryAs<Command>(out var cmd))
             {
-                if (cmd.type == Command.CommandType.CHECK)
+                if (cmd == Command.CHECK)
                 {
                     Console.WriteLine("\nCurrent statements:");
                     Console.Write(Formatter.Format(statements));
@@ -48,17 +54,18 @@ public class Verifier
             else
                 AddStatement(stmt);
         }
+
         foreach (var stmt in theorem.proof)
         {
-            if (stmt.stmt.stmt.TryAs<Command>(out var cmd))
+            if (stmt.stmt.TryAs<Command>(out var cmd))
             {
-                if (cmd.type == Command.CommandType.SORRY)
+                if (cmd == Command.SORRY)
                 {
                     statements.Clear();
                     theorems.Add(theorem.name, theorem);
                     return;
                 }
-                else if (cmd.type == Command.CommandType.CHECK)
+                else if (cmd == Command.CHECK)
                 {
                     Console.WriteLine("\nCurrent statements:");
                     Console.Write(Formatter.Format(statements));
@@ -66,18 +73,19 @@ public class Verifier
                 }
                 continue;
             }
-            VerifyStatement(stmt);
-            AddStatement(stmt.stmt);
+            VerifyStatementLine(stmt);
+            AddStatement(stmt);
         }
-        VerifyStatement(new() { stmt = theorem.hypothesis, theorem = new None() });
+        VerifyStatementLine(theorem.hypothesis);
         statements.Clear();
         theorems.Add(theorem.name, theorem);
     }
-    private void VerifyStatement(ProvenStatement stmt)
+    private void VerifyStatementLine(StatementLine stmt)
     {
-        // Handle sorry statements and theorem references
+        Logger.Assert(!stmt.stmt.Is<Command>(), $"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
+
         bool proven = false;
-        stmt.theorem.Switch(
+        stmt.stmt.As<Statement>().Switch(
             funcCall => // Substitute arguments into the theorem and create a new valid statement (hopefully equal to the statement to verify)
             {
                 // Get theorem and verify FuncCall
@@ -114,7 +122,88 @@ public class Verifier
 
         VerifyExpression(stmt.stmt.Expr, stmt.stmt.line);
     }
-    private void AddStatement(Statement stmt)
+    private bool VerifyStatement(Statement stmt, int line)
+    {
+        return stmt.Match(
+            s =>
+            {
+                if (s.op == TokenType.EXISTS)
+                    return VerifyExistsStatement(s, line);
+                else if (s.op == TokenType.FOR_ALL)
+                    throw new NotImplementedException();
+                else
+                    throw new();
+            },
+            logicalOp =>
+            {
+                throw new NotImplementedException();
+            },
+            relationalOp =>
+            {
+                throw new NotImplementedException();
+            },
+            setStmt =>
+            {
+                throw new NotImplementedException();
+            }
+        );
+    }
+
+
+    private bool VerifyExistsStatement(QuantifiedStatement stmt, int line)
+    {
+        Logger.Assert(stmt.objects.Count == 1, $"Can't handle quantified statements with more than one object yet.");
+
+        foreach (string obj in stmt.objects)
+        {
+            Logger.Assert(!objects.Contains(obj), $"An object with the same name (\"{obj}\") already exists (line {line}).");
+            objects.Add(obj);
+        }
+
+        foreach (var s in statements)
+        {
+            if (!s.TryAs<QuantifiedStatement>(out var other)) continue;
+
+            if (other.op == TokenType.EXISTS)
+            {
+                Dictionary<string, Expression> conversionDict = new() { { other.objects[0], new(new Term(stmt.objects[0])) } };
+
+                // Add all statements of the other exists statement rewritten with the current object
+                foreach (var rule in other.rules)
+                    statementStack.Push(RewriteStatement(rule, conversionDict));
+                statementStack.Push(RewriteStatement(other.stmt, conversionDict));
+                int popCount = other.rules.Count + 1;
+
+                // Check if all statements can be proven using the other exists statement
+                if (stmt.rules.All(rule => VerifyStatement(RewriteStatement(rule, conversionDict), line))
+                    && VerifyStatement(RewriteStatement(stmt.stmt, conversionDict), line))
+                {
+                    for (int i = 0; i < popCount; i++)
+                        statementStack.Pop();
+                    return true;
+                }
+
+                // Remove temporary statements
+                for (int i = 0; i < popCount; i++)
+                    statementStack.Pop();
+            }
+            else if (other.op == TokenType.FOR_ALL)
+                throw new NotImplementedException();
+            else
+                throw new();
+        }
+
+        // Remove objects only valid inside the quantified statement
+        foreach (string obj in stmt.objects)
+            objects.Remove(obj);
+
+        return false;
+    }
+    private Statement RewriteStatement(Statement stmt, Dictionary<string, Expression> conversionDict)
+    {
+        throw new NotImplementedException();
+    }
+    private void AddStatement(StatementLine stmt)
     {
         statements.Add(stmt);
         if (stmt.Expr.expr.TryAs<BinExpr>(out var binExpr))
@@ -221,4 +310,3 @@ public class Verifier
         return newExpr;
     }
 }
-*/
