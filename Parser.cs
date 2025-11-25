@@ -204,13 +204,18 @@ public class Parser
 
         if (Peek().type == TokenType.FOR_ALL || Peek().type == TokenType.EXISTS)
         {
-            return ParseQuantifiedStatement();
+            lhs = (Statement)ParseQuantifiedStatement();
         }
         else if (Peek().type == TokenType.BRACKET_OPEN)
         {
             Consume();
             lhs = ParseStatement();
             ConsumeExpect(TokenType.BRACKET_CLOSE);
+        }
+        else if (Peek().type == TokenType.STRING &&
+                 Peek().GetString().Length == 1 && char.IsUpper(Peek().GetString()[0]))
+        {
+            lhs = (Statement)Consume().GetString();
         }
         else
         {

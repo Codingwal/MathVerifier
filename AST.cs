@@ -1,4 +1,4 @@
-global using Statement = Variant<QuantifiedStatement, LogicalOperator, RelationalOperator, SetStatement>;
+global using Statement = Variant<QuantifiedStatement, LogicalOperator, RelationalOperator, SetStatement, string>;
 global using Term = Variant<Expression, FuncCall, string, double>;
 
 using TokenType = Token.TokenType;

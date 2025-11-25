@@ -23,7 +23,7 @@ class Lexer
                     continue;
                 }
 
-                if (str[i] == '/' && str[i] == '/')
+                if (str[i] == '/' && str[i] == '/') // Comment
                 {
                     break;
                 }
@@ -38,10 +38,10 @@ class Lexer
                     double num = double.Parse(numStr);
                     lineTokens.Add(new Token(num));
                 }
-                else if (char.IsLetter(str[i]))
+                else if (char.IsLetter(str[i])) // String
                 {
                     string literal = "";
-                    for (; i < str.Length && char.IsLetter(str[i]); i++)
+                    for (; i < str.Length && char.IsLetterOrDigit(str[i]); i++)
                         literal += str[i];
 
                     if (Token.str2Token.ContainsKey(literal))
@@ -49,7 +49,7 @@ class Lexer
                     else
                         lineTokens.Add(new Token(literal));
                 }
-                else
+                else // Symbol
                 {
                     string literal = "";
                     for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]); i++)
