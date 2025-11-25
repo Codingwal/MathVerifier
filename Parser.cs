@@ -204,40 +204,7 @@ public class Parser
 
         if (Peek().type == TokenType.FOR_ALL || Peek().type == TokenType.EXISTS)
         {
-            QuantifiedStatement stmt = new() { op = Consume().type };
-
-            List<string> tmp = new();
-            while (true)
-            {
-                string objName = ConsumeExpect(TokenType.STRING).GetString();
-                stmt.objects.Add(objName);
-                tmp.Add(objName);
-
-                if (Peek().type == TokenType.ELEMENT_OF)
-                {
-                    Consume();
-                    Expression set = ParseExpression();
-                    foreach (string str in tmp)
-                    {
-                        stmt.rules.Add(new SetStatement()
-                        {
-                            lhs = new Expression(new Term(str)),
-                            op = TokenType.ELEMENT_OF,
-                            rhs = set,
-                        });
-                    }
-                    tmp.Clear();
-                }
-                if (Peek().type == TokenType.COLON)
-                {
-                    Consume();
-                    break;
-                }
-                ConsumeExpect(TokenType.COMMA);
-            }
-            stmt.stmt = ParseStatement();
-
-            return stmt;
+            return ParseQuantifiedStatement();
         }
         else if (Peek().type == TokenType.BRACKET_OPEN)
         {
@@ -297,6 +264,61 @@ public class Parser
         }
         Logger.Assert(lhs.Is<Statement>(), $"Expected statement but only found expression in line {line}");
         return lhs.As<Statement>();
+    }
+    private QuantifiedStatement ParseQuantifiedStatement()
+    {
+        QuantifiedStatement stmt = new() { op = Consume().type };
+        Statement rules = new();
+        List<string> tmp = new();
+        while (true)
+        {
+            string objName = ConsumeExpect(TokenType.STRING).GetString();
+            stmt.objects.Add(objName);
+            tmp.Add(objName);
+
+            if (Peek().type == TokenType.ELEMENT_OF)
+            {
+                Consume();
+                Expression set = ParseExpression();
+
+                foreach (string str in tmp)
+                {
+                    SetStatement setStmt = new()
+                    {
+                        lhs = new Expression(new Term(str)),
+                        op = TokenType.ELEMENT_OF,
+                        rhs = set,
+                    };
+                    if (rules.HasValue())
+                        rules = new LogicalOperator()
+                        {
+                            lhs = setStmt,
+                            op = TokenType.AND,
+                            rhs = rules
+                        };
+                    else
+                        rules = setStmt;
+                }
+                tmp.Clear();
+            }
+            if (Peek().type == TokenType.COLON)
+            {
+                Consume();
+                break;
+            }
+            ConsumeExpect(TokenType.COMMA);
+        }
+        if (rules.HasValue())
+            stmt.stmt = new LogicalOperator()
+            {
+                lhs = rules,
+                op = TokenType.IMPLIES,
+                rhs = ParseStatement()
+            };
+        else
+            stmt.stmt = ParseStatement();
+
+        return stmt;
     }
 
     private Expression ParseExpression(int minPrec = 0)

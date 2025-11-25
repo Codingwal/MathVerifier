@@ -27,6 +27,8 @@ public struct Token : ICustomFormatting
 
         // Logical operators
         IMPLIES,
+        AND,
+        OR,
 
         // Quantified statements
         EXISTS,

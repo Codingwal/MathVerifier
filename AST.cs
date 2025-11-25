@@ -60,13 +60,11 @@ public struct QuantifiedStatement
 {
     public TokenType op;
     public List<string> objects;
-    public List<Statement> rules;
     public Statement stmt;
     public QuantifiedStatement()
     {
         op = TokenType.UNDEFINED;
         objects = new();
-        rules = new();
         stmt = new();
     }
 }
