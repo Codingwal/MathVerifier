@@ -1,3 +1,20 @@
+theorem A2(P; Q; R):
+    P => (Q => R)
+=>  (P => Q) => (P => R)
+{
+    sorry
+}
+
+theorem T1(P; Q; R):
+    P => Q
+    Q => R
+=>  P => R
+{
+    P => (Q => R)
+    (P => Q) => (P => R)    | A2(P; Q; R)
+    P => R      
+}
+
 theorem SpecificQ(M; B; P):
     A x (x e M => P)
     B is M

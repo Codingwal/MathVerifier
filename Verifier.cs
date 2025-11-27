@@ -13,7 +13,7 @@ public class Verifier
     private readonly Data ast;
     private List<string> objects;
     private List<Expression> statements;
-    private Stack<Expression> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
+    private List<Expression> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     private int num; // Used so that expressions copied from a definition use different variable names 
@@ -40,6 +40,8 @@ public class Verifier
     private void VerifyDefinition(Definition definition)
     {
         definitions.Add(definition.name, definition);
+        // TODO: statements must be valid
+        // throw new NotImplementedException();
     }
     private void VerifyTheorem(Theorem theorem)
     {
@@ -60,7 +62,10 @@ public class Verifier
                     Logger.Error($"Invalid command {cmd} in theorem requirements in line {stmt.line + 1}");
             }
             else
-                AddStatement(stmt.stmt.As<Expression>());
+            {
+                AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line); // Result is not important, but statement must be valid "code"
+                AddStatement(stmt.stmt.As<Expression>(), statements);
+            }
         }
 
         foreach (var stmt in theorem.proof)
@@ -82,10 +87,11 @@ public class Verifier
                 continue;
             }
             VerifyStatementLine(stmt);
-            AddStatement(stmt.stmt.As<Expression>());
+            AddStatement(stmt.stmt.As<Expression>(), statements);
         }
         VerifyStatementLine(theorem.hypothesis);
         statements.Clear();
+        objects.Clear();
         theorems.Add(theorem.name, theorem);
     }
     private void VerifyStatementLine(StatementLine stmt)
@@ -107,7 +113,7 @@ public class Verifier
                 for (int i = 0; i < theorem.parameters.Count; i++)
                     conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
 
-                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
+                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++), statements);
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -130,6 +136,9 @@ public class Verifier
         foreach (var stmt in statements)
             if (CompareExpressions(stmt, expr))
                 return StmtVal.TRUE;
+        foreach (var stmt in statementStack)
+            if (CompareExpressions(stmt, expr))
+                return StmtVal.TRUE;
 
         if (expr.TryAs<BinExpr>(out var binExpr))
         {
@@ -138,7 +147,15 @@ public class Verifier
                 case TokenType.IMPLIES:
                     {
                         StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+
+                        // Add statements valid in this context
+                        int stmtStackSize = statementStack.Count;
+                        AddStatement(binExpr.lhs, statementStack);
+
                         StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                        statementStack.SetCount(stmtStackSize); // Remove statements only valid in this context
+
                         if (lhs == StmtVal.FALSE)
                             return StmtVal.TRUE;
                         else
@@ -149,6 +166,7 @@ public class Verifier
                     {
                         StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
                         StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
                         if (lhs == StmtVal.TRUE || rhs == StmtVal.TRUE)
                             return StmtVal.TRUE;
                         else if (lhs == StmtVal.FALSE && rhs == StmtVal.FALSE)
@@ -160,6 +178,7 @@ public class Verifier
                     {
                         StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
                         StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
                         if (lhs == StmtVal.TRUE && rhs == StmtVal.TRUE)
                             return StmtVal.TRUE;
                         else if (lhs == StmtVal.FALSE || rhs == StmtVal.FALSE)
@@ -167,18 +186,39 @@ public class Verifier
                         else
                             return StmtVal.UNKNOWN;
                     }
-                // case TokenType.ELEMENT_OF:
-                //     {
+                case TokenType.ELEMENT_OF:
+                    {
+                        VerifyExpression(binExpr.lhs, line);
 
-                //     }
-                // case TokenType.SUBSET:
-                //     {
+                        if (!binExpr.rhs.TryAs<Term>(out var term)) throw new NotImplementedException();
+                        if (!term.term.TryAs<string>(out var str)) throw new NotImplementedException();
+                        Logger.Assert(definitions.ContainsKey(str), $"Undefined set \"{str}\" in line {line}");
+                        Definition definition = definitions[str];
 
-                //     }
-                // case TokenType.EQUALS:
-                //     {
+                        // Check if all rules are fullfilled
+                        Dictionary<string, Expression> conversionDict = new() { { definition.obj, binExpr.lhs } };
+                        foreach (var rule in definition.rules)
+                        {
+                            StmtVal val = AnalyseStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num++), line);
+                            if (val != StmtVal.TRUE)
+                                return val;
+                        }
 
-                //     }
+                        return StmtVal.TRUE;
+                    }
+                case TokenType.SUBSET:
+                    {
+                        throw new NotImplementedException();
+                    }
+                case TokenType.EQUALS:
+                    {
+                        VerifyExpression(binExpr.lhs, line);
+                        VerifyExpression(binExpr.rhs, line);
+
+                        if (CompareExpressions(binExpr.lhs, binExpr.rhs))
+                            return StmtVal.TRUE;
+                        return StmtVal.UNKNOWN;
+                    }
                 default:
                     Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
                     throw new();
@@ -201,14 +241,18 @@ public class Verifier
                     else
                         throw new NotImplementedException();
                 },
-                str => { return StmtVal.UNKNOWN; },
-                num => { Logger.Error($"Expected statement but found number {num} in line {line}"); throw new(); }
+                str =>
+                {
+                    Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
+                    return StmtVal.UNKNOWN;
+                },
+                num => { Logger.Error($"Expected statement but found number ({num}) in line {line}"); throw new(); }
             );
         }
         else
             throw new();
     }
-    private void AddStatement(Expression stmt)
+    private void AddStatement(Expression stmt, List<Expression> statements)
     {
         if (stmt.Is<Term>())
         {
@@ -216,7 +260,7 @@ public class Verifier
 
             if (term.TryAs<Expression>(out var expr))
             {
-                AddStatement(expr);
+                AddStatement(expr, statements);
                 return;
             }
         }
@@ -234,7 +278,7 @@ public class Verifier
                     foreach (var rule in set.rules)
                     {
                         Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
+                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num), statements);
                     }
                     num++;
                 }
@@ -243,13 +287,13 @@ public class Verifier
             }
             else if (binExpr.op.type == TokenType.AND)
             {
-                AddStatement(binExpr.lhs);
-                AddStatement(binExpr.rhs);
+                AddStatement(binExpr.lhs, statements);
+                AddStatement(binExpr.rhs, statements);
             }
             else if (binExpr.op.type == TokenType.IMPLIES)
             {
                 if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
-                    AddStatement(binExpr.rhs);
+                    AddStatement(binExpr.rhs, statements);
             }
         }
         statements.Add(stmt);
@@ -327,6 +371,34 @@ public class Verifier
                 qStmt => { throw new NotImplementedException(); },
                 str => str == termB.As<string>(),
                 num => num == termB.As<double>()
+            );
+        }
+    }
+
+    private void VerifyExpression(Expression expr, int line)
+    {
+        if (expr.TryAs<BinExpr>(out var binExpr))
+        {
+            // Check if binExpr.op is a Expr x Expr => Expr operator
+            Logger.Assert(Token.GetPrecedence(binExpr.op.type) < Token.ExpressionMinPrec,
+                $"Invalid expression operator \"{binExpr.op}\" in line {line}");
+
+            // TODO: Check if operator identifier is defined
+            if (binExpr.op.type == TokenType.STRING)
+                throw new NotImplementedException();
+
+            VerifyExpression(binExpr.lhs, line);
+            VerifyExpression(binExpr.rhs, line);
+        }
+        else
+        {
+            var term = expr.As<Term>().term;
+
+            term.Switch(expr => VerifyExpression(expr, line),
+                        funcCall => throw new NotImplementedException(),
+                        qStmt => Logger.Error($"Expected expression but found quantified statement in line {line}"),
+                        str => Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}"),
+                        num => { }
             );
         }
     }
