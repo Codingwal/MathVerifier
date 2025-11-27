@@ -2,9 +2,8 @@ define M(x)():
     x = 10
 end
 
-theorem Test(B; C):
-    B
-=>  B OR C
+theorem Test():
+=>  1 = 1
 {
-    100 = 1001
+    A x (x e M => x = 10)
 }

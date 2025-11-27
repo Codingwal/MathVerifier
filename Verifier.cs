@@ -39,9 +39,20 @@ public class Verifier
     }
     private void VerifyDefinition(Definition definition)
     {
+        objects.Add(definition.obj);
+        if (definition.parameters.Count != 0) throw new NotImplementedException();
+
+        // Verify syntax / grammar of rules
+        foreach (var rule in definition.rules)
+        {
+            Logger.Assert(rule.stmt.Is<Expression>(), $"Expected expression in definiton rules list (line {rule.line})");
+
+            AnalyseStatement(rule.stmt.As<Expression>(), rule.line); // Result is not important, but syntax / grammar must be checked
+        }
+
+        objects.Clear();
+
         definitions.Add(definition.name, definition);
-        // TODO: statements must be valid
-        // throw new NotImplementedException();
     }
     private void VerifyTheorem(Theorem theorem)
     {
@@ -59,11 +70,11 @@ public class Verifier
                     Console.WriteLine("-------------------\n");
                 }
                 else
-                    Logger.Error($"Invalid command {cmd} in theorem requirements in line {stmt.line + 1}");
+                    Logger.Error($"Invalid command {cmd} in theorem requirements in line {stmt.line}");
             }
             else
             {
-                AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line); // Result is not important, but statement must be valid "code"
+                AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line); // Result is not important, but syntax / grammar must be checked
                 AddStatement(stmt.stmt.As<Expression>(), statements);
             }
         }
