@@ -20,12 +20,12 @@ public abstract class VariantBase : ICustomFormatting
     }
     public bool Is<T>()
     {
-        return typeof(T) == GetObjectType();
+        return GetObjectType().Equals(typeof(T));
     }
     public T As<T>()
     {
         if (!Is<T>())
-            throw new InvalidOperationException($"Can't get Variant as {typeof(T)} because it is of type {GetObjectType()}");
+            throw new InvalidOperationException($"Can't get Variant ({GetType()}) as {typeof(T)} because it is of type {GetObjectType()}");
         return (T)Value;
     }
     public bool TryAs<T>(out T value)

@@ -38,10 +38,10 @@ class Lexer
                     double num = double.Parse(numStr);
                     lineTokens.Add(new Token(num));
                 }
-                else if (char.IsLetter(str[i])) // String
+                else if (char.IsLetter(str[i]) || str[i] == '_') // String
                 {
                     string literal = "";
-                    for (; i < str.Length && char.IsLetterOrDigit(str[i]); i++)
+                    for (; i < str.Length && (char.IsLetterOrDigit(str[i]) || str[i] == '_'); i++)
                         literal += str[i];
 
                     if (Token.str2Token.ContainsKey(literal))
@@ -52,7 +52,7 @@ class Lexer
                 else // Symbol
                 {
                     string literal = "";
-                    for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]); i++)
+                    for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]) && str[i] != '_'; i++)
                         literal += str[i];
 
                     int j = 0;

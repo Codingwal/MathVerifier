@@ -1,6 +1,4 @@
-global using Statement = Variant<QuantifiedStatement, LogicalOperator, RelationalOperator, SetStatement, string>;
-global using Term = Variant<Expression, FuncCall, string, double>;
-
+global using Expression = Variant<BinExpr, Term>;
 using TokenType = Token.TokenType;
 
 // Miscellaneous
@@ -28,52 +26,28 @@ public struct BinExpr
     public Token op;
     public Expression rhs;
 }
-public struct Expression
+public struct Term
 {
-    public Variant<BinExpr, Term> expr;
-    public Expression(Variant<BinExpr, Term> expr)
+    public Variant<Expression, FuncCall, QuantifiedStatement, string, double> term;
+    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, double> term)
     {
-        this.expr = expr;
+        this.term = term;
     }
 }
 
 // Statements
-public struct SetStatement
-{
-    public Expression lhs;
-    public TokenType op;
-    public Expression rhs;
-}
-public struct RelationalOperator
-{
-    public Expression lhs;
-    public TokenType op;
-    public Expression rhs;
-}
-public struct LogicalOperator
-{
-    public Statement lhs;
-    public TokenType op;
-    public Statement rhs;
-}
 public struct QuantifiedStatement
 {
     public TokenType op;
-    public List<string> objects;
-    public Statement stmt;
-    public QuantifiedStatement()
-    {
-        op = TokenType.UNDEFINED;
-        objects = new();
-        stmt = new();
-    }
+    public string obj;
+    public Expression stmt;
 }
 
 // High-level
 public struct StatementLine
 {
     public int line;
-    public Variant<Statement, Command> stmt;
+    public Variant<Expression, Command> stmt;
     public Variant<FuncCall, Command>? proof;
 }
 

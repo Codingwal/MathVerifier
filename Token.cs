@@ -74,6 +74,8 @@ public struct Token : ICustomFormatting
 
         // Logical operators
         {"=>", TokenType.IMPLIES},
+        {"AND", TokenType.AND},
+        {"OR", TokenType.OR},
 
         // Quantified operators
         { "E", TokenType.EXISTS},
@@ -108,23 +110,22 @@ public struct Token : ICustomFormatting
     {
         return type switch
         {
-            // Statements
+            // Stmt x Stmt => Stmt
+            TokenType.IMPLIES => 1,
+            TokenType.OR => 2,
+            TokenType.AND => 3,
 
-            TokenType.IMPLIES => 0,
+            // Expr x Expr => Stmt
+            TokenType.ELEMENT_OF => 5,
+            TokenType.SUBSET => 5,
+            TokenType.EQUALS => 5,
 
-            TokenType.ELEMENT_OF => 2,
-            TokenType.EQUALS => 2,
-
-            // Expressions
-
+            // Expr x Expr => Expr
             TokenType.PLUS => 10,
             TokenType.MINUS => 10,
-
-            TokenType.STRING => 11, // Operator object
-
             TokenType.STAR => 12,
             TokenType.BACKSLASH => 12,
-
+            TokenType.STRING => 100, // Operator object
             _ => -1,
         };
     }
@@ -178,5 +179,27 @@ public struct Token : ICustomFormatting
     public readonly string Format(string prefix)
     {
         return $"{prefix}{ToString()}\n";
+    }
+
+    public static bool operator ==(Token a, Token b)
+    {
+        return a.Equals(b);
+    }
+    public static bool operator !=(Token a, Token b)
+    {
+        return !(a == b);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj == null) return false;
+        if (obj is Token token)
+            return Equals(token);
+        else
+            return false;
+    }
+    public override int GetHashCode()
+    {
+        throw new NotImplementedException();
     }
 }

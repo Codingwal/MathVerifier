@@ -23,14 +23,14 @@ public static class Program
         Console.WriteLine("Finished parsing");
 
         // Print AST
-        Console.WriteLine("\n-------------------------");
-        Console.Write(Formatter.Format(ast));
-        Console.WriteLine("-------------------------\n");
+        // Console.WriteLine("\n-------------------------");
+        // Console.Write(Formatter.Format(ast));
+        // Console.WriteLine("-------------------------\n");
 
         // Verify
-        // Console.WriteLine("Verifying...");
-        // Verifier verifier = new(ast);
-        // verifier.Verify();
-        // Console.WriteLine("Finished verifying");
+        Console.WriteLine("Verifying...");
+        Verifier verifier = new(ast);
+        verifier.Verify();
+        Console.WriteLine("Finished verifying");
     }
 }

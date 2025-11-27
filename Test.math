@@ -15,19 +15,18 @@ theorem A1(P; Q):
 
 theorem A2(P; Q; R):
     P => (Q => R)
-=>  (P => R) => (P => R)
+=>  (P => Q) => (P => R)
 {
     sorry
 }
-
-// -------------------------------------------- //
 
 theorem T1(P; Q; R):
     P => Q
     Q => R
 =>  P => R
 {
-    P => (Q => R)           | A1(Q => R; P)
+    P => (Q => R)
     (P => Q) => (P => R)    | A2(P; Q; R)
-    P => R                  | MP(P => Q; P => R)
+    P => R      
 }
+

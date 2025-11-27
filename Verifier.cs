@@ -1,11 +1,19 @@
 using TokenType = Token.TokenType;
 
+
 public class Verifier
 {
+    private enum StmtVal
+    {
+        UNKNOWN,
+        TRUE,
+        FALSE
+    }
+
     private readonly Data ast;
     private List<string> objects;
-    private List<Statement> statements;
-    private Stack<Statement> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
+    private List<Expression> statements;
+    private Stack<Expression> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     private int num; // Used so that expressions copied from a definition use different variable names 
@@ -52,7 +60,7 @@ public class Verifier
                     Logger.Error($"Invalid command {cmd} in theorem requirements in line {stmt.line + 1}");
             }
             else
-                AddStatement(stmt);
+                AddStatement(stmt.stmt.As<Expression>());
         }
 
         foreach (var stmt in theorem.proof)
@@ -74,7 +82,7 @@ public class Verifier
                 continue;
             }
             VerifyStatementLine(stmt);
-            AddStatement(stmt);
+            AddStatement(stmt.stmt.As<Expression>());
         }
         VerifyStatementLine(theorem.hypothesis);
         statements.Clear();
@@ -82,192 +90,176 @@ public class Verifier
     }
     private void VerifyStatementLine(StatementLine stmt)
     {
-        Logger.Assert(!stmt.stmt.Is<Command>(), $"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
+        Console.WriteLine($"Verifying statement in line {stmt.line} -----------------------------------------------------------------");
 
-        bool proven = false;
-        stmt.stmt.As<Statement>().Switch(
-            funcCall => // Substitute arguments into the theorem and create a new valid statement (hopefully equal to the statement to verify)
+        if (stmt.stmt.Is<Command>()) Logger.Error($"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
+
+        if (stmt.proof != null)
+        {
+            if (stmt.proof.TryAs<FuncCall>(out var funcCall))
             {
-                // Get theorem and verify FuncCall
-                if (!theorems.ContainsKey(funcCall.name))
-                    Logger.Error($"Reference to undefined theorem \"{funcCall.name}\" in line {stmt.stmt.line + 1}");
+                Logger.Assert(theorems.ContainsKey(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" in line {stmt.line}");
                 Theorem theorem = theorems[funcCall.name];
-                if (funcCall.args.Count != theorem.parameters.Count)
-                    Logger.Error($"Incorrect argument count ({funcCall.args.Count}, expected {theorem.parameters.Count}) in line {stmt.stmt.line + 1}");
+                Logger.Assert(funcCall.args.Count == theorem.parameters.Count,
+                    $"Expected {theorem.parameters.Count} arguments but found {funcCall.args.Count} in theorem call in line {stmt.line}");
 
-                // Rewrite expression with the given arguments
                 Dictionary<string, Expression> conversionDict = new();
                 for (int i = 0; i < theorem.parameters.Count; i++)
-                {
                     conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
-                }
-                statements.Add(new(stmt.stmt.line, RewriteExpression(theorem.hypothesis.Expr, conversionDict, num)));
-                num++;
-            },
-            command => // Handle sorry command
+
+                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
+            }
+            else if (stmt.proof.TryAs<Command>(out var command))
             {
-                if (command.type == Command.CommandType.SORRY)
-                    proven = true;
-                else
-                    Logger.Error($"Unexpected command {command} as statement proof in line {stmt.stmt.line + 1}. Expected \"sorry\" or theorem reference.");
-            },
-            none => { }
-        );
-        if (proven) return; // Early out (for example because of sorry statement)
+                if (command == Command.SORRY) return;
+                else Logger.Error($"Unexpected command {command} as proof in line {stmt.line}");
+            }
+        }
 
-        // Check if this statement is already proven (or was just proven using a theorem reference)
-        foreach (Statement s in statements)
-            if (CompareExpressions(s.Expr, stmt.stmt.Expr))
-                return;
-
-        VerifyExpression(stmt.stmt.Expr, stmt.stmt.line);
+        StmtVal stmtVal = AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
+        if (stmtVal == StmtVal.TRUE)
+            return;
+        else if (stmtVal == StmtVal.FALSE)
+            Logger.Error($"Statement in line {stmt.line} is false.");
+        else
+            Logger.Error($"Failed to verify statement in line {stmt.line}");
     }
-    private bool VerifyStatement(Statement stmt, int line)
+    private StmtVal AnalyseStatement(Expression expr, int line)
     {
-        return stmt.Match(
-            s =>
+        // Check if the statement has already been proven
+        foreach (var stmt in statements)
+            if (CompareExpressions(stmt, expr))
+                return StmtVal.TRUE;
+
+        if (expr.TryAs<BinExpr>(out var binExpr))
+        {
+            switch (binExpr.op.type)
             {
-                if (s.op == TokenType.EXISTS)
-                    return VerifyExistsStatement(s, line);
-                else if (s.op == TokenType.FOR_ALL)
-                    throw new NotImplementedException();
-                else
+                case TokenType.IMPLIES:
+                    {
+                        StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                        StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                        if (lhs == StmtVal.FALSE)
+                            return StmtVal.TRUE;
+                        else
+                            return rhs;
+
+                    }
+                case TokenType.OR:
+                    {
+                        StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                        StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                        if (lhs == StmtVal.TRUE || rhs == StmtVal.TRUE)
+                            return StmtVal.TRUE;
+                        else if (lhs == StmtVal.FALSE && rhs == StmtVal.FALSE)
+                            return StmtVal.FALSE;
+                        else
+                            return StmtVal.UNKNOWN;
+                    }
+                case TokenType.AND:
+                    {
+                        StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                        StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                        if (lhs == StmtVal.TRUE && rhs == StmtVal.TRUE)
+                            return StmtVal.TRUE;
+                        else if (lhs == StmtVal.FALSE || rhs == StmtVal.FALSE)
+                            return StmtVal.FALSE;
+                        else
+                            return StmtVal.UNKNOWN;
+                    }
+                // case TokenType.ELEMENT_OF:
+                //     {
+
+                //     }
+                // case TokenType.SUBSET:
+                //     {
+
+                //     }
+                // case TokenType.EQUALS:
+                //     {
+
+                //     }
+                default:
+                    Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
                     throw new();
-            },
-            logicalOp =>
-            {
-                throw new NotImplementedException();
-            },
-            relationalOp =>
-            {
-                throw new NotImplementedException();
-            },
-            setStmt =>
-            {
-                throw new NotImplementedException();
             }
-        );
-    }
-
-
-    private bool VerifyExistsStatement(QuantifiedStatement stmt, int line)
-    {
-        Logger.Assert(stmt.objects.Count == 1, $"Can't handle quantified statements with more than one object yet.");
-
-        foreach (string obj in stmt.objects)
-        {
-            Logger.Assert(!objects.Contains(obj), $"An object with the same name (\"{obj}\") already exists (line {line}).");
-            objects.Add(obj);
         }
-
-        foreach (var s in statements)
+        else if (expr.TryAs<Term>(out var term))
         {
-            if (!s.TryAs<QuantifiedStatement>(out var other)) continue;
-
-            if (other.op == TokenType.EXISTS)
-            {
-                Dictionary<string, Expression> conversionDict = new() { { other.objects[0], new(new Term(stmt.objects[0])) } };
-
-                // Add all statements of the other exists statement rewritten with the current object
-                foreach (var rule in other.rules)
-                    statementStack.Push(RewriteStatement(rule, conversionDict));
-                statementStack.Push(RewriteStatement(other.stmt, conversionDict));
-                int popCount = other.rules.Count + 1;
-
-                // Check if all statements can be proven using the other exists statement
-                if (stmt.rules.All(rule => VerifyStatement(RewriteStatement(rule, conversionDict), line))
-                    && VerifyStatement(RewriteStatement(stmt.stmt, conversionDict), line))
+            return term.term.Match(
+                expr => { return AnalyseStatement(expr, line); },
+                funcCall => { throw new NotImplementedException(); },
+                qStmt =>
                 {
-                    for (int i = 0; i < popCount; i++)
-                        statementStack.Pop();
-                    return true;
-                }
-
-                // Remove temporary statements
-                for (int i = 0; i < popCount; i++)
-                    statementStack.Pop();
-            }
-            else if (other.op == TokenType.FOR_ALL)
-                throw new NotImplementedException();
-            else
-                throw new();
+                    if (qStmt.op == TokenType.FOR_ALL)
+                    {
+                        objects.Add(qStmt.obj);
+                        StmtVal val = AnalyseStatement(qStmt.stmt, line);
+                        objects.Remove(qStmt.obj);
+                        return val;
+                    }
+                    else
+                        throw new NotImplementedException();
+                },
+                str => { return StmtVal.UNKNOWN; },
+                num => { Logger.Error($"Expected statement but found number {num} in line {line}"); throw new(); }
+            );
         }
-
-        // Remove objects only valid inside the quantified statement
-        foreach (string obj in stmt.objects)
-            objects.Remove(obj);
-
-        return false;
+        else
+            throw new();
     }
-    private Statement RewriteStatement(Statement stmt, Dictionary<string, Expression> conversionDict)
+    private void AddStatement(Expression stmt)
     {
-        throw new NotImplementedException();
-    }
-    private void AddStatement(StatementLine stmt)
-    {
-        statements.Add(stmt);
-        if (stmt.Expr.expr.TryAs<BinExpr>(out var binExpr))
+        if (stmt.Is<Term>())
         {
+            var term = stmt.As<Term>().term;
+
+            if (term.TryAs<Expression>(out var expr))
+            {
+                AddStatement(expr);
+                return;
+            }
+        }
+        else
+        {
+            var binExpr = stmt.As<BinExpr>();
+
             if (binExpr.op.type == TokenType.ELEMENT_OF)
             {
-                if (binExpr.rhs.expr.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
+                if (binExpr.rhs.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
                 {
                     if (!definitions.ContainsKey(str))
-                        Logger.Error($"Use of undefined set \"{str}\" in line {stmt.line + 1}");
+                        Logger.Error($"Use of undefined set \"{str}\" in ElementOf statement");
                     Definition set = definitions[str];
                     foreach (var rule in set.rules)
                     {
                         Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-                        statements.Add(new(stmt.line, RewriteExpression(rule.Expr, conversionDict, num)));
+                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
                     }
                     num++;
                 }
                 else
-                    Logger.Error($"Failed to parse element of statement in line {stmt.line}");
+                    throw new NotImplementedException();
+            }
+            else if (binExpr.op.type == TokenType.AND)
+            {
+                AddStatement(binExpr.lhs);
+                AddStatement(binExpr.rhs);
+            }
+            else if (binExpr.op.type == TokenType.IMPLIES)
+            {
+                if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
+                    AddStatement(binExpr.rhs);
             }
         }
-    }
-    private void VerifyExpression(Expression expr, int line)
-    {
-        expr.expr.Switch(
-            binExpr =>
-            {
-                if (binExpr.op.type == TokenType.EQUALS)
-                    if (CompareExpressions(binExpr.lhs, binExpr.rhs))
-                        return;
-                Logger.Error($"Unverifiable expression in line {line + 1}");
-            },
-            term => { },
-            qExpr => { }
-        );
-    }
-    private bool CompareExpressions(Expression expr1, Expression expr2)
-    {
-        if (expr1.expr.Index != expr2.expr.Index)
-            return false;
-
-        return expr1.expr.Match(
-            binExpr1 =>
-            {
-                BinExpr binExpr2 = expr2.expr.As<BinExpr>();
-                return CompareExpressions(binExpr1.lhs, binExpr2.lhs)
-                && binExpr1.op.Equals(binExpr2.op)
-                && CompareExpressions(binExpr1.rhs, binExpr2.rhs);
-            },
-            term1 => term1.term.Equals(expr2.expr.As<Term>().term),
-            qExpr1 =>
-            {
-                throw new NotImplementedException();
-            }
-        );
+        statements.Add(stmt);
     }
     private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, int num)
     {
-        Expression newExpr = new();
-        old.expr.Switch(
+        return old.Match(
             binExpr =>
             {
-                newExpr.expr = new BinExpr()
+                return new BinExpr()
                 {
                     lhs = RewriteExpression(binExpr.lhs, conversionDict, num),
                     op = binExpr.op,
@@ -276,37 +268,66 @@ public class Verifier
             },
             term =>
             {
-                term.term.Switch(
-                    expr => newExpr.expr = new Term(RewriteExpression(expr, conversionDict, num)),
+                return term.term.Match(
+                    expr => RewriteExpression(expr, conversionDict, num),
+                    funcCall =>
+                    {
+                        FuncCall newFuncCall = new()
+                        {
+                            name = funcCall.name,
+                        };
+                        foreach (Expression expr in funcCall.args)
+                            newFuncCall.args.Add(RewriteExpression(expr, conversionDict, num));
+                        return new Term(newFuncCall);
+                    },
+                    qStmt =>
+                    {
+                        QuantifiedStatement newStmt = new()
+                        {
+                            op = qStmt.op,
+                            obj = $"_{qStmt.obj}{num}"
+                        };
+                        conversionDict.Add(qStmt.obj, new Term(newStmt.obj));
+                        newStmt.stmt = RewriteExpression(qStmt.stmt, conversionDict, num);
+                        conversionDict.Remove(qStmt.obj);
+                        return new Term(newStmt);
+                    },
                     str =>
                     {
                         if (conversionDict.ContainsKey(str))
-                            newExpr = conversionDict[str];
+                            return conversionDict[str];
                         else
-                            newExpr = new(new Term(str));
+                            return new Term(str);
                     },
-                    num => newExpr.expr = new Term(num)
+                    num => new Term(num)
                 );
-            },
-            quantifiedExpr =>
-            {
-                QuantifiedExpr expr = new() { type = quantifiedExpr.type };
-
-                // Copy object names and rename them to provent duplicates
-                foreach (var name in quantifiedExpr.objects)
-                {
-                    string newName = $"_{name}{num}";
-                    expr.objects.Add(newName);
-                    conversionDict.Add(name, new(new Term(newName)));
-                }
-
-                foreach (var rule in quantifiedExpr.rules)
-                    expr.rules.Add(new(rule.line, RewriteExpression(rule.Expr, conversionDict, num)));
-
-                expr.stmt = new(quantifiedExpr.stmt.line, RewriteExpression(quantifiedExpr.stmt.Expr, conversionDict, num));
-                newExpr.expr = expr;
             }
         );
-        return newExpr;
+    }
+    private bool CompareExpressions(Expression a, Expression b)
+    {
+        if (a.Index != b.Index) return false;
+
+        if (a.TryAs<BinExpr>(out var binA))
+        {
+            var binB = b.As<BinExpr>();
+            return (binA.op == binB.op)
+                && CompareExpressions(binA.lhs, binB.lhs)
+                && CompareExpressions(binA.rhs, binB.rhs);
+        }
+        else
+        {
+            var termA = a.As<Term>().term;
+            var termB = b.As<Term>().term;
+            if (termA.Index != termB.Index) return false;
+
+            return termA.Match(
+                expr => CompareExpressions(expr, termB.As<Expression>()),
+                funcCall => { throw new NotImplementedException(); },
+                qStmt => { throw new NotImplementedException(); },
+                str => str == termB.As<string>(),
+                num => num == termB.As<double>()
+            );
+        }
     }
 }

@@ -1,0 +1,9 @@
+theorem SpecificQ(M; B; P):
+    A x (x e M => P)
+    B is M
+=>  A x (x e B => P)
+{
+    A x (x e B => x e M)
+    A x ((x e B => x e M) AND (x e M) => P) | T1(x e B; x e M; P)
+    A x (x e B => P)
+}

@@ -163,7 +163,7 @@ public class Parser
         {
             StatementLine stmt = new()
             {
-                stmt = new(ParseStatement()),
+                stmt = new(ParseExpression()),
                 line = line,
                 proof = null,
             };
@@ -198,137 +198,17 @@ public class Parser
         ConsumeExpect(TokenType.BRACKET_CLOSE);
         return funcCall;
     }
-    private Statement ParseStatement(int minPrec = 0)
-    {
-        Variant<Expression, Statement> lhs;
-
-        if (Peek().type == TokenType.FOR_ALL || Peek().type == TokenType.EXISTS)
-        {
-            lhs = (Statement)ParseQuantifiedStatement();
-        }
-        else if (Peek().type == TokenType.BRACKET_OPEN)
-        {
-            Consume();
-            lhs = ParseStatement();
-            ConsumeExpect(TokenType.BRACKET_CLOSE);
-        }
-        else if (Peek().type == TokenType.STRING &&
-                 Peek().GetString().Length == 1 && char.IsUpper(Peek().GetString()[0]))
-        {
-            lhs = (Statement)Consume().GetString();
-        }
-        else
-        {
-            lhs = ParseExpression(Token.ExpressionMinPrec);
-        }
-
-        while (true)
-        {
-            int prec = Token.GetPrecedence(Peek().type);
-
-            if (prec < minPrec)
-                break;
-
-            Statement stmt;
-            switch (Peek().type)
-            {
-                case TokenType.ELEMENT_OF:
-                case TokenType.SUBSET:
-                    Logger.Assert(lhs.Is<Expression>(), $"Can't apply set statement to statement in line {line}");
-                    stmt = new SetStatement()
-                    {
-                        lhs = lhs.As<Expression>(),
-                        op = Consume().type,
-                        rhs = ParseExpression(Token.ExpressionMinPrec)
-                    };
-                    break;
-                case TokenType.EQUALS:
-                    Logger.Assert(lhs.Is<Expression>(), $"Can't apply relational operator to statement in line {line}");
-                    stmt = new RelationalOperator()
-                    {
-                        lhs = lhs.As<Expression>(),
-                        op = Consume().type,
-                        rhs = ParseExpression(Token.ExpressionMinPrec),
-                    };
-                    break;
-                case TokenType.IMPLIES:
-                    Logger.Assert(lhs.Is<Statement>(), $"Can't apply logical operator to expression in line {line}");
-                    stmt = new LogicalOperator()
-                    {
-                        lhs = lhs.As<Statement>(),
-                        op = Consume().type,
-                        rhs = ParseStatement(prec + 1)
-                    };
-                    break;
-                default:
-                    Logger.Error($"Invalid token {Peek()} in line {line}");
-                    throw new();
-            }
-
-            lhs = stmt;
-        }
-        Logger.Assert(lhs.Is<Statement>(), $"Expected statement but only found expression in line {line}");
-        return lhs.As<Statement>();
-    }
-    private QuantifiedStatement ParseQuantifiedStatement()
-    {
-        QuantifiedStatement stmt = new() { op = Consume().type };
-        Statement rules = new();
-        List<string> tmp = new();
-        while (true)
-        {
-            string objName = ConsumeExpect(TokenType.STRING).GetString();
-            stmt.objects.Add(objName);
-            tmp.Add(objName);
-
-            if (Peek().type == TokenType.ELEMENT_OF)
-            {
-                Consume();
-                Expression set = ParseExpression();
-
-                foreach (string str in tmp)
-                {
-                    SetStatement setStmt = new()
-                    {
-                        lhs = new Expression(new Term(str)),
-                        op = TokenType.ELEMENT_OF,
-                        rhs = set,
-                    };
-                    if (rules.HasValue())
-                        rules = new LogicalOperator()
-                        {
-                            lhs = setStmt,
-                            op = TokenType.AND,
-                            rhs = rules
-                        };
-                    else
-                        rules = setStmt;
-                }
-                tmp.Clear();
-            }
-            if (Peek().type == TokenType.COLON)
-            {
-                Consume();
-                break;
-            }
-            ConsumeExpect(TokenType.COMMA);
-        }
-        if (rules.HasValue())
-            stmt.stmt = new LogicalOperator()
-            {
-                lhs = rules,
-                op = TokenType.IMPLIES,
-                rhs = ParseStatement()
-            };
-        else
-            stmt.stmt = ParseStatement();
-
-        return stmt;
-    }
-
     private Expression ParseExpression(int minPrec = 0)
     {
-        Expression lhs = new(ParseTerm());
+        Expression lhs;
+        if (Peek().type == TokenType.BRACKET_OPEN)
+        {
+            Consume();
+            lhs = ParseExpression();
+            ConsumeExpect(TokenType.BRACKET_CLOSE);
+        }
+        else
+            lhs = new(ParseTerm());
 
         while (true)
         {
@@ -341,7 +221,7 @@ public class Parser
             binExpr.lhs = lhs;
             binExpr.op = Consume();
             binExpr.rhs = ParseExpression(prec + 1);
-            lhs.expr = binExpr;
+            lhs = binExpr;
         }
         return lhs;
     }
@@ -349,11 +229,15 @@ public class Parser
     {
         switch (Peek().type)
         {
-            case TokenType.BRACKET_OPEN:
+            case TokenType.FOR_ALL:
+            case TokenType.EXISTS:
+                QuantifiedStatement stmt = new() { op = Peek().type };
                 Consume();
-                Term term = new(ParseExpression());
+                stmt.obj = ConsumeExpect(TokenType.STRING).GetString();
+                ConsumeExpect(TokenType.BRACKET_OPEN);
+                stmt.stmt = ParseExpression();
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
-                return term;
+                return new(stmt);
             case TokenType.NUMBER:
                 return new(Consume().GetDouble());
             case TokenType.STRING:
