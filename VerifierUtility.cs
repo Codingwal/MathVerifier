@@ -84,7 +84,7 @@ public partial class Verifier
         if (expr.TryAs<BinExpr>(out var binExpr))
         {
             // Check if binExpr.op is a Expr x Expr => Expr operator
-            Logger.Assert(Token.GetPrecedence(binExpr.op.type) < Token.ExpressionMinPrec,
+            Logger.Assert(Token.GetPrecedence(binExpr.op.type) >= Token.ExpressionMinPrec,
                 $"Invalid expression operator \"{binExpr.op}\" in line {line}");
 
             // TODO: Check if operator identifier is defined

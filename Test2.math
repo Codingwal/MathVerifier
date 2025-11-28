@@ -1,9 +1,4 @@
-theorem A2(P; Q; R):
-    P => (Q => R)
-=>  (P => Q) => (P => R)
-{
-    sorry
-}
+
 
 theorem T1(P; Q; R):
     P => Q

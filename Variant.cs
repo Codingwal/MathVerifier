@@ -1,3 +1,4 @@
+using System.Diagnostics;
 
 public abstract class VariantBase : ICustomFormatting
 {
@@ -59,11 +60,11 @@ public abstract class VariantBase : ICustomFormatting
 
 public class Variant<T1, T2> : VariantBase
 {
-    private readonly int index;
-    private readonly T1? t1 = default;
-    private readonly T2? t2 = default;
-    public override int Index => index;
-    public override int ArgCount => 2;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly int index;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T1? t1 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T2? t2 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int Index => index;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int ArgCount => 2;
     public override object Value => index switch
     {
         1 => t1!,
@@ -125,12 +126,12 @@ public class Variant<T1, T2> : VariantBase
 
 public class Variant<T1, T2, T3> : VariantBase
 {
-    private readonly int index = 0;
-    private readonly T1? t1 = default;
-    private readonly T2? t2 = default;
-    private readonly T3? t3 = default;
-    public override int Index => index;
-    public override int ArgCount => 3;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly int index = 0;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T1? t1 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T2? t2 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T3? t3 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int Index => index;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int ArgCount => 3;
     public override object Value => index switch
     {
         1 => t1!,
@@ -207,13 +208,13 @@ public class Variant<T1, T2, T3> : VariantBase
 
 public class Variant<T1, T2, T3, T4> : VariantBase
 {
-    private readonly int index = 0;
-    private readonly T1? t1 = default;
-    private readonly T2? t2 = default;
-    private readonly T3? t3 = default;
-    private readonly T4? t4 = default;
-    public override int Index => index;
-    public override int ArgCount => 4;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly int index = 0;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T1? t1 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T2? t2 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T3? t3 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T4? t4 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int Index => index;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int ArgCount => 4;
     public override object Value => index switch
     {
         1 => t1!,
@@ -305,14 +306,14 @@ public class Variant<T1, T2, T3, T4> : VariantBase
 
 public class Variant<T1, T2, T3, T4, T5> : VariantBase
 {
-    private readonly int index = 0;
-    private readonly T1? t1 = default;
-    private readonly T2? t2 = default;
-    private readonly T3? t3 = default;
-    private readonly T4? t4 = default;
-    private readonly T5? t5 = default;
-    public override int Index => index;
-    public override int ArgCount => 5;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly int index = 0;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T1? t1 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T2? t2 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T3? t3 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T4? t4 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] private readonly T5? t5 = default;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int Index => index;
+    [DebuggerBrowsable(DebuggerBrowsableState.Never)] public override int ArgCount => 5;
     public override object Value => index switch
     {
         1 => t1!,

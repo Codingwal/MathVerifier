@@ -1,9 +1,17 @@
+theorem A2(P; Q; R):
+    P => (Q => R)
+=>  (P => Q) => (P => R)
+{
+    sorry
+}
+
 define M(x)():
-    x = 10
+    x = 5 + 5
 end
 
-theorem Test():
+theorem Test(a; b):
 =>  1 = 1
 {
+    5 + 5 = 10  | sorry
     A x (x e M => x = 10)
 }
