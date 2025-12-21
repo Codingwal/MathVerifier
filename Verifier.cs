@@ -11,8 +11,7 @@ public partial class Verifier
 
     private readonly Data ast;
     private List<string> objects;
-    private List<Expression> statements;
-    private List<Expression> statementStack; // Statements only valid in the given context (in quantified statement, in imply statement, ...)
+    private Statements statements;
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     private int num; // Used so that expressions copied from a definition use different variable names 
@@ -21,7 +20,6 @@ public partial class Verifier
         this.ast = ast;
         objects = new();
         statements = new();
-        statementStack = new();
         theorems = new();
         definitions = new();
         num = 0;
@@ -58,6 +56,7 @@ public partial class Verifier
         foreach (var param in theorem.parameters)
             objects.Add(param);
 
+        statements.EnterScope("Theorem");
         foreach (var stmt in theorem.requirements)
         {
             if (stmt.stmt.TryAs<Command>(out var cmd))
@@ -74,7 +73,7 @@ public partial class Verifier
             else
             {
                 AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line); // Result is not important, but syntax / grammar must be checked
-                AddStatement(stmt.stmt.As<Expression>(), statements);
+                AddStatement(stmt.stmt.As<Expression>());
             }
         }
 
@@ -84,7 +83,6 @@ public partial class Verifier
             {
                 if (cmd == Command.SORRY)
                 {
-                    statements.Clear();
                     theorems.Add(theorem.name, theorem);
                     return;
                 }
@@ -97,10 +95,10 @@ public partial class Verifier
                 continue;
             }
             VerifyStatementLine(stmt);
-            AddStatement(stmt.stmt.As<Expression>(), statements);
+            AddStatement(stmt.stmt.As<Expression>());
         }
         VerifyStatementLine(theorem.hypothesis);
-        statements.Clear();
+        statements.ExitScope("Theorem");
         objects.Clear();
         theorems.Add(theorem.name, theorem);
     }
@@ -123,7 +121,7 @@ public partial class Verifier
                 for (int i = 0; i < theorem.parameters.Count; i++)
                     conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
 
-                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++), statements);
+                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -143,10 +141,7 @@ public partial class Verifier
     private StmtVal AnalyseStatement(Expression expr, int line)
     {
         // Check if the statement has already been proven
-        foreach (var stmt in statements)
-            if (CompareExpressions(stmt, expr))
-                return StmtVal.TRUE;
-        foreach (var stmt in statementStack)
+        foreach (var stmt in statements.GetStatements())
             if (CompareExpressions(stmt, expr))
                 return StmtVal.TRUE;
 
@@ -159,12 +154,12 @@ public partial class Verifier
                         StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
 
                         // Add statements valid in this context
-                        int stmtStackSize = statementStack.Count;
-                        AddStatement(binExpr.lhs, statementStack);
+                        statements.EnterScope("Implies");
+                        AddStatement(binExpr.lhs);
 
                         StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
 
-                        statementStack.SetCount(stmtStackSize); // Remove statements only valid in this context
+                        statements.ExitScope("Implies");
 
                         if (lhs == StmtVal.FALSE)
                             return StmtVal.TRUE;
@@ -257,7 +252,7 @@ public partial class Verifier
         else
             throw new();
     }
-    private void AddStatement(Expression stmt, List<Expression> statements)
+    private void AddStatement(Expression stmt)
     {
         if (stmt.Is<Term>())
         {
@@ -265,7 +260,7 @@ public partial class Verifier
 
             if (term.TryAs<Expression>(out var expr))
             {
-                AddStatement(expr, statements);
+                AddStatement(expr);
                 return;
             }
         }
@@ -283,7 +278,7 @@ public partial class Verifier
                     foreach (var rule in set.rules)
                     {
                         Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num), statements);
+                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
                     }
                     num++;
                 }
@@ -292,16 +287,16 @@ public partial class Verifier
             }
             else if (binExpr.op.type == TokenType.AND)
             {
-                AddStatement(binExpr.lhs, statements);
-                AddStatement(binExpr.rhs, statements);
+                AddStatement(binExpr.lhs);
+                AddStatement(binExpr.rhs);
             }
             else if (binExpr.op.type == TokenType.IMPLIES)
             {
                 if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
-                    AddStatement(binExpr.rhs, statements);
+                    AddStatement(binExpr.rhs);
             }
         }
-        statements.Add(stmt);
+        statements.AddStatement(stmt);
     }
     private StmtVal AnalyseExpressionEquality(Expression a, Expression b, int line, int recursiveDepth = 0)
     {
@@ -322,12 +317,7 @@ public partial class Verifier
         if (recursiveDepth > 2)
             return StmtVal.UNKNOWN;
 
-        foreach (var expr in statements)
-        {
-            StmtVal val = AnalyseExprEqualityWithStmt(a, b, expr, line, recursiveDepth);
-            if (val != StmtVal.UNKNOWN) return val;
-        }
-        foreach (var expr in statementStack)
+        foreach (var expr in statements.GetStatements())
         {
             StmtVal val = AnalyseExprEqualityWithStmt(a, b, expr, line, recursiveDepth);
             if (val != StmtVal.UNKNOWN) return val;
