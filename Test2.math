@@ -1,4 +1,9 @@
-
+theorem A2(P; Q; R):
+    P => (Q => R)
+=>  (P => Q) => (P => R)
+{
+    sorry
+}
 
 theorem T1(P; Q; R):
     P => Q
@@ -11,11 +16,11 @@ theorem T1(P; Q; R):
 }
 
 theorem SpecificQ(M; B; P):
-    A x (x e M => P)
-    B is M
-=>  A x (x e B => P)
+    ∀ x (x ∈ M ⇒ P)
+    B ⊆ M
+⇒  ∀ x (x ∈ B ⇒ P)
 {
-    A x (x e B => x e M)
-    A x ((x e B => x e M) AND (x e M) => P) | T1(x e B; x e M; P)
-    A x (x e B => P)
+        ∀ x (x ∈ B ⇒ x e M)
+        ∀ x ((x ∈ B ⇒ x ∈ M) ∧ (x ∈ M) ⇒ P) | T1(x ∈ B; x ∈ M; P)
+        ∀ x (x ∈ B ⇒ P)
 }

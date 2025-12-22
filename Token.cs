@@ -66,26 +66,26 @@ public struct Token : ICustomFormatting
         {"}", TokenType.CURLY_CLOSE},
 
         // Set statements
-        {"e", TokenType.ELEMENT_OF},
-        {"is", TokenType.SUBSET},
+        {"∈", TokenType.ELEMENT_OF},
+        {"⊆", TokenType.SUBSET},
 
         // Relational operators
         {"=", TokenType.EQUALS},
 
         // Logical operators
-        {"=>", TokenType.IMPLIES},
-        {"AND", TokenType.AND},
-        {"OR", TokenType.OR},
+        {"⇒", TokenType.IMPLIES},
+        {"∧", TokenType.AND},
+        {"∨", TokenType.OR},
 
         // Quantified operators
-        { "E", TokenType.EXISTS},
-        {"A", TokenType.FOR_ALL},
+        {"∃", TokenType.EXISTS},
+        {"∀", TokenType.FOR_ALL},
 
         // Binary operators
         {"+", TokenType.PLUS},
         {"-", TokenType.MINUS},
-        {"*", TokenType.STAR},
-        {"/", TokenType.BACKSLASH},
+        {"⋅", TokenType.STAR},
+        {"÷", TokenType.BACKSLASH},
 
         // Misc
         {",", TokenType.COMMA},
@@ -94,13 +94,13 @@ public struct Token : ICustomFormatting
         {"|", TokenType.PIPE},
 
         // Keywords
-        { "theorem", TokenType.THEOREM},
+        {"theorem", TokenType.THEOREM},
         {"define", TokenType.DEFINE},
         {"let", TokenType.LET},
         {"end", TokenType.END},
 
         // Commands
-        { "check", TokenType.CHECK},
+        {"check", TokenType.CHECK},
         {"sorry", TokenType.SORRY},
     };
 
