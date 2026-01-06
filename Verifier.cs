@@ -138,7 +138,10 @@ public partial class Verifier
                     conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
 
                 foreach (var requirement in theorem.requirements)
-                    VerifyStatementLine(requirement);
+                    Logger.Assert(AnalyseStatement(RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, num++), requirement.line) == StmtVal.TRUE,
+                    $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {stmt.line}." +
+                    $"\n{ExpressionBuilder.ExpressionToString(RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, num))}");
+
 
                 AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
             }
@@ -152,7 +155,11 @@ public partial class Verifier
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
-                if (command == Command.SORRY) return;
+                if (command == Command.SORRY)
+                {
+                    ExitScope("Statement");
+                    return;
+                }
                 else Logger.Error($"Unexpected command {command} as proof in line {stmt.line}");
             }
         }

@@ -1,11 +1,9 @@
-define M:
-    ∀ x(x ∈ M ⇒ x = 10)
+define Sqrt:
+    ∀ x(Sqrt(x) ⋅ Sqrt(x) = x)
 end
 
-theorem Test(x):
-    x ∈ M
-⇒  1 = 1
-{    
-    x = 10 | @ M
+theorem Test():
+⇒ 1 = 1
+{
+    ∀ y(Sqrt(y) ⋅ Sqrt(y) = y) | @ Sqrt
 }
-

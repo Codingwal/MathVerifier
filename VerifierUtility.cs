@@ -72,7 +72,12 @@ public partial class Verifier
             return termA.Match(
                 expr => CompareExpressions(expr, termB.As<Expression>()),
                 funcCall => { throw new NotImplementedException(); },
-                qStmt => { throw new NotImplementedException(); },
+                qStmtA =>
+                {
+                    var qStmtB = termB.As<QuantifiedStatement>();
+                    if (qStmtA.op != qStmtB.op) return false;
+                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }, num++));
+                },
                 str => str == termB.As<string>(),
                 num => num == termB.As<double>()
             );
