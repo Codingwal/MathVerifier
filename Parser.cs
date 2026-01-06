@@ -67,27 +67,11 @@ public class Parser
     }
     private Definition ParseDefinition()
     {
-        Definition definition = new();
-
         ConsumeExpect(TokenType.DEFINE);
-        definition.name = ConsumeExpect(TokenType.STRING).GetString();
-
-        // Object
-        ConsumeExpect(TokenType.BRACKET_OPEN);
-        definition.obj = ConsumeExpect(TokenType.STRING).GetString();
-        ConsumeExpect(TokenType.BRACKET_CLOSE);
-
-        // Parameters
-        ConsumeExpect(TokenType.BRACKET_OPEN);
-        while (Peek().type == TokenType.STRING)
+        Definition definition = new()
         {
-            string name = ConsumeExpect(TokenType.STRING).GetString();
-            definition.parameters.Add(name);
-
-            if (Peek().type == TokenType.SEMICOLON)
-                Consume();
-        }
-        ConsumeExpect(TokenType.BRACKET_CLOSE);
+            name = ConsumeExpect(TokenType.STRING).GetString()
+        };
         ConsumeExpect(TokenType.COLON);
         ConsumeExpect(TokenType.NEWLINE);
 

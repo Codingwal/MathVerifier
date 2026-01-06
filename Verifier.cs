@@ -10,8 +10,8 @@ public partial class Verifier
     }
 
     private readonly Data ast;
-    private List<string> objects;
-    private Statements statements;
+    private ScopeStack<string> objects;
+    private ScopeStack<Expression> statements;
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     private int num; // Used so that expressions copied from a definition use different variable names 
@@ -24,6 +24,17 @@ public partial class Verifier
         definitions = new();
         num = 0;
     }
+    private void EnterScope(string scopeName)
+    {
+        objects.EnterScope(scopeName);
+        statements.EnterScope(scopeName);
+    }
+    private void ExitScope(string scopeName)
+    {
+        objects.ExitScope(scopeName);
+        statements.ExitScope(scopeName);
+    }
+
     public void Verify()
     {
         foreach (var e in ast.data)
@@ -36,8 +47,7 @@ public partial class Verifier
     }
     private void VerifyDefinition(Definition definition)
     {
-        objects.Add(definition.obj);
-        if (definition.parameters.Count != 0) throw new NotImplementedException();
+        EnterScope("Definition");
 
         // Verify syntax / grammar of rules
         foreach (var rule in definition.rules)
@@ -47,16 +57,17 @@ public partial class Verifier
             AnalyseStatement(rule.stmt.As<Expression>(), rule.line); // Result is not important, but syntax / grammar must be checked
         }
 
-        objects.Clear();
+        ExitScope("Definition");
 
         definitions.Add(definition.name, definition);
     }
     private void VerifyTheorem(Theorem theorem)
     {
+        EnterScope("Theorem");
+
         foreach (var param in theorem.parameters)
             objects.Add(param);
 
-        statements.EnterScope("Theorem");
         foreach (var stmt in theorem.requirements)
         {
             if (stmt.stmt.TryAs<Command>(out var cmd))
@@ -98,8 +109,7 @@ public partial class Verifier
             AddStatement(stmt.stmt.As<Expression>());
         }
         VerifyStatementLine(theorem.hypothesis);
-        statements.ExitScope("Theorem");
-        objects.Clear();
+        ExitScope("Theorem");
         theorems.Add(theorem.name, theorem);
     }
     private void VerifyStatementLine(StatementLine stmt)
@@ -141,7 +151,7 @@ public partial class Verifier
     private StmtVal AnalyseStatement(Expression expr, int line)
     {
         // Check if the statement has already been proven
-        foreach (var stmt in statements.GetStatements())
+        foreach (var stmt in statements.GetAll())
             if (CompareExpressions(stmt, expr))
                 return StmtVal.TRUE;
 
@@ -193,23 +203,24 @@ public partial class Verifier
                     }
                 case TokenType.ELEMENT_OF:
                     {
-                        VerifyExpression(binExpr.lhs, line);
+                        // VerifyExpression(binExpr.lhs, line);
 
-                        if (!binExpr.rhs.TryAs<Term>(out var term)) throw new NotImplementedException();
-                        if (!term.term.TryAs<string>(out var str)) throw new NotImplementedException();
-                        Logger.Assert(definitions.ContainsKey(str), $"Undefined set \"{str}\" in line {line}");
-                        Definition definition = definitions[str];
+                        // if (!binExpr.rhs.TryAs<Term>(out var term)) throw new NotImplementedException();
+                        // if (!term.term.TryAs<string>(out var str)) throw new NotImplementedException();
+                        // Logger.Assert(definitions.ContainsKey(str), $"Undefined set \"{str}\" in line {line}");
+                        // Definition definition = definitions[str];
 
-                        // Check if all rules are fullfilled
-                        Dictionary<string, Expression> conversionDict = new() { { definition.obj, binExpr.lhs } };
-                        foreach (var rule in definition.rules)
-                        {
-                            StmtVal val = AnalyseStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num++), line);
-                            if (val != StmtVal.TRUE)
-                                return val;
-                        }
+                        // // Check if all rules are fullfilled
+                        // Dictionary<string, Expression> conversionDict = new() { { definition.obj, binExpr.lhs } };
+                        // foreach (var rule in definition.rules)
+                        // {
+                        //     StmtVal val = AnalyseStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num++), line);
+                        //     if (val != StmtVal.TRUE)
+                        //         return val;
+                        // }
 
-                        return StmtVal.TRUE;
+                        // return StmtVal.TRUE;
+                        return StmtVal.UNKNOWN;
                     }
                 case TokenType.SUBSET:
                     {
@@ -233,9 +244,10 @@ public partial class Verifier
                 {
                     if (qStmt.op == TokenType.FOR_ALL)
                     {
+                        objects.EnterScope("Quantified statement");
                         objects.Add(qStmt.obj);
                         StmtVal val = AnalyseStatement(qStmt.stmt, line);
-                        objects.Remove(qStmt.obj);
+                        objects.ExitScope("Quantified statement");
                         return val;
                     }
                     else
@@ -254,49 +266,49 @@ public partial class Verifier
     }
     private void AddStatement(Expression stmt)
     {
-        if (stmt.Is<Term>())
-        {
-            var term = stmt.As<Term>().term;
+        // if (stmt.Is<Term>())
+        // {
+        //     var term = stmt.As<Term>().term;
 
-            if (term.TryAs<Expression>(out var expr))
-            {
-                AddStatement(expr);
-                return;
-            }
-        }
-        else
-        {
-            var binExpr = stmt.As<BinExpr>();
+        //     if (term.TryAs<Expression>(out var expr))
+        //     {
+        //         AddStatement(expr);
+        //         return;
+        //     }
+        // }
+        // else
+        // {
+        //     var binExpr = stmt.As<BinExpr>();
 
-            if (binExpr.op.type == TokenType.ELEMENT_OF)
-            {
-                if (binExpr.rhs.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
-                {
-                    if (!definitions.ContainsKey(str))
-                        Logger.Error($"Use of undefined set \"{str}\" in ElementOf statement");
-                    Definition set = definitions[str];
-                    foreach (var rule in set.rules)
-                    {
-                        Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-                        AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
-                    }
-                    num++;
-                }
-                else
-                    throw new NotImplementedException();
-            }
-            else if (binExpr.op.type == TokenType.AND)
-            {
-                AddStatement(binExpr.lhs);
-                AddStatement(binExpr.rhs);
-            }
-            else if (binExpr.op.type == TokenType.IMPLIES)
-            {
-                if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
-                    AddStatement(binExpr.rhs);
-            }
-        }
-        statements.AddStatement(stmt);
+        //     if (binExpr.op.type == TokenType.ELEMENT_OF)
+        //     {
+        //         if (binExpr.rhs.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
+        //         {
+        //             if (!definitions.ContainsKey(str))
+        //                 Logger.Error($"Use of undefined set \"{str}\" in ElementOf statement");
+        //             Definition set = definitions[str];
+        //             foreach (var rule in set.rules)
+        //             {
+        //                 Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
+        //                 AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
+        //             }
+        //             num++;
+        //         }
+        //         else
+        //             throw new NotImplementedException();
+        //     }
+        //     else if (binExpr.op.type == TokenType.AND)
+        //     {
+        //         AddStatement(binExpr.lhs);
+        //         AddStatement(binExpr.rhs);
+        //     }
+        //     else if (binExpr.op.type == TokenType.IMPLIES)
+        //     {
+        //         if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
+        //             AddStatement(binExpr.rhs);
+        //     }
+        // }
+        statements.Add(stmt);
     }
     private StmtVal AnalyseExpressionEquality(Expression a, Expression b, int line, int recursiveDepth = 0)
     {
@@ -317,7 +329,7 @@ public partial class Verifier
         if (recursiveDepth > 2)
             return StmtVal.UNKNOWN;
 
-        foreach (var expr in statements.GetStatements())
+        foreach (var expr in statements.GetAll())
         {
             StmtVal val = AnalyseExprEqualityWithStmt(a, b, expr, line, recursiveDepth);
             if (val != StmtVal.UNKNOWN) return val;

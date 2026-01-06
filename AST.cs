@@ -71,14 +71,10 @@ public struct Theorem
 public struct Definition
 {
     public string name;
-    public string obj;
-    public List<string> parameters;
     public List<StatementLine> rules;
     public Definition()
     {
         name = "";
-        obj = "";
-        parameters = new();
         rules = new();
     }
 }

@@ -1,9 +1,9 @@
-public class Statements
+public class ScopeStack<T>
 {
     private struct Scope
     {
         public string debugName;
-        public List<Expression> statements;
+        public List<T> statements;
         public Scope(string debugName)
         {
             this.debugName = debugName;
@@ -12,7 +12,7 @@ public class Statements
     }
     private readonly List<Scope> scopes;
 
-    public Statements()
+    public ScopeStack()
     {
         scopes = new();
         EnterScope("Global");
@@ -27,14 +27,20 @@ public class Statements
         Logger.Assert(scopes[^1].debugName == expectedName, $"Popped scope with unexpected name ({scopes[^1].debugName} instead of {expectedName})");
         scopes.RemoveAt(scopes.Count - 1);
     }
-    public void AddStatement(Expression stmt)
+    public void Add(T value)
     {
-        scopes.Last().statements.Add(stmt);
+        scopes.Last().statements.Add(value);
     }
-    public IEnumerable<Expression> GetStatements()
+    public IEnumerable<T> GetAll()
     {
-        foreach (var scope in scopes)
-            foreach (var stmt in scope.statements)
-                yield return stmt;
+        foreach (Scope scope in scopes)
+            foreach (T value in scope.statements)
+                yield return value;
+    }
+    public bool Contains(T value)
+    {
+        foreach (T e in GetAll())
+            if (e!.Equals(value)) return true;
+        return false;
     }
 }

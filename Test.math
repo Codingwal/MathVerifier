@@ -1,5 +1,5 @@
-define set M(x)():
-    x = 10
+define M:
+    ∀ x(x = 10 ⇒ x ∈ M ∧ x ∈ M ⇒ x = 10)
 end
 
 theorem Test(a; b):
