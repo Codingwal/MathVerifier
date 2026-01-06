@@ -230,7 +230,22 @@ public class Parser
             case TokenType.NUMBER:
                 return new(Consume().GetDouble());
             case TokenType.STRING:
-                return new(Consume().GetString());
+                string str = Consume().GetString();
+                if (Peek().type == TokenType.BRACKET_OPEN)
+                {
+                    Consume();
+                    FuncCall funcCall = new() { name = str };
+                    while (Peek().type != TokenType.BRACKET_CLOSE)
+                    {
+                        funcCall.args.Add(ParseExpression());
+                        if (Peek().type != TokenType.BRACKET_CLOSE)
+                            ConsumeExpect(TokenType.COMMA);
+                    }
+                    ConsumeExpect(TokenType.BRACKET_CLOSE);
+                    return new(funcCall);
+                }
+                else
+                    return new(str);
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

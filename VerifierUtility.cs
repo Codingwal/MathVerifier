@@ -71,7 +71,13 @@ public partial class Verifier
 
             return termA.Match(
                 expr => CompareExpressions(expr, termB.As<Expression>()),
-                funcCall => { throw new NotImplementedException(); },
+                funcCall =>
+                {
+                    if (funcCall.name != termB.As<FuncCall>().name) return false;
+                    for (int i = 0; i < funcCall.args.Count; i++)
+                        if (!CompareExpressions(funcCall.args[i], termB.As<FuncCall>().args[i])) return false;
+                    return true;
+                },
                 qStmtA =>
                 {
                     var qStmtB = termB.As<QuantifiedStatement>();
