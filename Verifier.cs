@@ -120,6 +120,8 @@ public partial class Verifier
 
         if (stmt.stmt.Is<Command>()) Logger.Error($"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
 
+        EnterScope("Statement"); // Proof statements should get deleted after verifying the statement
+
         // Handle proof
         if (stmt.proof != null)
         {
@@ -145,7 +147,7 @@ public partial class Verifier
                 Definition definition = definitions[str];
 
                 foreach (var rule in definition.rules)
-                    AddStatement(rule.stmt.As<Expression>());
+                    AddStatement(RewriteExpression(rule.stmt.As<Expression>(), new(), num++));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -155,6 +157,9 @@ public partial class Verifier
         }
 
         StmtVal stmtVal = AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
+
+        ExitScope("Statement");
+
         if (stmtVal == StmtVal.TRUE)
             return;
         else if (stmtVal == StmtVal.FALSE)

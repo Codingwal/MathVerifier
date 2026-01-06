@@ -2,7 +2,6 @@
     - theorem references
     - definition references
 - move proof statements to scope
-
 - rename vars of proof statements to avoid duplicates
 
 - handle function calls

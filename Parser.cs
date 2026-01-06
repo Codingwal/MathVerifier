@@ -159,6 +159,11 @@ public class Parser
                     Consume();
                     stmt.proof = Command.SORRY;
                 }
+                else if (Peek().type == TokenType.AT)
+                {
+                    Consume();
+                    stmt.proof = ConsumeExpect(TokenType.STRING).GetString();
+                }
                 else
                     stmt.proof = ParseFuncCall();
             }
