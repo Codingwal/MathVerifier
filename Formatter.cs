@@ -6,7 +6,7 @@ public interface ICustomFormatting
     public string Format(string prefix);
 }
 
-public class Formatter
+public static class Formatter
 {
     public static string Format(object obj, string prefix = "")
     {

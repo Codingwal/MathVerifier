@@ -100,7 +100,8 @@ public partial class Verifier
                 else if (cmd == Command.CHECK)
                 {
                     Console.WriteLine("\nCurrent statements:");
-                    Console.Write(Formatter.Format(statements));
+                    foreach (var s in statements.GetAll())
+                        Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
                     Console.WriteLine("-------------------\n");
                 }
                 continue;

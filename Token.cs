@@ -113,6 +113,7 @@ public struct Token : ICustomFormatting
         return type switch
         {
             // Stmt x Stmt => Stmt
+            TokenType.EQUIVALENT => 0,
             TokenType.IMPLIES => 1,
             TokenType.OR => 2,
             TokenType.AND => 3,
@@ -203,5 +204,19 @@ public struct Token : ICustomFormatting
     public override int GetHashCode()
     {
         throw new NotImplementedException();
+    }
+    public readonly string ToSymbol()
+    {
+        if (type == TokenType.NUMBER)
+            return GetDouble().ToString();
+        else if (type == TokenType.STRING)
+            return GetString();
+
+        foreach (var pair in str2Token)
+        {
+            if (pair.Value == type)
+                return pair.Key;
+        }
+        throw new();
     }
 }
