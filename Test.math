@@ -1,10 +1,10 @@
 define M:
-    ∀ x(x = 10 ⇒ x ∈ M ∧ x ∈ M ⇒ x = 10)
+    ∀ x(x = 10 ⇔ x ∈ M)
 end
 
-theorem Test(a; b):
+theorem Test(a, b):
 ⇒  1 = 1
 {
-    ∀ x(x ∈ M ⇒ x = 10)
+    ∀ x(x = 10 ⇔ x ∈ M)
 }
 

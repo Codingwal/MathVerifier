@@ -27,6 +27,7 @@ public struct Token : ICustomFormatting
 
         // Logical operators
         IMPLIES,
+        EQUIVALENT,
         AND,
         OR,
 
@@ -74,6 +75,7 @@ public struct Token : ICustomFormatting
 
         // Logical operators
         {"⇒", TokenType.IMPLIES},
+        {"⇔", TokenType.EQUIVALENT},
         {"∧", TokenType.AND},
         {"∨", TokenType.OR},
 

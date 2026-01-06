@@ -177,6 +177,16 @@ public partial class Verifier
                             return rhs;
 
                     }
+                case TokenType.EQUIVALENT:
+                    {
+                        StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                        StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                        if (lhs == StmtVal.UNKNOWN || rhs == StmtVal.UNKNOWN)
+                            return StmtVal.UNKNOWN;
+                        else
+                            return lhs == rhs ? StmtVal.TRUE : StmtVal.FALSE;
+                    }
                 case TokenType.OR:
                     {
                         StmtVal lhs = AnalyseStatement(binExpr.lhs, line);

@@ -99,8 +99,8 @@ public class Parser
             string name = ConsumeExpect(TokenType.STRING).GetString();
             theorem.parameters.Add(name);
 
-            if (Peek().type == TokenType.SEMICOLON)
-                Consume();
+            if (Peek().type != TokenType.BRACKET_CLOSE)
+                ConsumeExpect(TokenType.COMMA);
         }
         ConsumeExpect(TokenType.BRACKET_CLOSE);
         ConsumeExpect(TokenType.COLON);
