@@ -177,7 +177,7 @@ public class Parser
         {
             funcCall.args.Add(ParseExpression());
             if (Peek().type != TokenType.BRACKET_CLOSE)
-                ConsumeExpect(TokenType.SEMICOLON);
+                ConsumeExpect(TokenType.COMMA);
         }
         ConsumeExpect(TokenType.BRACKET_CLOSE);
         return funcCall;

@@ -47,6 +47,7 @@ public partial class Verifier
     }
     private void VerifyDefinition(Definition definition)
     {
+        objects.Add(definition.name);
         EnterScope("Definition");
 
         // Verify syntax / grammar of rules
@@ -75,7 +76,8 @@ public partial class Verifier
                 if (cmd == Command.CHECK)
                 {
                     Console.WriteLine("\nCurrent statements:");
-                    Console.Write(Formatter.Format(statements));
+                    foreach (var s in statements.GetAll())
+                        Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
                     Console.WriteLine("-------------------\n");
                 }
                 else
@@ -94,8 +96,7 @@ public partial class Verifier
             {
                 if (cmd == Command.SORRY)
                 {
-                    theorems.Add(theorem.name, theorem);
-                    return;
+                    throw new NotImplementedException();
                 }
                 else if (cmd == Command.CHECK)
                 {
@@ -115,10 +116,11 @@ public partial class Verifier
     }
     private void VerifyStatementLine(StatementLine stmt)
     {
-        Console.WriteLine($"Verifying statement in line {stmt.line} -----------------------------------------------------------------");
+        Console.WriteLine($"Verifying statement in line {stmt.line}.");
 
         if (stmt.stmt.Is<Command>()) Logger.Error($"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
 
+        // Handle proof
         if (stmt.proof != null)
         {
             if (stmt.proof.TryAs<FuncCall>(out var funcCall))
@@ -132,7 +134,18 @@ public partial class Verifier
                 for (int i = 0; i < theorem.parameters.Count; i++)
                     conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
 
+                foreach (var requirement in theorem.requirements)
+                    VerifyStatementLine(requirement);
+
                 AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
+            }
+            else if (stmt.proof.TryAs<string>(out var str))
+            {
+                Logger.Assert(definitions.ContainsKey(str), $"Reference to undefined definition \"{str}\" in line {stmt.line}");
+                Definition definition = definitions[str];
+
+                foreach (var rule in definition.rules)
+                    AddStatement(rule.stmt.As<Expression>());
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -220,6 +233,9 @@ public partial class Verifier
                     }
                 case TokenType.ELEMENT_OF:
                 case TokenType.SUBSET:
+                    // Check syntax & grammar
+                    VerifyExpression(binExpr.lhs, line);
+                    VerifyExpression(binExpr.rhs, line);
                     return StmtVal.UNKNOWN;
                 default:
                     Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");

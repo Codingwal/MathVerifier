@@ -35,7 +35,6 @@ public struct Term
     }
 }
 
-// Statements
 public struct QuantifiedStatement
 {
     public TokenType op;
@@ -48,7 +47,7 @@ public struct StatementLine
 {
     public int line;
     public Variant<Expression, Command> stmt;
-    public Variant<FuncCall, Command>? proof;
+    public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
 
 public struct Theorem

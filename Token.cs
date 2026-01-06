@@ -46,6 +46,7 @@ public struct Token : ICustomFormatting
         COLON,
         PIPE,
         COMMA,
+        AT,
 
         // Keywords
         THEOREM,
@@ -94,6 +95,7 @@ public struct Token : ICustomFormatting
         {";", TokenType.SEMICOLON},
         {":", TokenType.COLON},
         {"|", TokenType.PIPE},
+        {"@", TokenType.AT},
 
         // Keywords
         {"theorem", TokenType.THEOREM},
