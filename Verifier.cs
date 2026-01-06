@@ -173,6 +173,8 @@ public partial class Verifier
 
                         if (lhs == StmtVal.FALSE)
                             return StmtVal.TRUE;
+                        if (lhs == StmtVal.UNKNOWN && rhs != StmtVal.TRUE)
+                            return StmtVal.UNKNOWN;
                         else
                             return rhs;
 
@@ -211,35 +213,13 @@ public partial class Verifier
                         else
                             return StmtVal.UNKNOWN;
                     }
-                case TokenType.ELEMENT_OF:
-                    {
-                        // VerifyExpression(binExpr.lhs, line);
-
-                        // if (!binExpr.rhs.TryAs<Term>(out var term)) throw new NotImplementedException();
-                        // if (!term.term.TryAs<string>(out var str)) throw new NotImplementedException();
-                        // Logger.Assert(definitions.ContainsKey(str), $"Undefined set \"{str}\" in line {line}");
-                        // Definition definition = definitions[str];
-
-                        // // Check if all rules are fullfilled
-                        // Dictionary<string, Expression> conversionDict = new() { { definition.obj, binExpr.lhs } };
-                        // foreach (var rule in definition.rules)
-                        // {
-                        //     StmtVal val = AnalyseStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num++), line);
-                        //     if (val != StmtVal.TRUE)
-                        //         return val;
-                        // }
-
-                        // return StmtVal.TRUE;
-                        return StmtVal.UNKNOWN;
-                    }
-                case TokenType.SUBSET:
-                    {
-                        throw new NotImplementedException();
-                    }
                 case TokenType.EQUALS:
                     {
                         return AnalyseExpressionEquality(binExpr.lhs, binExpr.rhs, line);
                     }
+                case TokenType.ELEMENT_OF:
+                case TokenType.SUBSET:
+                    return StmtVal.UNKNOWN;
                 default:
                     Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
                     throw new();
