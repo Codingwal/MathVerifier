@@ -1,12 +1,7 @@
-- handle statement proofs
-    - theorem references
-    - definition references
-- move proof statements to scope
-- rename vars of proof statements to avoid duplicates
 
-- handle function calls
+
 - refactor AddStatement
-- handle proofs using "sorry"
-- add "\" to split expr over multiple lines -> rework Consume / line system
+- handle function calls
 
+- add "\" to split expr over multiple lines -> rework Consume / line system
 - refactor

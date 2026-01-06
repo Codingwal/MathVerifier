@@ -96,7 +96,7 @@ public partial class Verifier
             {
                 if (cmd == Command.SORRY)
                 {
-                    throw new NotImplementedException();
+                    goto done;
                 }
                 else if (cmd == Command.CHECK)
                 {
@@ -111,6 +111,7 @@ public partial class Verifier
             AddStatement(stmt.stmt.As<Expression>());
         }
         VerifyStatementLine(theorem.hypothesis);
+    done:
         ExitScope("Theorem");
         theorems.Add(theorem.name, theorem);
     }
