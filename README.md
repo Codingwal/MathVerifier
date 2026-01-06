@@ -1,0 +1,1 @@
+dotnet run Examples/Test.math

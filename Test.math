@@ -1,9 +1,0 @@
-define Sqrt:
-    ∀ x(Sqrt(x) ⋅ Sqrt(x) = x)
-end
-
-theorem Test():
-⇒ 1 = 1
-{
-    ∀ y(Sqrt(y) ⋅ Sqrt(y) = y) | @ Sqrt
-}

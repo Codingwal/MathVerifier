@@ -1,25 +1,9 @@
-include Lib
+define Sqrt:
+    ∀ x(Sqrt(x) ⋅ Sqrt(x) = x)
+end
 
-theorem Equator(f € R -> R):
-    f is Steady
-    f(x + 2 * PI) = f(x)
-    => E x : f(x) = f(x + PI)
+theorem Test():
+⇒ 1 = 1
 {
-    let d € R -> R: (A x € R: d(x) = f(x + PI) - f(x))
-    d is Steady
-    if (E x € R : d(x) != 0)
-    {
-        let x € R : d(x) != 0
-        d(x + PI) = f(x + 2 * PI) - f(x + PI) = f(x) - f(x + PI) = -f(x + PI) + f(x) = -(f(x + PI) - f(x)) = -d(x)
-        E d(x) > 0 ^ E d(x) < 0
-        E x € R : d(x) = 0
-    }
-    else
-    {
-        E x € R : d(x) = 0
-    }
-
-    let x € R : d(x) = 0
-    0 = f(x + PI) - f(x)
-    d(x) = f(x + PI)
+    ∀ y(Sqrt(y) ⋅ Sqrt(y) = y) | @ Sqrt
 }
