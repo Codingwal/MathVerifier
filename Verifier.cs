@@ -145,9 +145,9 @@ public partial class Verifier
         if (stmtVal == StmtVal.TRUE)
             return;
         else if (stmtVal == StmtVal.FALSE)
-            Logger.Error($"Statement in line {stmt.line} is false.");
+            Logger.Error($"Statement in line {stmt.line} is false.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
         else
-            Logger.Error($"Failed to verify statement in line {stmt.line}");
+            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
     }
     private StmtVal AnalyseStatement(Expression expr, int line)
     {
