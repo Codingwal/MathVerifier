@@ -12,7 +12,6 @@ public struct Token : ICustomFormatting
 
         // Literals
         STRING,
-        NUMBER,
 
         // Brackets
         BRACKET_OPEN,
@@ -138,48 +137,35 @@ public struct Token : ICustomFormatting
     }
 
     public TokenType type;
-    public Variant<string, double> data;
+    public string? data;
 
     public Token(TokenType type)
     {
         Debug.Assert(type != TokenType.STRING);
-        Debug.Assert(type != TokenType.NUMBER);
         this.type = type;
-        data = new();
+        data = null;
     }
     public Token(string str)
     {
         type = TokenType.STRING;
         data = str;
     }
-    public Token(double num)
-    {
-        type = TokenType.NUMBER;
-        data = num;
-    }
-
     public readonly string GetString()
     {
         Debug.Assert(type == TokenType.STRING);
-        return data.As<string>();
+        return data!;
     }
-    public readonly double GetDouble()
-    {
-        Debug.Assert(type == TokenType.NUMBER);
-        return data.As<double>();
-    }
-
     public readonly bool Equals(Token other)
     {
-        return type == other.type && data.Equals(other.data);
+        if (type != other.type) return false;
+        if (type == TokenType.STRING) return GetString() == other.GetString();
+        return true;
     }
     public override readonly string ToString()
     {
         string str = type.ToString();
         if (type == TokenType.STRING)
             str += " (\"" + GetString() + "\")";
-        else if (type == TokenType.NUMBER)
-            str += " (" + GetDouble() + ")";
         return str;
     }
 
@@ -211,16 +197,13 @@ public struct Token : ICustomFormatting
     }
     public readonly string ToSymbol()
     {
-        if (type == TokenType.NUMBER)
-            return GetDouble().ToString();
-        else if (type == TokenType.STRING)
+        if (type == TokenType.STRING)
             return GetString();
 
         foreach (var pair in str2Token)
-        {
             if (pair.Value == type)
                 return pair.Key;
-        }
+
         throw new();
     }
 }

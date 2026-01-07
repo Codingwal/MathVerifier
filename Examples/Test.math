@@ -1,9 +1,27 @@
-define Sqrt:
-    ∀ x(Sqrt(x) ⋅ Sqrt(x) = x)
+define 0:
+end
+
+define Succ:
+    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))
+    ¬∃n(Succ(n) = 0)
+end
+
+define ℕ:
+    0 ∈ ℕ
+    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)
+    ∀ ϕ((ϕ(0) ∧ ∀ n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀ n(ϕ(n)))
+end
+
+define 1:
+    1 = Succ(n)
 end
 
 theorem Test():
-⇒ 1 = 1
+⇒ 1 ∈ ℕ
 {
-    ∀ y(Sqrt(y) ⋅ Sqrt(y) = y) | @ Sqrt
+    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)    | @ ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ
+    0 ∈ ℕ                        | @ ℕ
+    Succ(0) ∈ ℕ
+    1 ∈ ℕ
 }

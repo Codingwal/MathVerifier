@@ -25,17 +25,6 @@ class Lexer
                 {
                     break;
                 }
-                else if (char.IsNumber(str[i])) // Number
-                {
-                    string numStr = "";
-                    while (i < str.Length && (char.IsNumber(str[i]) || str[i] == '.'))
-                    {
-                        numStr += str[i];
-                        i++;
-                    }
-                    double num = double.Parse(numStr);
-                    lineTokens.Add(new Token(num));
-                }
                 else if (char.IsLetter(str[i]) || str[i] == '_') // String
                 {
                     string literal = "";

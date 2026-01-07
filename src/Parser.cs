@@ -225,8 +225,6 @@ public class Parser
                 stmt.stmt = ParseExpression();
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
                 return new(stmt);
-            case TokenType.NUMBER:
-                return new(Consume().GetDouble());
             case TokenType.STRING:
                 string str = Consume().GetString();
                 if (Peek().type == TokenType.BRACKET_OPEN)
