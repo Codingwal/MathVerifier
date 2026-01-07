@@ -13,7 +13,7 @@ define ℕ:
 end
 
 define 1:
-    1 = Succ(n)
+    1 = Succ(0)
 end
 
 theorem MP(P, Q):
@@ -27,9 +27,10 @@ theorem MP(P, Q):
 theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
 {
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ ℕ
+    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ℕ
     0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
-    0 ∈ ℕ                       | @ ℕ
+    0 ∈ ℕ                       | @ℕ
     Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
-    1 ∈ ℕ
+    1 = Succ(0)                  | @1
+    1 ∈ ℕ                       | sorry
 }
