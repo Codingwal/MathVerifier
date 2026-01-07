@@ -1,1 +1,5 @@
 - refactor AddStatement
+
+- improve SyntaxChecker
+    - check operators
+    - distinguish between expressions & statements (?)

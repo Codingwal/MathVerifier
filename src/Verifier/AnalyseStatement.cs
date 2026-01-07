@@ -134,7 +134,6 @@ public partial class Verifier
                             };
                         }
                     default:
-                        Logger.Error($"Invalid unary operator {unaryExpr.op} in line {line}");
                         throw new();
                 }
             });

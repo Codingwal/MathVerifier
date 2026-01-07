@@ -2,12 +2,14 @@ public class SyntaxChecker
 {
     private readonly Data ast;
     private ScopeStack<string> objects;
-    private List<string> theoremNames;
+    private Dictionary<string, Theorem> theorems;
+    private List<string> definitions;
     public SyntaxChecker(Data ast)
     {
         this.ast = ast;
         objects = new();
-        theoremNames = new();
+        theorems = new();
+        definitions = new();
     }
 
     public void Check()
@@ -18,8 +20,7 @@ public class SyntaxChecker
     private void CheckTheorem(Theorem theorem)
     {
         // Check name
-        Logger.Assert(!theoremNames.Contains(theorem.name), $"A theorem with the name \"{theorem.name}\" has already been defined! (line {theorem.line})");
-        theoremNames.Add(theorem.name);
+        Logger.Assert(!theorems.ContainsKey(theorem.name), $"A theorem with the name \"{theorem.name}\" has already been defined! (line {theorem.line})");
 
         objects.EnterScope("Theorem");
 
@@ -35,19 +36,21 @@ public class SyntaxChecker
             CheckStatementLine(requirement, allowProof: false, allowSorry: false, allowCheck: false);
 
         // Check hypothesis
-        CheckStatementLine(theorem.hypothesis, allowProof: false, allowSorry: false, allowCheck: true);
+        CheckStatementLine(theorem.hypothesis, allowProof: false, allowSorry: false, allowCheck: false);
 
         // Check proof
         foreach (var stmtLine in theorem.proof)
             CheckStatementLine(stmtLine, allowProof: true, allowSorry: true, allowCheck: true);
 
         objects.ExitScope("Theorem");
+        theorems.Add(theorem.name, theorem);
     }
     private void CheckDefinition(Definition definition)
     {
         // Check name
         Logger.Assert(!objects.Contains(definition.name), $"An object with the name {definition.name} has already been defined! (line {definition.line}).");
         objects.Add(definition.name);
+        definitions.Add(definition.name);
 
         objects.EnterScope("Definition");
 
@@ -82,13 +85,15 @@ public class SyntaxChecker
         stmtLine.proof?.Switch(
             funcCall =>
             {
-                Logger.Assert(theoremNames.Contains(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" as proof in line {stmtLine.line}.");
+                Logger.Assert(theorems.ContainsKey(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" as proof in line {stmtLine.line}.");
+                Logger.Assert(funcCall.args.Count == theorems[funcCall.name].parameters.Count,
+                    $"Expected {theorems[funcCall.name].parameters.Count} arguments but found {funcCall.args.Count} at reference to theorem {funcCall.name} in line {stmtLine.line}");
                 foreach (var arg in funcCall.args)
                     CheckExpression(arg, stmtLine.line);
             },
             definitionRef =>
             {
-                Logger.Assert(objects.Contains(definitionRef), $"Reference to undefined object \"{definitionRef}\" as proof in line {stmtLine.line}.");
+                Logger.Assert(definitions.Contains(definitionRef), $"Reference to undefined object \"{definitionRef}\" as proof in line {stmtLine.line}.");
             },
             cmd =>
             {
