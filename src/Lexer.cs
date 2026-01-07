@@ -1,4 +1,4 @@
-class Lexer
+public static class Lexer
 {
     public static List<List<Token>> Tokenize(string fileName)
     {
@@ -9,57 +9,7 @@ class Lexer
         int line = 0;
         while (reader.Peek() >= 0)
         {
-            string str = reader.ReadLine()!;
-
-            List<Token> lineTokens = new();
-            int i = 0;
-            while (i < str.Length)
-            {
-                if (char.IsWhiteSpace(str[i]))
-                {
-                    i++;
-                    continue;
-                }
-
-                if (str[i] == '/' && str[i] == '/') // Comment
-                {
-                    break;
-                }
-                else if (char.IsLetter(str[i]) || str[i] == '_') // String
-                {
-                    string literal = "";
-                    for (; i < str.Length && (char.IsLetterOrDigit(str[i]) || str[i] == '_'); i++)
-                        literal += str[i];
-
-                    if (Token.str2Token.ContainsKey(literal))
-                        lineTokens.Add(new Token(Token.str2Token[literal]));
-                    else
-                        lineTokens.Add(new Token(literal));
-                }
-                else // Symbol
-                {
-                    string literal = "";
-                    for (; i < str.Length && !char.IsWhiteSpace(str[i]) && !char.IsLetterOrDigit(str[i]) && str[i] != '_'; i++)
-                        literal += str[i];
-
-                    int j = 0;
-                    for (int k = literal.Length; j < k;)
-                    {
-                        if (Token.str2Token.ContainsKey(literal[j..k]))
-                        {
-                            lineTokens.Add(new Token(Token.str2Token[literal[j..k]]));
-                            j = k;
-                            k = literal.Length;
-                        }
-                        else
-                            k--;
-                    }
-                    if (j != literal.Length)
-                        Logger.Error($"Invalid symbol \"{literal[j..]}\" in line {line + 1}");
-                }
-            }
-            lineTokens.Add(new Token(TokenType.NEWLINE));
-            tokens.Add(lineTokens);
+            tokens.Add(TokenizeLine(reader.ReadLine()!, line));
             line++;
         }
         // Add EOF token
@@ -68,5 +18,51 @@ class Lexer
         reader.Close();
 
         return tokens;
+    }
+
+    private static List<Token> TokenizeLine(string str, int line)
+    {
+        List<Token> tokens = new();
+        int i = 0;
+        while (i < str.Length)
+        {
+            if (char.IsWhiteSpace(str[i]))
+            {
+                i++;
+                continue;
+            }
+
+            if (str[i] == '/' && str[i + 1] == '/') // Comment
+            {
+                tokens.Add(new Token(TokenType.NEWLINE));
+                return tokens;
+            }
+
+            tokens.Add(Tokenize(str, ref i, line));
+        }
+        tokens.Add(new Token(TokenType.NEWLINE));
+        return tokens;
+    }
+    private static Token Tokenize(string str, ref int i, int line)
+    {
+        // Single-char symbol? (':', '|', '∃', '⇒', ...)
+        if (Token.str2Token.ContainsKey(str[i].ToString()))
+            return new Token(Token.str2Token[str[i++].ToString()]);
+
+        string s = "";
+        while (i < str.Length && !char.IsWhiteSpace(str[i]))
+        {
+            // Break if a single-char symbol has been reached (will be tokenized on its one the next iteration)
+            if (Token.str2Token.ContainsKey(str[i].ToString()))
+                break;
+
+            s += str[i];
+            i++;
+
+            // Check if the string is a known keyword
+            if (Token.str2Token.ContainsKey(s))
+                return new Token(Token.str2Token[s]);
+        }
+        return new Token(s);
     }
 }
