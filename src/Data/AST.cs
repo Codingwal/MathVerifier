@@ -1,5 +1,4 @@
 global using Expression = Variant<BinExpr, Term>;
-using TokenType = Token.TokenType;
 
 // Miscellaneous
 public enum Command

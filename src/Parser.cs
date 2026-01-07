@@ -1,5 +1,3 @@
-using TokenType = Token.TokenType;
-
 public class Parser
 {
     private List<List<Token>> tokens;

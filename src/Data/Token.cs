@@ -1,3 +1,5 @@
+global using TokenType = Token.TokenType;
+
 using System.Diagnostics;
 
 public struct Token : ICustomFormatting

@@ -1,0 +1,117 @@
+public partial class Verifier
+{
+    private StmtVal AnalyseStatement(Expression expr, int line)
+    {
+        // Check if the statement has already been proven
+        foreach (var stmt in statements.GetAll())
+            if (CompareExpressions(stmt, expr))
+                return StmtVal.TRUE;
+
+        // Analyse statement recursively
+        return expr.Match(
+            binExpr => AnalyseBinExpr(binExpr, line),
+            term => AnalyseTerm(term, line));
+    }
+
+    private StmtVal AnalyseBinExpr(BinExpr binExpr, int line)
+    {
+        switch (binExpr.op.type)
+        {
+            case TokenType.IMPLIES:
+                {
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+
+                    // Add statements valid in this context
+                    statements.EnterScope("Implies");
+                    AddStatement(binExpr.lhs);
+
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                    statements.ExitScope("Implies");
+
+                    if (lhs == StmtVal.FALSE)
+                        return StmtVal.TRUE;
+                    if (lhs == StmtVal.UNKNOWN && rhs != StmtVal.TRUE)
+                        return StmtVal.UNKNOWN;
+                    else
+                        return rhs;
+
+                }
+            case TokenType.EQUIVALENT:
+                {
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                    if (lhs == StmtVal.UNKNOWN || rhs == StmtVal.UNKNOWN)
+                        return StmtVal.UNKNOWN;
+                    else
+                        return lhs == rhs ? StmtVal.TRUE : StmtVal.FALSE;
+                }
+            case TokenType.OR:
+                {
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                    if (lhs == StmtVal.TRUE || rhs == StmtVal.TRUE)
+                        return StmtVal.TRUE;
+                    else if (lhs == StmtVal.FALSE && rhs == StmtVal.FALSE)
+                        return StmtVal.FALSE;
+                    else
+                        return StmtVal.UNKNOWN;
+                }
+            case TokenType.AND:
+                {
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+
+                    if (lhs == StmtVal.TRUE && rhs == StmtVal.TRUE)
+                        return StmtVal.TRUE;
+                    else if (lhs == StmtVal.FALSE || rhs == StmtVal.FALSE)
+                        return StmtVal.FALSE;
+                    else
+                        return StmtVal.UNKNOWN;
+                }
+            case TokenType.EQUALS:
+                {
+                    return AnalyseExpressionEquality(binExpr.lhs, binExpr.rhs, line);
+                }
+            case TokenType.ELEMENT_OF:
+            case TokenType.SUBSET:
+                // Check syntax & grammar
+                VerifyExpression(binExpr.lhs, line);
+                VerifyExpression(binExpr.rhs, line);
+                return StmtVal.UNKNOWN;
+            default:
+                Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
+                throw new();
+        }
+    }
+
+    private StmtVal AnalyseTerm(Term term, int line)
+    {
+        return term.term.Match(
+                expr => { return AnalyseStatement(expr, line); },
+                funcCall => { throw new NotImplementedException(); },
+                qStmt =>
+                {
+                    if (qStmt.op == TokenType.FOR_ALL)
+                    {
+                        objects.EnterScope("Quantified statement");
+                        objects.Add(qStmt.obj);
+                        StmtVal val = AnalyseStatement(qStmt.stmt, line);
+                        objects.ExitScope("Quantified statement");
+                        return val;
+                    }
+                    else
+                        throw new NotImplementedException();
+                },
+                str =>
+                {
+                    Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
+                    return StmtVal.UNKNOWN;
+                },
+                num => { Logger.Error($"Expected statement but found number ({num}) in line {line}"); throw new(); }
+            );
+    }
+
+}

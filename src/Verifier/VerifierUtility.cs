@@ -1,5 +1,3 @@
-using TokenType = Token.TokenType;
-
 public partial class Verifier
 {
     private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, int num)

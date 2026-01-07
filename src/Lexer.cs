@@ -1,5 +1,3 @@
-using TokenType = Token.TokenType;
-
 class Lexer
 {
     public static List<List<Token>> Tokenize(string fileName)
