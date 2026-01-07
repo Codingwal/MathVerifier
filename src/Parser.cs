@@ -75,7 +75,8 @@ public class Parser
         ConsumeExpect(TokenType.DEFINE);
         Definition definition = new()
         {
-            name = ConsumeExpect(TokenType.STRING).GetString()
+            name = ConsumeExpect(TokenType.STRING).GetString(),
+            line = line
         };
         ConsumeExpect(TokenType.COLON);
         ConsumeExpect(TokenType.NEWLINE);
@@ -92,7 +93,7 @@ public class Parser
     }
     private Theorem ParseTheorem()
     {
-        Theorem theorem = new();
+        Theorem theorem = new() { line = line };
 
         ConsumeExpect(TokenType.THEOREM);
         theorem.name = ConsumeExpect(TokenType.STRING).GetString();

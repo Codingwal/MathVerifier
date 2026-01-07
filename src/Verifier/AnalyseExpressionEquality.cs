@@ -70,8 +70,6 @@ public partial class Verifier
             funcCallA =>
             {
                 var funcCallB = b.term.As<FuncCall>();
-                Logger.Assert(objects.Contains(funcCallA.name), $"Call to undefined function \"{funcCallA.name}\" in line {line}");
-                Logger.Assert(objects.Contains(funcCallB.name), $"Call to undefined function \"{funcCallB.name}\" in line {line}");
                 if (funcCallA.name != funcCallB.name) return StmtVal.FALSE;
 
                 bool allEqual = true;
@@ -86,8 +84,6 @@ public partial class Verifier
             qStmt => { Logger.Error($"Unexpected quantified statement in expression in line {line}"); throw new(); },
             str =>
             {
-                Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
-                Logger.Assert(objects.Contains(b.term.As<string>()), $"Undefined identifier \"{b.term.As<string>()}\" in line {line}");
                 return (str == b.term.As<string>()) ? StmtVal.TRUE : StmtVal.UNKNOWN;
             },
             unaryExpr =>

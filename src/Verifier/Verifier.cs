@@ -8,7 +8,6 @@ public partial class Verifier
     }
 
     private readonly Data ast;
-    private ScopeStack<string> objects;
     private ScopeStack<Expression> statements;
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
@@ -16,23 +15,11 @@ public partial class Verifier
     public Verifier(Data ast)
     {
         this.ast = ast;
-        objects = new();
         statements = new();
         theorems = new();
         definitions = new();
         num = 0;
     }
-    private void EnterScope(string scopeName)
-    {
-        objects.EnterScope(scopeName);
-        statements.EnterScope(scopeName);
-    }
-    private void ExitScope(string scopeName)
-    {
-        objects.ExitScope(scopeName);
-        statements.ExitScope(scopeName);
-    }
-
     public void Verify()
     {
         foreach (var e in ast.data)
@@ -40,9 +27,6 @@ public partial class Verifier
     }
     private void VerifyDefinition(Definition definition)
     {
-        objects.Add(definition.name);
-        EnterScope("Definition");
-
         // Verify syntax / grammar of rules
         foreach (var rule in definition.rules)
         {
@@ -51,16 +35,11 @@ public partial class Verifier
             AnalyseStatement(rule.stmt.As<Expression>(), rule.line); // Result is not important, but syntax / grammar must be checked
         }
 
-        ExitScope("Definition");
-
         definitions.Add(definition.name, definition);
     }
     private void VerifyTheorem(Theorem theorem)
     {
-        EnterScope("Theorem");
-
-        foreach (var param in theorem.parameters)
-            objects.Add(param);
+        statements.EnterScope("Theorem");
 
         foreach (var stmt in theorem.requirements)
         {
@@ -105,7 +84,7 @@ public partial class Verifier
         }
         VerifyStatementLine(theorem.hypothesis);
     done:
-        ExitScope("Theorem");
+        statements.ExitScope("Theorem");
         theorems.Add(theorem.name, theorem);
     }
     private void VerifyStatementLine(StatementLine stmt)
@@ -114,7 +93,7 @@ public partial class Verifier
 
         if (stmt.stmt.Is<Command>()) Logger.Error($"Unexpected command {stmt.stmt.As<Command>()} in line {stmt.line}! Expected statement.");
 
-        EnterScope("Statement"); // Proof statements should get deleted after verifying the statement
+        statements.EnterScope("Statement"); // Proof statements should get deleted after verifying the statement
 
         // Handle proof
         if (stmt.proof != null)
@@ -150,7 +129,7 @@ public partial class Verifier
             {
                 if (command == Command.SORRY)
                 {
-                    ExitScope("Statement");
+                    statements.ExitScope("Statement");
                     return;
                 }
                 else Logger.Error($"Unexpected command {command} as proof in line {stmt.line}");
@@ -159,7 +138,7 @@ public partial class Verifier
 
         StmtVal stmtVal = AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
 
-        ExitScope("Statement");
+        statements.ExitScope("Statement");
 
         if (stmtVal == StmtVal.TRUE)
             return;

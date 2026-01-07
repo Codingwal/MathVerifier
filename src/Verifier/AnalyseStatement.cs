@@ -77,9 +77,6 @@ public partial class Verifier
                 }
             case TokenType.ELEMENT_OF:
             case TokenType.SUBSET:
-                // Check syntax & grammar
-                VerifyExpression(binExpr.lhs, line);
-                VerifyExpression(binExpr.rhs, line);
                 return StmtVal.UNKNOWN;
             default:
                 Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
@@ -96,10 +93,7 @@ public partial class Verifier
             {
                 if (qStmt.op == TokenType.FOR_ALL)
                 {
-                    objects.EnterScope("Quantified statement (FOR_ALL)");
-                    objects.Add(qStmt.obj);
                     StmtVal val = AnalyseStatement(qStmt.stmt, line);
-                    objects.ExitScope("Quantified statement (FOR_ALL)");
                     return val;
                 }
                 else if (qStmt.op == TokenType.EXISTS)
@@ -123,11 +117,7 @@ public partial class Verifier
                 else
                     throw new();
             },
-            str =>
-            {
-                Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
-                return StmtVal.UNKNOWN;
-            },
+            str => StmtVal.UNKNOWN,
             unaryExpr =>
             {
                 switch (unaryExpr.op.type)

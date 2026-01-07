@@ -61,6 +61,7 @@ public struct Theorem
     public List<StatementLine> requirements;
     public StatementLine hypothesis;
     public List<StatementLine> proof;
+    public int line;
     public Theorem()
     {
         name = "";
@@ -68,6 +69,7 @@ public struct Theorem
         requirements = new();
         hypothesis = new();
         proof = new();
+        line = -1;
     }
 }
 
@@ -75,10 +77,12 @@ public struct Definition
 {
     public string name;
     public List<StatementLine> rules;
+    public int line;
     public Definition()
     {
         name = "";
         rules = new();
+        line = -1;
     }
 }
 

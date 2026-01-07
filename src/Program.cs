@@ -27,6 +27,11 @@ public static class Program
         // Console.Write(Formatter.Format(ast));
         // Console.WriteLine("-------------------------\n");
 
+        Console.WriteLine("Checking syntax...");
+        SyntaxChecker checker = new(ast);
+        checker.Check();
+        Console.WriteLine("Finished checking syntax");
+
         // Verify
         Console.WriteLine("Verifying...");
         Verifier verifier = new(ast);

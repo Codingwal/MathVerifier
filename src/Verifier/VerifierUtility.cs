@@ -91,37 +91,4 @@ public partial class Verifier
             );
         }
     }
-
-    private void VerifyExpression(Expression expr, int line)
-    {
-        if (expr.TryAs<BinExpr>(out var binExpr))
-        {
-            // Check if binExpr.op is a Expr x Expr => Expr operator
-            Logger.Assert(Token.GetPrecedence(binExpr.op.type) >= Token.ExpressionMinPrec,
-                $"Invalid expression operator \"{binExpr.op}\" in line {line}");
-
-            // TODO: Check if operator identifier is defined
-            if (binExpr.op.type == TokenType.STRING)
-                throw new NotImplementedException();
-
-            VerifyExpression(binExpr.lhs, line);
-            VerifyExpression(binExpr.rhs, line);
-        }
-        else
-        {
-            var term = expr.As<Term>().term;
-
-            term.Switch(expr => VerifyExpression(expr, line),
-                        funcCall =>
-                        {
-                            Logger.Assert(objects.Contains(funcCall.name), $"Call to undefined function \"{funcCall.name}\" in line {line}");
-                            foreach (var arg in funcCall.args)
-                                VerifyExpression(arg, line);
-                        },
-                        qStmt => Logger.Error($"Expected expression but found quantified statement in line {line}"),
-                        str => Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}"),
-                        num => { }
-            );
-        }
-    }
 }
