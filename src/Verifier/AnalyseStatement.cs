@@ -90,21 +90,39 @@ public partial class Verifier
     private StmtVal AnalyseTerm(Term term, int line)
     {
         return term.term.Match(
-                qStmt =>
             expr => AnalyseStatement(expr, line),
             funcCall => StmtVal.UNKNOWN,
+            qStmt =>
+            {
+                if (qStmt.op == TokenType.FOR_ALL)
                 {
-                    if (qStmt.op == TokenType.FOR_ALL)
+                    objects.EnterScope("Quantified statement (FOR_ALL)");
+                    objects.Add(qStmt.obj);
+                    StmtVal val = AnalyseStatement(qStmt.stmt, line);
+                    objects.ExitScope("Quantified statement (FOR_ALL)");
+                    return val;
+                }
+                else if (qStmt.op == TokenType.EXISTS)
+                {
+                    // ∃x(ϕ(x)) ⇔ ¬∀x(¬ϕ(x))
+                    return AnalyseStatement(new Term(new UnaryExpr() // ¬∀x(¬ϕ(x))
                     {
-                        objects.EnterScope("Quantified statement");
-                        objects.Add(qStmt.obj);
-                        StmtVal val = AnalyseStatement(qStmt.stmt, line);
-                        objects.ExitScope("Quantified statement");
-                        return val;
-                    }
-                    else
-                        throw new NotImplementedException();
-                },
+                        op = new(TokenType.NOT),
+                        expr = new Term(new QuantifiedStatement() // ∀x(¬ϕ(x))
+                        {
+                            op = TokenType.FOR_ALL,
+                            obj = qStmt.obj,
+                            stmt = new Term(new UnaryExpr() // ¬ϕ(x)
+                            {
+                                op = new(TokenType.NOT),
+                                expr = qStmt.stmt           // ϕ(x)
+                            })
+                        })
+                    }), line);
+                }
+                else
+                    throw new();
+            },
             str =>
             {
                 Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
