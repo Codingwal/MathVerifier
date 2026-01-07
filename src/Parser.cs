@@ -253,7 +253,7 @@ public class Parser
                 return new(new UnaryExpr()
                 {
                     op = Consume(),
-                    term = ParseTerm()
+                    expr = ParseTerm()
                 });
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");

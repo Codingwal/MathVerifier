@@ -28,7 +28,7 @@ public struct BinExpr
 public struct UnaryExpr
 {
     public Token op;
-    public Term term;
+    public Expression expr;
 }
 public struct Term
 {

@@ -86,7 +86,7 @@ public partial class Verifier
                 unExprA =>
                 {
                     var unExprB = termB.As<UnaryExpr>();
-                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.term, unExprB.term);
+                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr);
                 }
             );
         }

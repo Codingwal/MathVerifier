@@ -78,7 +78,7 @@ public partial class Verifier
             unaryExpr =>
             {
                 if (unaryExpr.op != b.term.As<UnaryExpr>().op) return StmtVal.FALSE;
-                return AnalyseExpressionEquality(unaryExpr.term, b.term.As<UnaryExpr>().term, line, recursiveDepth);
+                return AnalyseExpressionEquality(unaryExpr.expr, b.term.As<UnaryExpr>().expr, line, recursiveDepth);
             }
         );
     }

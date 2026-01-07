@@ -105,13 +105,31 @@ public partial class Verifier
                     else
                         throw new NotImplementedException();
                 },
-                str =>
+            str =>
+            {
+                Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
+                return StmtVal.UNKNOWN;
+            },
+            unaryExpr =>
+            {
+                switch (unaryExpr.op.type)
                 {
-                    Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}");
-                    return StmtVal.UNKNOWN;
-                },
-                num => { Logger.Error($"Expected statement but found number ({num}) in line {line}"); throw new(); }
-            );
+                    case TokenType.NOT:
+                        {
+                            StmtVal val = AnalyseStatement(unaryExpr.expr, line);
+                            return val switch
+                            {
+                                StmtVal.TRUE => StmtVal.FALSE,
+                                StmtVal.FALSE => StmtVal.TRUE,
+                                StmtVal.UNKNOWN => StmtVal.UNKNOWN,
+                                _ => throw new()
+                            };
+                        }
+                    default:
+                        Logger.Error($"Invalid unary operator {unaryExpr.op} in line {line}");
+                        throw new();
+                }
+            });
     }
 
 }
