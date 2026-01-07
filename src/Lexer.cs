@@ -38,6 +38,11 @@ public static class Lexer
                 return tokens;
             }
 
+            if (str[i] == '\\') // Multi-line statement
+            {
+                return tokens;
+            }
+
             tokens.Add(Tokenize(str, ref i, line));
         }
         tokens.Add(new Token(TokenType.NEWLINE));

@@ -17,19 +17,26 @@ public class Parser
     }
     private Token Consume()
     {
-        // If the token is a newline, skip all following new lines
-        if (Peek().type == TokenType.NEWLINE)
+        Token token = Peek();
+        index++;
+
+        // If the end of the line has been reached, skip lines until the next token is found
+        while (index >= tokens[line - 1].Count)
+        {
+            index = 0;
+            line++;
+        }
+
+        // If the token is of type NEWLINE, skip all additional NEWLINE tokens
+        if (token.type == TokenType.NEWLINE)
         {
             while (Peek().type == TokenType.NEWLINE)
             {
                 line++;
                 index = 0;
             }
-            return new Token(TokenType.NEWLINE);
         }
 
-        Token token = Peek();
-        index++;
         return token;
     }
     private Token ConsumeExpect(TokenType type)

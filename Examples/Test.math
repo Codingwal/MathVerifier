@@ -2,7 +2,8 @@ define 0:
 end
 
 define Succ:
-    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))
+    ∀n(∀m(Succ(n) = \
+    Succ(m) ⇒ n = m))
     ¬∃n(Succ(n) = 0)
 end
 
