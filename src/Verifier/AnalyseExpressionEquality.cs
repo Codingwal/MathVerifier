@@ -67,7 +67,22 @@ public partial class Verifier
 
         return a.term.Match(
             expr => AnalyseExpressionEquality(expr, b.term.As<Expression>(), line, recursiveDepth),
-            funcCall => { throw new NotImplementedException(); },
+            funcCallA =>
+            {
+                var funcCallB = b.term.As<FuncCall>();
+                Logger.Assert(objects.Contains(funcCallA.name), $"Call to undefined function \"{funcCallA.name}\" in line {line}");
+                Logger.Assert(objects.Contains(funcCallB.name), $"Call to undefined function \"{funcCallB.name}\" in line {line}");
+                if (funcCallA.name != funcCallB.name) return StmtVal.FALSE;
+
+                bool allEqual = true;
+                for (int i = 0; i < funcCallA.args.Count; i++)
+                {
+                    StmtVal val = AnalyseExpressionEquality(funcCallA.args[i], funcCallB.args[i], line, recursiveDepth);
+                    if (val == StmtVal.FALSE) return StmtVal.FALSE;
+                    else if (val == StmtVal.UNKNOWN) allEqual = false;
+                }
+                return allEqual ? StmtVal.TRUE : StmtVal.UNKNOWN;
+            },
             qStmt => { Logger.Error($"Unexpected quantified statement in expression in line {line}"); throw new(); },
             str =>
             {

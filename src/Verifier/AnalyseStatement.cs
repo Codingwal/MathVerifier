@@ -90,9 +90,9 @@ public partial class Verifier
     private StmtVal AnalyseTerm(Term term, int line)
     {
         return term.term.Match(
-                expr => { return AnalyseStatement(expr, line); },
-                funcCall => { throw new NotImplementedException(); },
                 qStmt =>
+            expr => AnalyseStatement(expr, line),
+            funcCall => StmtVal.UNKNOWN,
                 {
                     if (qStmt.op == TokenType.FOR_ALL)
                     {

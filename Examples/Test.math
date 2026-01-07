@@ -2,8 +2,7 @@ define 0:
 end
 
 define Succ:
-    ∀n(∀m(Succ(n) = \
-    Succ(m) ⇒ n = m))
+    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))
     ¬∃n(Succ(n) = 0)
 end
 
@@ -17,12 +16,20 @@ define 1:
     1 = Succ(n)
 end
 
-theorem Test():
+theorem MP(P, Q):
+    P ⇒ Q
+    P
+⇒ Q
+{
+    sorry
+}
+
+theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
 {
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)    | @ ℕ
-    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ
-    0 ∈ ℕ                        | @ ℕ
-    Succ(0) ∈ ℕ
+    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
+    0 ∈ ℕ                       | @ ℕ
+    Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
     1 ∈ ℕ
 }

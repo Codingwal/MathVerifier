@@ -112,7 +112,12 @@ public partial class Verifier
             var term = expr.As<Term>().term;
 
             term.Switch(expr => VerifyExpression(expr, line),
-                        funcCall => throw new NotImplementedException(),
+                        funcCall =>
+                        {
+                            Logger.Assert(objects.Contains(funcCall.name), $"Call to undefined function \"{funcCall.name}\" in line {line}");
+                            foreach (var arg in funcCall.args)
+                                VerifyExpression(arg, line);
+                        },
                         qStmt => Logger.Error($"Expected expression but found quantified statement in line {line}"),
                         str => Logger.Assert(objects.Contains(str), $"Undefined identifier \"{str}\" in line {line}"),
                         num => { }
