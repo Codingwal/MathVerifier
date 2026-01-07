@@ -249,6 +249,12 @@ public class Parser
                 }
                 else
                     return new(str);
+            case TokenType.NOT:
+                return new(new UnaryExpr()
+                {
+                    op = Consume(),
+                    term = ParseTerm()
+                });
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

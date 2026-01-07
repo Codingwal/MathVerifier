@@ -25,10 +25,15 @@ public struct BinExpr
     public Token op;
     public Expression rhs;
 }
+public struct UnaryExpr
+{
+    public Token op;
+    public Term term;
+}
 public struct Term
 {
-    public Variant<Expression, FuncCall, QuantifiedStatement, string, double> term;
-    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, double> term)
+    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr> term;
+    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr> term)
     {
         this.term = term;
     }

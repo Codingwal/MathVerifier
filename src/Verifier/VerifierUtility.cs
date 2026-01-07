@@ -83,7 +83,11 @@ public partial class Verifier
                     return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }, num++));
                 },
                 str => str == termB.As<string>(),
-                num => num == termB.As<double>()
+                unExprA =>
+                {
+                    var unExprB = termB.As<UnaryExpr>();
+                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.term, unExprB.term);
+                }
             );
         }
     }

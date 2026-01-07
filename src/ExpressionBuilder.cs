@@ -21,13 +21,10 @@ public static class ExpressionBuilder
                         str += ")";
                         return str;
                     },
-                    qStmt =>
-                    {
-                        return $"{new Token(qStmt.op).ToSymbol()} {qStmt.obj}({ExpressionToString(qStmt.stmt)})";
-                    },
+                    qStmt => $"{new Token(qStmt.op).ToSymbol()} {qStmt.obj} ({ExpressionToString(qStmt.stmt)})",
                     str => str,
-                    num => num.ToString()
-                );
+                    unaryExpr => $"{unaryExpr.op} {ExpressionToString(unaryExpr.term)}"
+                    );
             }
         );
     }

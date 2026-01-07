@@ -75,7 +75,11 @@ public partial class Verifier
                 Logger.Assert(objects.Contains(b.term.As<string>()), $"Undefined identifier \"{b.term.As<string>()}\" in line {line}");
                 return (str == b.term.As<string>()) ? StmtVal.TRUE : StmtVal.UNKNOWN;
             },
-            num => (num == b.term.As<double>()) ? StmtVal.TRUE : StmtVal.FALSE
+            unaryExpr =>
+            {
+                if (unaryExpr.op != b.term.As<UnaryExpr>().op) return StmtVal.FALSE;
+                return AnalyseExpressionEquality(unaryExpr.term, b.term.As<UnaryExpr>().term, line, recursiveDepth);
+            }
         );
     }
 }

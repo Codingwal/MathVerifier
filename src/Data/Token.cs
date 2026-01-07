@@ -27,6 +27,7 @@ public struct Token : ICustomFormatting
         EQUALS,
 
         // Logical operators
+        NOT,
         IMPLIES,
         EQUIVALENT,
         AND,
@@ -36,7 +37,7 @@ public struct Token : ICustomFormatting
         EXISTS,
         FOR_ALL,
 
-        // Binary operators
+        // Binary operators 
         PLUS,
         MINUS,
         STAR,
@@ -76,6 +77,7 @@ public struct Token : ICustomFormatting
         {"=", TokenType.EQUALS},
 
         // Logical operators
+        {"¬", TokenType.NOT},
         {"⇒", TokenType.IMPLIES},
         {"⇔", TokenType.EQUIVALENT},
         {"∧", TokenType.AND},
