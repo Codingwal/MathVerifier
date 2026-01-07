@@ -33,7 +33,7 @@ public partial class Verifier
         statements.EnterScope("Theorem");
 
         foreach (var stmt in theorem.requirements)
-            AddStatement(stmt.stmt.As<Expression>());
+            statements.Add(stmt.stmt.As<Expression>());
 
         foreach (var stmt in theorem.proof)
         {
@@ -46,14 +46,14 @@ public partial class Verifier
                 else if (cmd == Command.CHECK)
                 {
                     Console.WriteLine("\nCurrent statements:");
-                    foreach (var s in statements.GetAll())
+                    foreach (var s in GetAllStatements())
                         Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
                     Console.WriteLine("-------------------\n");
                 }
                 continue;
             }
             VerifyStatementLine(stmt);
-            AddStatement(stmt.stmt.As<Expression>());
+            statements.Add(stmt.stmt.As<Expression>());
         }
         VerifyStatementLine(theorem.hypothesis);
     done:
@@ -82,12 +82,12 @@ public partial class Verifier
                         $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {stmt.line}." +
                         $"\n{ExpressionBuilder.ExpressionToString(RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, num))}");
 
-                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
+                statements.Add(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
             }
             else if (stmt.proof.TryAs<string>(out var str))
             {
                 foreach (var rule in definitions[str].rules)
-                    AddStatement(RewriteExpression(rule.stmt.As<Expression>(), new(), num++));
+                    statements.Add(RewriteExpression(rule.stmt.As<Expression>(), new(), num++));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -109,52 +109,5 @@ public partial class Verifier
             Logger.Error($"Statement in line {stmt.line} is false.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
         else
             Logger.Error($"Failed to verify statement in line {stmt.line}.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
-    }
-
-    private void AddStatement(Expression stmt)
-    {
-        // if (stmt.Is<Term>())
-        // {
-        //     var term = stmt.As<Term>().term;
-
-        //     if (term.TryAs<Expression>(out var expr))
-        //     {
-        //         AddStatement(expr);
-        //         return;
-        //     }
-        // }
-        // else
-        // {
-        //     var binExpr = stmt.As<BinExpr>();
-
-        //     if (binExpr.op.type == TokenType.ELEMENT_OF)
-        //     {
-        //         if (binExpr.rhs.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
-        //         {
-        //             if (!definitions.ContainsKey(str))
-        //                 Logger.Error($"Use of undefined set \"{str}\" in ElementOf statement");
-        //             Definition set = definitions[str];
-        //             foreach (var rule in set.rules)
-        //             {
-        //                 Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-        //                 AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
-        //             }
-        //             num++;
-        //         }
-        //         else
-        //             throw new NotImplementedException();
-        //     }
-        //     else if (binExpr.op.type == TokenType.AND)
-        //     {
-        //         AddStatement(binExpr.lhs);
-        //         AddStatement(binExpr.rhs);
-        //     }
-        //     else if (binExpr.op.type == TokenType.IMPLIES)
-        //     {
-        //         if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
-        //             AddStatement(binExpr.rhs);
-        //     }
-        // }
-        statements.Add(stmt);
     }
 }
