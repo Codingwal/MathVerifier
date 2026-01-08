@@ -1,7 +1,8 @@
 - "let" statement
     - use to create ∀ & ∃
-- compare expressions using equality statements
-- verify algebraic stuff can be done
+
+- if / else
+- proof by contradiction
 
 - improve SyntaxChecker
     - check operators
