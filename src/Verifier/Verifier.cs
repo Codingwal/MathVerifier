@@ -50,10 +50,16 @@ public partial class Verifier
                         Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
                     Console.WriteLine("-------------------\n");
                 }
-                continue;
             }
-            VerifyStatementLine(stmt);
-            AddStatement(stmt.stmt.As<Expression>());
+            else if (stmt.stmt.TryAs<DefinitionStatement>(out var defStmt))
+            {
+                AddStatement(defStmt.stmt);
+            }
+            else
+            {
+                VerifyStatementLine(stmt);
+                AddStatement(stmt.stmt.As<Expression>());
+            }
         }
         VerifyStatementLine(theorem.hypothesis);
     done:

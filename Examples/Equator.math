@@ -2,6 +2,7 @@ define ℝ:
 end
 
 define π:
+    π ∈ ℝ
 end
 
 define Stetig:
@@ -9,7 +10,17 @@ end
 
 define 2:
     ∀x(x + x = 2 ⋅ x)
+    2 ∈ ℝ
 end
+
+theorem Associative(a, b, c):
+    a ∈ ℝ
+    b ∈ ℝ
+    c ∈ ℝ
+⇒ (a + b) + c = a + (b + c)
+{
+    sorry
+}
 
 theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
@@ -18,15 +29,25 @@ theorem Equator(f):
 ⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 {
     let d: ∀x(d(x) = f(x + π) - f(x))
-    
-    if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
-    {
-        ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
-        
-        
-    }
-    else
-    {
+    let a: a ∈ ℝ
 
-    }
+    π ∈ ℝ       | @π
+
+    d(a + π) = d((a + π) + π) - d(a + π)    | sorry
+    d(a + π) = d(a + (π + π)) - d(a + π)    | Associative(a, π, π)
+    d(a + π) = d(a + 2⋅π) - d(a + π)        | sorry
+    d(a + π) = d(a) - d(a + π)              | sorry
+
+    sorry
+    
+//    if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
+//    {
+//        ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
+//        
+//        
+//    }
+//    else
+//    {
+//
+//    }
 }

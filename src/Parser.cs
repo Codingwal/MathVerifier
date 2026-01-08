@@ -126,16 +126,8 @@ public class Parser
         ConsumeExpect(TokenType.CURLY_OPEN);
         ConsumeExpect(TokenType.NEWLINE);
         while (Peek().type != TokenType.CURLY_CLOSE)
-        {
-            if (Peek().type == TokenType.SORRY)
-            {
-                Consume();
-                theorem.proof.Add(new() { stmt = Command.SORRY, line = line });
-                ConsumeExpect(TokenType.NEWLINE);
-            }
-            else
-                theorem.proof.Add(ParseStatementLine());
-        }
+            theorem.proof.Add(ParseStatementLine());
+
         ConsumeExpect(TokenType.CURLY_CLOSE);
         ConsumeExpect(TokenType.NEWLINE);
 
@@ -149,13 +141,30 @@ public class Parser
             ConsumeExpect(TokenType.NEWLINE);
             return new() { stmt = Command.CHECK, line = line };
         }
+        else if (Peek().type == TokenType.SORRY)
+        {
+            Consume();
+            ConsumeExpect(TokenType.NEWLINE);
+            return new() { stmt = Command.SORRY, line = line };
+        }
+        else if (Peek().type == TokenType.LET)
+        {
+            Consume();
+            var defStmt = new DefinitionStatement()
+            {
+                obj = ConsumeExpect(TokenType.STRING).GetString(),
+            };
+            ConsumeExpect(TokenType.COLON);
+            defStmt.stmt = ParseExpression();
+            ConsumeExpect(TokenType.NEWLINE);
+            return new() { stmt = defStmt, line = line };
+        }
         else
         {
             StatementLine stmt = new()
             {
                 stmt = new(ParseExpression()),
-                line = line,
-                proof = null,
+                line = line
             };
             if (Peek().type == TokenType.PIPE)
             {

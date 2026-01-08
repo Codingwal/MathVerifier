@@ -1,35 +1,15 @@
-define 0:
-end
-
-define Succ:
-    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))
-    ¬∃n(Succ(n) = 0)
-end
-
-define ℕ:
-    0 ∈ ℕ
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)
-    ∀ ϕ((ϕ(0) ∧ ∀ n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀ n(ϕ(n)))
-end
-
 define 1:
-    1 = Succ(0)
 end
 
-theorem MP(P, Q):
-    P ⇒ Q
-    P
-⇒ Q
-{
-    sorry
-}
+define 2:
+end
 
-theorem 1_in_ℕ():
-⇒ 1 ∈ ℕ
+theorem Test(f):
+    1 + 1 = 2
+⇒ ∀x(x = x)
 {
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ℕ
-    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
-    0 ∈ ℕ                       | @ℕ
-    Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
-    1 ∈ ℕ                       | @1
+    let a: a = 1
+
+    a + a = 1 + 1
+    a + a = 2
 }

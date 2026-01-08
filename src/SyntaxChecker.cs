@@ -33,14 +33,14 @@ public class SyntaxChecker
 
         // Check requirements
         foreach (var requirement in theorem.requirements)
-            CheckStatementLine(requirement, allowProof: false, allowSorry: false, allowCheck: false);
+            CheckStatementLine(requirement, allowProof: false, allowCommands: false, allowDefStmt: false);
 
         // Check hypothesis
-        CheckStatementLine(theorem.hypothesis, allowProof: false, allowSorry: false, allowCheck: false);
+        CheckStatementLine(theorem.hypothesis, allowProof: false, allowCommands: false, allowDefStmt: false);
 
         // Check proof
         foreach (var stmtLine in theorem.proof)
-            CheckStatementLine(stmtLine, allowProof: true, allowSorry: true, allowCheck: true);
+            CheckStatementLine(stmtLine, allowProof: true, allowCommands: true, allowDefStmt: true);
 
         objects.ExitScope("Theorem");
         theorems.Add(theorem.name, theorem);
@@ -56,12 +56,12 @@ public class SyntaxChecker
 
         // Check rules
         foreach (var rule in definition.rules)
-            CheckStatementLine(rule, allowProof: false, allowSorry: false, allowCheck: false);
+            CheckStatementLine(rule, allowProof: false, allowCommands: false, allowDefStmt: false);
 
         objects.ExitScope("Definition");
     }
 
-    private void CheckStatementLine(StatementLine stmtLine, bool allowProof, bool allowSorry, bool allowCheck)
+    private void CheckStatementLine(StatementLine stmtLine, bool allowProof, bool allowCommands, bool allowDefStmt)
     {
         // Assert that a proof is only present if allowed
         Logger.Assert(stmtLine.proof == null || allowProof, $"Unexpected proof in line {stmtLine.line}.");
@@ -70,11 +70,22 @@ public class SyntaxChecker
         if (stmtLine.stmt.TryAs<Command>(out var cmd))
         {
             if (cmd == Command.CHECK)
-                Logger.Assert(allowCheck, $"Unexpected command \"check\" in line {stmtLine.line}.");
+                Logger.Assert(allowCommands, $"Unexpected command \"check\" in line {stmtLine.line}.");
             else if (cmd == Command.SORRY)
-                Logger.Assert(allowSorry, $"Unexpected command \"sorry\" in line {stmtLine.line}.");
+                Logger.Assert(allowCommands, $"Unexpected command \"sorry\" in line {stmtLine.line}.");
             else
                 throw new();
+            return;
+        }
+
+        // Handle definition statements (let x: P(x))
+        if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
+        {
+            Logger.Assert(allowDefStmt, $"Unexpected definition statement in line {stmtLine.line}.");
+            Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
+            Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
+            objects.Add(defStmt.obj);
+            CheckExpression(defStmt.stmt, stmtLine.line);
             return;
         }
 

@@ -46,11 +46,17 @@ public struct QuantifiedStatement
     public Expression stmt;
 }
 
+public struct DefinitionStatement
+{
+    public string obj;
+    public Expression stmt;
+}
+
 // High-level
 public struct StatementLine
 {
     public int line;
-    public Variant<Expression, Command> stmt;
+    public Variant<Expression, Command, DefinitionStatement> stmt;
     public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
 
