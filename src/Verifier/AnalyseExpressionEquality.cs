@@ -19,7 +19,7 @@ public partial class Verifier
         if (recursiveDepth > 2)
             return StmtVal.UNKNOWN;
 
-        foreach (var expr in GetAllStatements())
+        foreach (var expr in statements.GetAll())
         {
             StmtVal val = AnalyseExprEqualityWithStmt(a, b, expr, line, recursiveDepth);
             if (val != StmtVal.UNKNOWN) return val;

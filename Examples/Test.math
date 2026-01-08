@@ -16,12 +16,21 @@ define 1:
     1 = Succ(0)
 end
 
-theorem 1_in_ℕ(P, Q, R, S):
+theorem MP(P, Q):
+    P ⇒ Q
+    P
+⇒ Q
+{
+    sorry
+}
+
+theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
 {
     ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ℕ
     0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
-    Succ(0) ∈ ℕ                 | @ℕ
+    0 ∈ ℕ                       | @ℕ
+    Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
     1 = Succ(0)                  | @1
     1 ∈ ℕ                       | sorry
 }

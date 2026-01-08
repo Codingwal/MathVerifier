@@ -3,7 +3,7 @@ public partial class Verifier
     private StmtVal AnalyseStatement(Expression expr, int line)
     {
         // Check if the statement has already been proven
-        foreach (var stmt in GetAllStatements())
+        foreach (var stmt in statements.GetAll())
             if (CompareExpressions(stmt, expr))
                 return StmtVal.TRUE;
 
@@ -23,7 +23,7 @@ public partial class Verifier
 
                     // Add statements valid in this context
                     statements.EnterScope("Implies");
-                    statements.Add(binExpr.lhs);
+                    AddStatement(binExpr.lhs);
 
                     StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
 
