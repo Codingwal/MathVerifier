@@ -31,6 +31,5 @@ theorem 1_in_ℕ():
     0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
     0 ∈ ℕ                       | @ℕ
     Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
-    1 = Succ(0)                  | @1
-    1 ∈ ℕ                       | sorry
+    1 ∈ ℕ                       | @1
 }
