@@ -1,4 +1,7 @@
-- refactor AddStatement
+- "let" statement
+    - use to create ∀ & ∃
+- compare expressions using equality statements
+- verify algebraic stuff can be done
 
 - improve SyntaxChecker
     - check operators

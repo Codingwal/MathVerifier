@@ -113,48 +113,6 @@ public partial class Verifier
 
     private void AddStatement(Expression stmt)
     {
-        // if (stmt.Is<Term>())
-        // {
-        //     var term = stmt.As<Term>().term;
-
-        //     if (term.TryAs<Expression>(out var expr))
-        //     {
-        //         AddStatement(expr);
-        //         return;
-        //     }
-        // }
-        // else
-        // {
-        //     var binExpr = stmt.As<BinExpr>();
-
-        //     if (binExpr.op.type == TokenType.ELEMENT_OF)
-        //     {
-        //         if (binExpr.rhs.TryAs<Term>(out var term) && term.term.TryAs<string>(out var str))
-        //         {
-        //             if (!definitions.ContainsKey(str))
-        //                 Logger.Error($"Use of undefined set \"{str}\" in ElementOf statement");
-        //             Definition set = definitions[str];
-        //             foreach (var rule in set.rules)
-        //             {
-        //                 Dictionary<string, Expression> conversionDict = new() { { set.obj, binExpr.lhs } };
-        //                 AddStatement(RewriteExpression(rule.stmt.As<Expression>(), conversionDict, num));
-        //             }
-        //             num++;
-        //         }
-        //         else
-        //             throw new NotImplementedException();
-        //     }
-        //     else if (binExpr.op.type == TokenType.AND)
-        //     {
-        //         AddStatement(binExpr.lhs);
-        //         AddStatement(binExpr.rhs);
-        //     }
-        //     else if (binExpr.op.type == TokenType.IMPLIES)
-        //     {
-        //         if (AnalyseStatement(binExpr.lhs, -1) == StmtVal.TRUE)
-        //             AddStatement(binExpr.rhs);
-        //     }
-        // }
         statements.Add(stmt);
     }
 }

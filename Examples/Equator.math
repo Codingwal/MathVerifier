@@ -1,0 +1,32 @@
+define ℝ:
+end
+
+define π:
+end
+
+define Stetig:
+end
+
+define 2:
+    ∀x(x + x = 2 ⋅ x)
+end
+
+theorem Equator(f):
+    ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
+    Stetig(f)
+    ∀x(x ∈ ℝ ⇒ f(x) = f(x + 2⋅π))   // f ist Periodisch
+⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
+{
+    let d: ∀x(d(x) = f(x + π) - f(x))
+    
+    if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
+    {
+        ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
+        
+        
+    }
+    else
+    {
+
+    }
+}
