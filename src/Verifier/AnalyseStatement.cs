@@ -73,7 +73,7 @@ public partial class Verifier
                 }
             case TokenType.EQUALS:
                 {
-                    return AnalyseExpressionEquality(binExpr.lhs, binExpr.rhs, line);
+                    return CompareExpressions(binExpr.lhs, binExpr.rhs) ? StmtVal.TRUE : StmtVal.UNKNOWN;
                 }
             case TokenType.ELEMENT_OF:
             case TokenType.SUBSET:
