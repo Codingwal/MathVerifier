@@ -1,7 +1,10 @@
 public static class Lexer
 {
+    private static bool inMultiLineComment;
     public static List<List<Token>> Tokenize(string fileName)
     {
+        inMultiLineComment = false;
+
         List<List<Token>> tokens = new();
 
         StreamReader reader = new(fileName);
@@ -26,24 +29,36 @@ public static class Lexer
         int i = 0;
         while (i < str.Length)
         {
-            if (char.IsWhiteSpace(str[i]))
+            if (inMultiLineComment)
+            {
+                if (str[i] == '*' && str[i + 1] == '/')
+                {
+                    i += 2;
+                    inMultiLineComment = false;
+                }
+                else
+                    i++;
+            }
+            else if (char.IsWhiteSpace(str[i]))
             {
                 i++;
-                continue;
             }
-
-            if (str[i] == '/' && str[i + 1] == '/') // Comment
+            else if (str[i] == '/' && str[i + 1] == '*') // Multi-line comment
+            {
+                i += 2;
+                inMultiLineComment = true;
+            }
+            else if (str[i] == '/' && str[i + 1] == '/') // Comment
             {
                 tokens.Add(new Token(TokenType.NEWLINE));
                 return tokens;
             }
-
-            if (str[i] == '\\') // Multi-line statement
+            else if (str[i] == '\\') // Multi-line statement
             {
                 return tokens;
             }
-
-            tokens.Add(Tokenize(str, ref i, line));
+            else
+                tokens.Add(Tokenize(str, ref i, line));
         }
         tokens.Add(new Token(TokenType.NEWLINE));
         return tokens;
