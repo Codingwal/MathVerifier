@@ -9,3 +9,4 @@
     - distinguish between expressions & statements (?)
 - multi-line comments
 - multiple objects ("let" statement, ∀, ∃)
+- fix ExpressionBuilder FuncCall output (trailing comma)

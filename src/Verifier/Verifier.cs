@@ -11,14 +11,12 @@ public partial class Verifier
     private ScopeStack<Expression> statements;
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
-    private int num; // Used so that expressions copied from a definition use different variable names 
     public Verifier(Data ast)
     {
         this.ast = ast;
         statements = new();
         theorems = new();
         definitions = new();
-        num = 0;
     }
     public void Verify()
     {
@@ -77,23 +75,12 @@ public partial class Verifier
         {
             if (stmt.proof.TryAs<FuncCall>(out var funcCall))
             {
-                Theorem theorem = theorems[funcCall.name];
-
-                Dictionary<string, Expression> conversionDict = new();
-                for (int i = 0; i < theorem.parameters.Count; i++)
-                    conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
-
-                foreach (var requirement in theorem.requirements)
-                    Logger.Assert(AnalyseStatement(RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, num++), requirement.line) == StmtVal.TRUE,
-                        $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {stmt.line}." +
-                        $"\n{ExpressionBuilder.ExpressionToString(RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, num))}");
-
-                AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, num++));
+                HandleFuncCallProof(funcCall, stmt.line);
             }
             else if (stmt.proof.TryAs<string>(out var str))
             {
                 foreach (var rule in definitions[str].rules)
-                    AddStatement(RewriteExpression(rule.stmt.As<Expression>(), new(), num++));
+                    AddStatement(RewriteExpression(rule.stmt.As<Expression>(), new()));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -115,6 +102,69 @@ public partial class Verifier
             Logger.Error($"Statement in line {stmt.line} is false.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
         else
             Logger.Error($"Failed to verify statement in line {stmt.line}.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
+    }
+
+    private void HandleFuncCallProof(FuncCall funcCall, int line)
+    {
+        Theorem theorem = theorems[funcCall.name];
+
+        // Setup conversion lists (inspect arguments)
+        Dictionary<string, Expression> conversionDict = new();
+        Dictionary<string, Expression> replaceArgs = new();
+        for (int i = 0; i < theorem.parameters.Count; i++)
+        {
+            if (ContainsReplaceArgs(funcCall.args[i]))
+                replaceArgs.Add(theorem.parameters[i], funcCall.args[i]);
+            else
+                conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
+        }
+
+        Expression? RewriteCallback(Expression old)
+        {
+            if (!old.TryAs<Term>(out var term)) return null; // Ignore BinExpr
+
+            // Arguments with replace args can't be used as objects
+            if (term.term.TryAs<string>(out var str))
+            {
+                Logger.Assert(!replaceArgs.ContainsKey(str), $"Can't use replace arguments if the argument is used as an object!");
+                return null;
+            }
+
+            if (!term.term.TryAs<FuncCall>(out var call)) return null; // Ignore everything except FuncCall
+            if (!replaceArgs.TryGetValue(call.name, out var arg)) return null; // Ignore if not in replaceArgs
+
+            // Rewrite functions passed as replace args
+            for (int i = 0; i < call.args.Count; i++) conversionDict.Add($"_{i}", call.args[i]);
+            Expression newExpr = RewriteExpression(arg, conversionDict);
+            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line}.");
+            for (int i = 0; i < call.args.Count; i++) conversionDict.Remove($"_{i}");
+
+            // A second rewrite is required because the first only converts to the objects used in the theorem
+            newExpr = RewriteExpression(newExpr, conversionDict);
+
+            return newExpr;
+        }
+
+        // Rewrite and verify requirements
+        foreach (var requirement in theorem.requirements)
+        {
+            Expression req = RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, RewriteCallback);
+
+            Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
+                $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {line}." +
+                $"\n{ExpressionBuilder.ExpressionToString(req)}");
+        }
+
+        // Rewrite hypothesis and add it to the verified statements
+        AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, RewriteCallback));
+    }
+
+    private bool ContainsReplaceArgs(Expression expr)
+    {
+        return Find(expr,
+                expr => expr.TryAs<Term>(out var term)
+                    && term.term.TryAs<string>(out var str)
+                    && str[0] == '_');
     }
 
     private void AddStatement(Expression stmt)

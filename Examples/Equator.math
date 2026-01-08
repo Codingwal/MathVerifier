@@ -8,10 +8,37 @@ end
 define Stetig:
 end
 
+define 0:
+    0 ∈ ℝ
+end
+
 define 2:
     ∀x(x + x = 2 ⋅ x)
     2 ∈ ℝ
 end
+
+theorem MP(P, Q):
+    P
+    P ⇒ Q
+⇒ Q
+{
+    sorry
+}
+
+theorem Choose(ϕ, a):
+    ∀x(ϕ(x))
+⇒ ϕ(a)
+{
+    sorry
+}
+
+theorem AddInℝ(a, b):
+    a ∈ ℝ
+    b ∈ ℝ
+⇒ a + b ∈ ℝ
+{
+    sorry
+}
 
 theorem Associative(a, b, c):
     a ∈ ℝ
@@ -22,10 +49,18 @@ theorem Associative(a, b, c):
     sorry
 }
 
+theorem T1(a, b):
+    a ∈ ℝ
+    b ∈ ℝ
+⇒ a - b = 0 - (b - a)
+{
+    sorry
+}
+
 theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
     Stetig(f)
-    ∀x(x ∈ ℝ ⇒ f(x) = f(x + 2⋅π))   // f ist Periodisch
+    ∀x(x ∈ ℝ ⇒ f(x + 2⋅π) = f(x))    // f ist Periodisch
 ⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 {
     let d: ∀x(d(x) = f(x + π) - f(x))
@@ -33,10 +68,24 @@ theorem Equator(f):
 
     π ∈ ℝ       | @π
 
-    d(a + π) = d((a + π) + π) - d(a + π)    | sorry
-    d(a + π) = d(a + (π + π)) - d(a + π)    | Associative(a, π, π)
-    d(a + π) = d(a + 2⋅π) - d(a + π)        | sorry
-    d(a + π) = d(a) - d(a + π)              | sorry
+    d(a + π) = f((a + π) + π) - f(a + π)    | Choose(d(_0) = f(_0 + π) - f(_0), a + π)
+    d(a + π) = f(a + (π + π)) - f(a + π)    | Associative(a, π, π)
+
+    ∀x(x + x = 2 ⋅ x)                   | @2
+    d(a + π) = f(a + 2⋅π) - f(a + π)    | Choose(_0 + _0 = 2 ⋅ _0, π)
+
+    a ∈ ℝ ⇒ f(a + 2⋅π) = f(a)   | Choose(_0 ∈ ℝ ⇒ f(_0 + 2⋅π) = f(_0), a)
+    d(a + π) = f(a) - f(a + π)  | MP(a ∈ ℝ, f(a + 2⋅π) = f(a))
+
+    a ∈ ℝ ⇒ f(a) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a)
+    f(a) ∈ ℝ             | MP(a ∈ ℝ, f(a) ∈ ℝ)
+
+    a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ   | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a + π)
+    a + π ∈ ℝ                   | AddInℝ(a, π)
+    f(a + π) ∈ ℝ                | MP(a + π ∈ ℝ, f(a + π) ∈ ℝ)
+
+    d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
+    d(a + π) = 0 - d(a)                 | Choose(d(_0) = f(_0 + π) - f(_0), a)
 
     sorry
     

@@ -27,6 +27,7 @@ public class SyntaxChecker
         // Check parameters
         foreach (string param in theorem.parameters)
         {
+            Logger.Assert(param[0] != '_', $"Object names are not allowed to start with '_'! (line {theorem.line})");
             Logger.Assert(!objects.Contains(param), $"An object with the name \"{param}\" has already been defined! (line {theorem.line})");
             objects.Add(param);
         }
@@ -48,6 +49,7 @@ public class SyntaxChecker
     private void CheckDefinition(Definition definition)
     {
         // Check name
+        Logger.Assert(definition.name[0] != '_', $"Object names are not allowed to start with '_'! (line {definition.line})");
         Logger.Assert(!objects.Contains(definition.name), $"An object with the name {definition.name} has already been defined! (line {definition.line}).");
         objects.Add(definition.name);
         definitions.Add(definition.name);
@@ -83,6 +85,7 @@ public class SyntaxChecker
         {
             Logger.Assert(allowDefStmt, $"Unexpected definition statement in line {stmtLine.line}.");
             Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
+            Logger.Assert(defStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {stmtLine.line})");
             Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
             objects.Add(defStmt.obj);
             CheckExpression(defStmt.stmt, stmtLine.line);
@@ -99,8 +102,16 @@ public class SyntaxChecker
                 Logger.Assert(theorems.ContainsKey(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" as proof in line {stmtLine.line}.");
                 Logger.Assert(funcCall.args.Count == theorems[funcCall.name].parameters.Count,
                     $"Expected {theorems[funcCall.name].parameters.Count} arguments but found {funcCall.args.Count} at reference to theorem {funcCall.name} in line {stmtLine.line}");
+
+                objects.EnterScope("Proof-FuncCall");
+
+                for (int i = 0; i < 5; i++)
+                    objects.Add($"_{i}");
+
                 foreach (var arg in funcCall.args)
                     CheckExpression(arg, stmtLine.line);
+
+                objects.ExitScope("Proof-FuncCall");
             },
             definitionRef =>
             {
@@ -135,6 +146,7 @@ public class SyntaxChecker
                     qStmt =>
                     {
                         // Operator is checked on creation
+                        Logger.Assert(qStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
                         Logger.Assert(!objects.Contains(qStmt.obj), $"An object with name \"{qStmt.obj}\" has already been defined! (line {line})");
                         objects.EnterScope("Quantified statement");
                         objects.Add(qStmt.obj);

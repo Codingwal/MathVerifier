@@ -1,29 +1,44 @@
 public partial class Verifier
 {
-    private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, int num)
+    private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
     {
+        if (callback != null)
+        {
+            Expression? tmp = callback(old);
+            if (tmp != null)
+                return tmp;
+        }
+
+
         return old.Match(
             binExpr =>
             {
                 return new BinExpr()
                 {
-                    lhs = RewriteExpression(binExpr.lhs, conversionDict, num),
+                    lhs = RewriteExpression(binExpr.lhs, conversionDict, callback),
                     op = binExpr.op,
-                    rhs = RewriteExpression(binExpr.rhs, conversionDict, num),
+                    rhs = RewriteExpression(binExpr.rhs, conversionDict, callback),
                 };
             },
             term =>
             {
                 return term.term.Match(
-                    expr => RewriteExpression(expr, conversionDict, num),
+                    expr => RewriteExpression(expr, conversionDict, callback),
                     funcCall =>
                     {
-                        FuncCall newFuncCall = new()
+                        string name = "";
+                        if (conversionDict.TryGetValue(funcCall.name, out var newExpr))
                         {
-                            name = funcCall.name,
-                        };
+                            if (!newExpr.TryAs<Term>(out var term) || !term.term.TryAs(out string newName))
+                                Logger.Error($"Expected object as argument (parameter {funcCall.name} is used as a function)");
+                            else
+                                name = newName;
+                        }
+                        else name = funcCall.name;
+
+                        FuncCall newFuncCall = new() { name = name };
                         foreach (Expression expr in funcCall.args)
-                            newFuncCall.args.Add(RewriteExpression(expr, conversionDict, num));
+                            newFuncCall.args.Add(RewriteExpression(expr, conversionDict, callback));
                         return new Term(newFuncCall);
                     },
                     qStmt =>
@@ -31,10 +46,10 @@ public partial class Verifier
                         QuantifiedStatement newStmt = new()
                         {
                             op = qStmt.op,
-                            obj = $"_{qStmt.obj}{num}"
+                            obj = $"_{qStmt.obj}"
                         };
                         conversionDict.Add(qStmt.obj, new Term(newStmt.obj));
-                        newStmt.stmt = RewriteExpression(qStmt.stmt, conversionDict, num);
+                        newStmt.stmt = RewriteExpression(qStmt.stmt, conversionDict, callback);
                         conversionDict.Remove(qStmt.obj);
                         return new Term(newStmt);
                     },
@@ -84,7 +99,7 @@ public partial class Verifier
                 {
                     var qStmtB = termB.As<QuantifiedStatement>();
                     if (qStmtA.op != qStmtB.op) return false;
-                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }, num++), compareUsingStatements);
+                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }), compareUsingStatements);
                 },
                 str => str == termB.As<string>(),
                 unExprA =>
@@ -118,5 +133,27 @@ public partial class Verifier
                 return true;
         }
         return false;
+    }
+
+    private bool Find(Expression expr, Func<Expression, bool> predicate)
+    {
+        if (predicate(expr))
+            return true;
+
+        return expr.Match(
+            binExpr => Find(binExpr.lhs, predicate) || Find(binExpr.rhs, predicate),
+            term => term.term.Match(
+                expr => Find(expr, predicate),
+                funcCall =>
+                {
+                    foreach (var arg in funcCall.args)
+                        if (Find(arg, predicate)) return true;
+                    return false;
+                },
+                qStmt => Find(qStmt.stmt, predicate),
+                str => false,
+                unExpr => Find(unExpr.expr, predicate)
+                )
+            );
     }
 }
