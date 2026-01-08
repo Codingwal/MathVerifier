@@ -16,8 +16,8 @@ public static class ExpressionBuilder
                     funcCall =>
                     {
                         string str = $"{funcCall.name}(";
-                        foreach (var arg in funcCall.args)
-                            str += ExpressionToString(arg) + ",";
+                        for (int i = 0; i < funcCall.args.Count; i++)
+                            str += ExpressionToString(funcCall.args[i]) + ((i + 1 < funcCall.args.Count) ? "," : "");
                         str += ")";
                         return str;
                     },

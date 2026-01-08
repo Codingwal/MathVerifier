@@ -1,12 +1,11 @@
 - "let" statement
     - use to create ∀ & ∃
 
-- if / else
-- proof by contradiction
+- if / else -> cases
+    - proof by contradiction
 - require proof of existence for definitions
 - improve SyntaxChecker
     - check operators
     - distinguish between expressions & statements (?)
 - multi-line comments
 - multiple objects ("let" statement, ∀, ∃)
-- fix ExpressionBuilder FuncCall output (trailing comma)
