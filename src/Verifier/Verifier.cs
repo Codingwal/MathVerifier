@@ -62,14 +62,24 @@ public partial class Verifier
                 }
                 else if (cmd == Command.CHECK)
                 {
+                    statements.EnterScope("Check command");
+                    AddProofToStatements(stmt.proof, stmt.line, out var _);
+
+                    // Print statements
                     Console.WriteLine("\nCurrent statements:");
                     foreach (var s in statements.GetAll())
                         Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
                     Console.WriteLine("-------------------\n");
+
+                    statements.ExitScope("Check command");
                 }
             }
             else if (stmt.stmt.TryAs<DefinitionStatement>(out var defStmt))
             {
+                statements.EnterScope("Definition statement");
+                AddProofToStatements(stmt.proof, stmt.line, out var sorry);
+                // TODO: require exists statement
+                statements.ExitScope("Definition statement");
                 statements.Add(defStmt.stmt);
             }
             else if (stmt.stmt.TryAs<ConditionalStatement>(out var condStmt))
@@ -115,29 +125,9 @@ public partial class Verifier
 
         statements.EnterScope("Statement"); // Proof statements should get deleted after verifying the statement
 
-        // Handle proof
-        if (stmt.proof != null)
-        {
-            if (stmt.proof.TryAs<FuncCall>(out var funcCall))
-            {
-                HandleFuncCallProof(funcCall, stmt.line);
-            }
-            else if (stmt.proof.TryAs<string>(out var str))
-            {
-                foreach (var rule in definitions[str].rules)
-                    statements.Add(RewriteExpression(rule.expr, new()));
-            }
-            else if (stmt.proof.TryAs<Command>(out var command))
-            {
-                if (command == Command.SORRY)
-                {
-                    statements.ExitScope("Statement");
-                    return;
-                }
-            }
-        }
+        AddProofToStatements(stmt.proof, stmt.line, out bool sorry);
 
-        StmtVal stmtVal = AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
+        StmtVal stmtVal = sorry ? StmtVal.TRUE : AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
 
         statements.ExitScope("Statement");
 
@@ -147,6 +137,30 @@ public partial class Verifier
             Logger.Error($"Statement in line {stmt.line} is false.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
         else
             Logger.Error($"Failed to verify statement in line {stmt.line}.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
+    }
+
+    private void AddProofToStatements(Variant<FuncCall, string, Command>? proof, int line, out bool sorry)
+    {
+        sorry = false;
+
+        if (proof == null) return;
+
+        if (proof.TryAs<FuncCall>(out var funcCall))
+        {
+            HandleFuncCallProof(funcCall, line);
+        }
+        else if (proof.TryAs<string>(out var str))
+        {
+            foreach (var rule in definitions[str].rules)
+                statements.Add(RewriteExpression(rule.expr, new()));
+        }
+        else if (proof.TryAs<Command>(out var command))
+        {
+            if (command == Command.SORRY)
+            {                
+                sorry = true;
+            }
+        }
     }
 
     private void HandleFuncCallProof(FuncCall funcCall, int line)

@@ -148,31 +148,13 @@ public class Parser
     }
     private StatementLine ParseStatementLine()
     {
-        if (Peek().type == TokenType.CHECK)
-        {
-            Consume();
-            ConsumeExpect(TokenType.NEWLINE);
-            return new() { stmt = Command.CHECK, line = line };
-        }
-        else if (Peek().type == TokenType.SORRY)
+        if (Peek().type == TokenType.SORRY) // Parse sorry statement
         {
             Consume();
             ConsumeExpect(TokenType.NEWLINE);
             return new() { stmt = Command.SORRY, line = line };
         }
-        else if (Peek().type == TokenType.LET)
-        {
-            Consume();
-            var defStmt = new DefinitionStatement()
-            {
-                obj = ConsumeExpect(TokenType.STRING).GetString(),
-            };
-            ConsumeExpect(TokenType.COLON);
-            defStmt.stmt = ParseExpression();
-            ConsumeExpect(TokenType.NEWLINE);
-            return new() { stmt = defStmt, line = line };
-        }
-        else if (Peek().type == TokenType.IF)
+        else if (Peek().type == TokenType.IF) // Parse conditional statement
         {
             Consume();
             ConsumeExpect(TokenType.BRACKET_OPEN);
@@ -194,32 +176,46 @@ public class Parser
 
             return new() { stmt = condStmt, line = line };
         }
-        else
+
+        StatementLine stmt;
+        if (Peek().type == TokenType.LET) // Parse definition statement
         {
-            StatementLine stmt = new()
+            Consume();
+            var defStmt = new DefinitionStatement()
             {
-                stmt = new(ParseExpression()),
-                line = line
+                obj = ConsumeExpect(TokenType.STRING).GetString(),
             };
-            if (Peek().type == TokenType.PIPE)
+            ConsumeExpect(TokenType.COLON);
+            defStmt.stmt = ParseExpression();
+            stmt = new() { stmt = defStmt, line = line };
+        }
+        else if (Peek().type == TokenType.CHECK) // Parse check command
+        {
+            Consume();
+            stmt = new() { stmt = Command.CHECK, line = line };
+        }
+        else // Parse expression statement
+            stmt = new() { stmt = new(ParseExpression()), line = line };
+
+        // Parse proof
+        if (Peek().type == TokenType.PIPE)
+        {
+            Consume();
+            if (Peek().type == TokenType.SORRY)
             {
                 Consume();
-                if (Peek().type == TokenType.SORRY)
-                {
-                    Consume();
-                    stmt.proof = Command.SORRY;
-                }
-                else if (Peek().type == TokenType.AT)
-                {
-                    Consume();
-                    stmt.proof = ConsumeExpect(TokenType.STRING).GetString();
-                }
-                else
-                    stmt.proof = ParseFuncCall();
+                stmt.proof = Command.SORRY;
             }
-            ConsumeExpect(TokenType.NEWLINE);
-            return stmt;
+            else if (Peek().type == TokenType.AT)
+            {
+                Consume();
+                stmt.proof = ConsumeExpect(TokenType.STRING).GetString();
+            }
+            else
+                stmt.proof = ParseFuncCall();
         }
+        ConsumeExpect(TokenType.NEWLINE);
+        return stmt;
     }
     private FuncCall ParseFuncCall()
     {

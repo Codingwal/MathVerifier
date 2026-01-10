@@ -67,20 +67,14 @@ public class SyntaxChecker
     }
     private void CheckStatementLine(StatementLine stmtLine)
     {
-        if (stmtLine.stmt.Is<Command>())
-            return;
-
-        // Handle definition statements (let x: P(x))
-        if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
+        // Handle sorry statement
+        if (stmtLine.stmt.TryAs<Command>(out var cmd) && cmd == Command.SORRY)
         {
             Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
-            Logger.Assert(defStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {stmtLine.line})");
-            Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
-            objects.Add(defStmt.obj);
-            CheckExpression(defStmt.stmt, stmtLine.line);
             return;
         }
 
+        // Handle conditional statements
         if (stmtLine.stmt.TryAs<ConditionalStatement>(out var condStmt))
         {
             CheckExpressionLine(condStmt.condition);
@@ -100,8 +94,19 @@ public class SyntaxChecker
             return;
         }
 
-        // Check statement
-        CheckExpression(stmtLine.stmt.As<Expression>(), stmtLine.line);
+        // Handle definition statements (let x: P(x))
+        if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
+        {
+            Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
+            Logger.Assert(defStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {stmtLine.line})");
+            Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
+            objects.Add(defStmt.obj);
+            CheckExpression(defStmt.stmt, stmtLine.line);
+        }
+        else if (stmtLine.stmt.TryAs<Command>(out var command))
+            Logger.Assert(command == Command.CHECK, $"Expected check command in line {stmtLine.line}");
+        else
+            CheckExpression(stmtLine.stmt.As<Expression>(), stmtLine.line);
 
         // Check proof
         stmtLine.proof?.Switch(

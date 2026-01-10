@@ -94,6 +94,7 @@ theorem Equator(f):
     
     if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
     {
+        check                       | T3(_0 ∈ ℝ ∧ d(_0) = 0)
         ∀x(¬(x ∈ ℝ ∧ d(x) = 0))     | T3(_0 ∈ ℝ ∧ d(_0) = 0)
     }
     else
