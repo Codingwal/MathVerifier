@@ -265,6 +265,11 @@ public class Parser
                     op = Consume(),
                     expr = ParseTerm()
                 });
+            case TokenType.BRACKET_OPEN:
+                Consume();
+                Term term = new(ParseExpression());
+                ConsumeExpect(TokenType.BRACKET_CLOSE);
+                return term;
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

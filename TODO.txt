@@ -1,6 +1,4 @@
-- "let" statement
-    - use to create ∀ & ∃
-
+- use definition statement to create ∀ & ∃
 - if / else -> cases
     - proof by contradiction
 - require proof of existence for definitions
@@ -8,3 +6,4 @@
     - check operators
     - distinguish between expressions & statements (?)
 - multiple objects ("let" statement, ∀, ∃)
+- tuples
