@@ -130,18 +130,34 @@ public struct Token : ICustomFormatting
             TokenType.AND => 3,
 
             // Expr x Expr => Stmt
-            TokenType.ELEMENT_OF => 5,
-            TokenType.SUBSET => 5,
-            TokenType.EQUALS => 5,
+            TokenType.ELEMENT_OF => 100,
+            TokenType.SUBSET => 100,
+            TokenType.EQUALS => 100,
 
             // Expr x Expr => Expr
-            TokenType.PLUS => 10,
-            TokenType.MINUS => 10,
-            TokenType.STAR => 12,
-            TokenType.BACKSLASH => 12,
-            TokenType.STRING => 100, // Operator object
+            TokenType.PLUS => 200,
+            TokenType.MINUS => 200,
+            TokenType.STAR => 201,
+            TokenType.BACKSLASH => 201,
+            TokenType.STRING => 250, // Operator object
             _ => -1,
         };
+    }
+
+    public enum BinOpType
+    {
+        None,
+        Stmt2Stmt,
+        Expr2Stmt,
+        Expr2Expr
+    }
+    public static BinOpType GetBinOpType(TokenType tokenType)
+    {
+        int prec = GetPrecedence(tokenType);
+        if (prec == -1) return BinOpType.None;
+        if (prec < 100) return BinOpType.Stmt2Stmt;
+        if (prec < 200) return BinOpType.Expr2Stmt;
+        return BinOpType.Expr2Expr;
     }
 
     public TokenType type;

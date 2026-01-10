@@ -74,15 +74,13 @@ theorem Equator(f):
     ∀x(x + x = 2 ⋅ x)                   | @2
     d(a + π) = f(a + 2⋅π) - f(a + π)    | Choose(_0 + _0 = 2 ⋅ _0, π)
 
-    a ∈ ℝ ⇒ f(a + 2⋅π) = f(a)   | Choose(_0 ∈ ℝ ⇒ f(_0 + 2⋅π) = f(_0), a)
-    d(a + π) = f(a) - f(a + π)  | MP(a ∈ ℝ, f(a + 2⋅π) = f(a))
+    f(a + 2⋅π) = f(a)           | Choose(_0 ∈ ℝ ⇒ f(_0 + 2⋅π) = f(_0), a)
+    d(a + π) = f(a) - f(a + π)
 
-    a ∈ ℝ ⇒ f(a) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a)
-    f(a) ∈ ℝ             | MP(a ∈ ℝ, f(a) ∈ ℝ)
+    f(a) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a)
 
-    a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ   | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a + π)
-    a + π ∈ ℝ                   | AddInℝ(a, π)
-    f(a + π) ∈ ℝ                | MP(a + π ∈ ℝ, f(a + π) ∈ ℝ)
+    a + π ∈ ℝ       | AddInℝ(a, π)
+    f(a + π) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a + π)
 
     d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
     d(a + π) = 0 - d(a)                 | Choose(d(_0) = f(_0 + π) - f(_0), a)
@@ -94,11 +92,11 @@ theorem Equator(f):
     }
     else
     {
-
+        ¬¬∃x(x ∈ ℝ ∧ d(x) = 0)
     }
     both
     {
-
+        2 = 2
     }
 
     sorry

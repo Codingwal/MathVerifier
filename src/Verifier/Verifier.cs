@@ -31,7 +31,7 @@ public partial class Verifier
         statements.EnterScope("Theorem");
 
         foreach (var stmt in theorem.requirements)
-            AddStatement(stmt.expr);
+            statements.Add(stmt.expr);
 
         VerifyScope(theorem.proof, out bool sorryStatement);
 
@@ -70,18 +70,18 @@ public partial class Verifier
             }
             else if (stmt.stmt.TryAs<DefinitionStatement>(out var defStmt))
             {
-                AddStatement(defStmt.stmt);
+                statements.Add(defStmt.stmt);
             }
             else if (stmt.stmt.TryAs<ConditionalStatement>(out var condStmt))
             {
                 statements.EnterScope("If");
-                AddStatement(condStmt.condition.expr);
+                statements.Add(condStmt.condition.expr);
                 VerifyScope(condStmt.ifScope, out bool _);
                 VerifyScope(condStmt.bothScope, out bool _);
                 statements.ExitScope("If");
 
                 statements.EnterScope("Else");
-                AddStatement(new Term(new UnaryExpr() { op = new(TokenType.NOT), expr = condStmt.condition.expr }));
+                statements.Add(new Term(new UnaryExpr() { op = new(TokenType.NOT), expr = condStmt.condition.expr }));
                 VerifyScope(condStmt.elseScope, out bool _);
                 VerifyScope(condStmt.bothScope, out bool _);
                 statements.ExitScope("Else");
@@ -91,7 +91,7 @@ public partial class Verifier
             else
             {
                 VerifyStatementLine(stmt);
-                AddStatement(stmt.stmt.As<Expression>());
+                statements.Add(stmt.stmt.As<Expression>());
             }
         }
     }
@@ -101,9 +101,9 @@ public partial class Verifier
         foreach (var stmtLine in scope.statements)
         {
             stmtLine.stmt.Switch(
-                AddStatement,
+                statements.Add,
                 cmd => { },
-                defStmt => AddStatement(defStmt.stmt),
+                defStmt => statements.Add(defStmt.stmt),
                 condStmt => AddScopeStatements(condStmt.bothScope)
                 );
         }
@@ -125,7 +125,7 @@ public partial class Verifier
             else if (stmt.proof.TryAs<string>(out var str))
             {
                 foreach (var rule in definitions[str].rules)
-                    AddStatement(RewriteExpression(rule.expr, new()));
+                    statements.Add(RewriteExpression(rule.expr, new()));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -201,7 +201,7 @@ public partial class Verifier
         }
 
         // Rewrite hypothesis and add it to the verified statements
-        AddStatement(RewriteExpression(theorem.hypothesis.expr, conversionDict, RewriteCallback));
+        statements.Add(RewriteExpression(theorem.hypothesis.expr, conversionDict, RewriteCallback));
     }
 
     private bool ContainsReplaceArgs(Expression expr)
@@ -212,8 +212,4 @@ public partial class Verifier
                     && str[0] == '_');
     }
 
-    private void AddStatement(Expression stmt)
-    {
-        statements.Add(stmt);
-    }
 }

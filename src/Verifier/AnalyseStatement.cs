@@ -1,11 +1,19 @@
 public partial class Verifier
 {
-    private StmtVal AnalyseStatement(Expression expr, int line)
+    private StmtVal AnalyseStatement(Expression expr, int line, bool recursion = true)
     {
         // Check if the statement has already been proven
         foreach (var stmt in statements.GetAll())
-            if (CompareExpressions(stmt, expr))
-                return StmtVal.TRUE;
+        {
+            if (recursion)
+            {
+                if (ProofStatementWith(expr, stmt)) return StmtVal.TRUE;
+            }
+            else
+            {
+                if (CompareExpressions(expr, stmt)) return StmtVal.TRUE;
+            }
+        }
 
         // Analyse statement recursively
         return expr.Match(
@@ -23,7 +31,7 @@ public partial class Verifier
 
                     // Add statements valid in this context
                     statements.EnterScope("Implies");
-                    AddStatement(binExpr.lhs);
+                    statements.Add(binExpr.lhs);
 
                     StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
 
@@ -139,4 +147,56 @@ public partial class Verifier
             });
     }
 
+    private bool ProofStatementWith(Expression stmt, Expression other)
+    {
+        if (CompareExpressions(stmt, other))
+            return true;
+
+        if (other.TryAs<BinExpr>(out var binExpr))
+            return ProofStatementWithBinExpr(stmt, binExpr);
+
+        return false;
+    }
+
+    private bool ProofStatementWithBinExpr(Expression stmt, BinExpr binExpr)
+    {
+        if (Token.GetBinOpType(binExpr.op.type) != Token.BinOpType.Stmt2Stmt)
+            return false;
+
+        StmtVal lhs = AnalyseStatement(binExpr.lhs, -1, recursion: false);
+        StmtVal rhs = AnalyseStatement(binExpr.rhs, -1, recursion: false);
+
+        switch (binExpr.op.type)
+        {
+            case TokenType.EQUIVALENT:
+                // L ⇔ R and L implies R
+                if (lhs == StmtVal.TRUE)
+                    if (ProofStatementWith(stmt, binExpr.rhs)) return true;
+                // L ⇔ R and R implies L
+                if (rhs == StmtVal.TRUE)
+                    if (ProofStatementWith(stmt, binExpr.lhs)) return true;
+                break;
+            case TokenType.IMPLIES:
+                // L ⇒ R and L implies R
+                if (lhs == StmtVal.TRUE)
+                    if (ProofStatementWith(stmt, binExpr.rhs)) return true;
+                break;
+            case TokenType.AND:
+                // L ∧ R implies L and R
+                if (ProofStatementWith(stmt, binExpr.lhs)) return true;
+                if (ProofStatementWith(stmt, binExpr.rhs)) return true;
+                break;
+            case TokenType.OR:
+                // L ∨ R and ¬L implies R
+                if (lhs == StmtVal.FALSE)
+                    if (ProofStatementWith(stmt, binExpr.rhs)) return true;
+                // L ∨ R and ¬R implies L
+                if (rhs == StmtVal.FALSE)
+                    if (ProofStatementWith(stmt, binExpr.lhs)) return true;
+                break;
+            default:
+                throw new();
+        }
+        return false;
+    }
 }
