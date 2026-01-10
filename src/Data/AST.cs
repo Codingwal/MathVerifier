@@ -53,10 +53,31 @@ public struct DefinitionStatement
 }
 
 // High-level
+
+public struct ExpressionLine
+{
+    public Expression expr;
+    public int line;
+}
+public struct Scope
+{
+    public List<StatementLine> statements;
+    public Scope()
+    {
+        statements = new();
+    }
+}
+public struct ConditionalStatement
+{
+    public ExpressionLine condition;
+    public Scope ifScope;
+    public Scope elseScope;
+    public Scope bothScope;
+}
 public struct StatementLine
 {
     public int line;
-    public Variant<Expression, Command, DefinitionStatement> stmt;
+    public Variant<Expression, Command, DefinitionStatement, ConditionalStatement> stmt;
     public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
 
@@ -64,9 +85,9 @@ public struct Theorem
 {
     public string name;
     public List<string> parameters;
-    public List<StatementLine> requirements;
-    public StatementLine hypothesis;
-    public List<StatementLine> proof;
+    public List<ExpressionLine> requirements;
+    public ExpressionLine hypothesis;
+    public Scope proof;
     public int line;
     public Theorem()
     {
@@ -82,7 +103,7 @@ public struct Theorem
 public struct Definition
 {
     public string name;
-    public List<StatementLine> rules;
+    public List<ExpressionLine> rules;
     public int line;
     public Definition()
     {

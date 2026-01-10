@@ -31,15 +31,34 @@ public partial class Verifier
         statements.EnterScope("Theorem");
 
         foreach (var stmt in theorem.requirements)
-            AddStatement(stmt.stmt.As<Expression>());
+            AddStatement(stmt.expr);
 
-        foreach (var stmt in theorem.proof)
+        VerifyScope(theorem.proof, out bool sorryStatement);
+
+        // Verify hypothesis
+        if (!sorryStatement)
+        {
+            StmtVal val = AnalyseStatement(theorem.hypothesis.expr, theorem.hypothesis.line);
+            Logger.Assert(val != StmtVal.FALSE, $"Hypothesis in line {theorem.hypothesis.line} is false.");
+            Logger.Assert(val != StmtVal.UNKNOWN, $"Failed to verify hypothesis in line {theorem.hypothesis.line}");
+        }
+
+        statements.ExitScope("Theorem");
+        theorems.Add(theorem.name, theorem);
+    }
+
+    private void VerifyScope(Scope scope, out bool sorryStatement)
+    {
+        sorryStatement = false;
+
+        foreach (var stmt in scope.statements)
         {
             if (stmt.stmt.TryAs<Command>(out var cmd))
             {
                 if (cmd == Command.SORRY)
                 {
-                    goto done;
+                    sorryStatement = true;
+                    return;
                 }
                 else if (cmd == Command.CHECK)
                 {
@@ -53,17 +72,43 @@ public partial class Verifier
             {
                 AddStatement(defStmt.stmt);
             }
+            else if (stmt.stmt.TryAs<ConditionalStatement>(out var condStmt))
+            {
+                statements.EnterScope("If");
+                AddStatement(condStmt.condition.expr);
+                VerifyScope(condStmt.ifScope, out bool _);
+                VerifyScope(condStmt.bothScope, out bool _);
+                statements.ExitScope("If");
+
+                statements.EnterScope("Else");
+                AddStatement(new Term(new UnaryExpr() { op = new(TokenType.NOT), expr = condStmt.condition.expr }));
+                VerifyScope(condStmt.elseScope, out bool _);
+                VerifyScope(condStmt.bothScope, out bool _);
+                statements.ExitScope("Else");
+
+                AddScopeStatements(condStmt.bothScope);
+            }
             else
             {
                 VerifyStatementLine(stmt);
                 AddStatement(stmt.stmt.As<Expression>());
             }
         }
-        VerifyStatementLine(theorem.hypothesis);
-    done:
-        statements.ExitScope("Theorem");
-        theorems.Add(theorem.name, theorem);
     }
+
+    private void AddScopeStatements(Scope scope)
+    {
+        foreach (var stmtLine in scope.statements)
+        {
+            stmtLine.stmt.Switch(
+                AddStatement,
+                cmd => { },
+                defStmt => AddStatement(defStmt.stmt),
+                condStmt => AddScopeStatements(condStmt.bothScope)
+                );
+        }
+    }
+
     private void VerifyStatementLine(StatementLine stmt)
     {
         Console.WriteLine($"Verifying statement in line {stmt.line}.");
@@ -80,7 +125,7 @@ public partial class Verifier
             else if (stmt.proof.TryAs<string>(out var str))
             {
                 foreach (var rule in definitions[str].rules)
-                    AddStatement(RewriteExpression(rule.stmt.As<Expression>(), new()));
+                    AddStatement(RewriteExpression(rule.expr, new()));
             }
             else if (stmt.proof.TryAs<Command>(out var command))
             {
@@ -148,7 +193,7 @@ public partial class Verifier
         // Rewrite and verify requirements
         foreach (var requirement in theorem.requirements)
         {
-            Expression req = RewriteExpression(requirement.stmt.As<Expression>(), conversionDict, RewriteCallback);
+            Expression req = RewriteExpression(requirement.expr, conversionDict, RewriteCallback);
 
             Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
                 $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {line}." +
@@ -156,7 +201,7 @@ public partial class Verifier
         }
 
         // Rewrite hypothesis and add it to the verified statements
-        AddStatement(RewriteExpression(theorem.hypothesis.stmt.As<Expression>(), conversionDict, RewriteCallback));
+        AddStatement(RewriteExpression(theorem.hypothesis.expr, conversionDict, RewriteCallback));
     }
 
     private bool ContainsReplaceArgs(Expression expr)

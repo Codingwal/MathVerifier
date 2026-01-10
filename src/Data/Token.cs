@@ -55,6 +55,9 @@ public struct Token : ICustomFormatting
         DEFINE,
         END,
         LET,
+        IF,
+        ELSE,
+        BOTH,
 
         // Commands
         CHECK,
@@ -105,6 +108,9 @@ public struct Token : ICustomFormatting
         {"define", TokenType.DEFINE},
         {"let", TokenType.LET},
         {"end", TokenType.END},
+        {"if", TokenType.IF},
+        {"else", TokenType.ELSE},
+        {"both", TokenType.BOTH},
 
         // Commands
         {"check", TokenType.CHECK},

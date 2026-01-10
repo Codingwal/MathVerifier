@@ -84,7 +84,7 @@ public class Parser
         // Rules
         while (Peek().type != TokenType.END)
         {
-            definition.rules.Add(ParseStatementLine());
+            definition.rules.Add(ParseExpressionLine());
         }
         ConsumeExpect(TokenType.END);
         ConsumeExpect(TokenType.NEWLINE);
@@ -114,24 +114,37 @@ public class Parser
 
         // Required Statements
         while (Peek().type != TokenType.IMPLIES)
-        {
-            theorem.requirements.Add(ParseStatementLine());
-        }
+            theorem.requirements.Add(ParseExpressionLine());
 
         // Hypothesis
         ConsumeExpect(TokenType.IMPLIES);
-        theorem.hypothesis = ParseStatementLine();
+        theorem.hypothesis = ParseExpressionLine();
 
         // Proof
+        theorem.proof = ParseScope();
+
+        return theorem;
+    }
+    private Scope ParseScope()
+    {
+        Scope scope = new();
         ConsumeExpect(TokenType.CURLY_OPEN);
         ConsumeExpect(TokenType.NEWLINE);
         while (Peek().type != TokenType.CURLY_CLOSE)
-            theorem.proof.Add(ParseStatementLine());
-
+            scope.statements.Add(ParseStatementLine());
         ConsumeExpect(TokenType.CURLY_CLOSE);
         ConsumeExpect(TokenType.NEWLINE);
-
-        return theorem;
+        return scope;
+    }
+    private ExpressionLine ParseExpressionLine()
+    {
+        var exprLine = new ExpressionLine()
+        {
+            expr = ParseExpression(),
+            line = line
+        };
+        ConsumeExpect(TokenType.NEWLINE);
+        return exprLine;
     }
     private StatementLine ParseStatementLine()
     {
@@ -158,6 +171,28 @@ public class Parser
             defStmt.stmt = ParseExpression();
             ConsumeExpect(TokenType.NEWLINE);
             return new() { stmt = defStmt, line = line };
+        }
+        else if (Peek().type == TokenType.IF)
+        {
+            Consume();
+            ConsumeExpect(TokenType.BRACKET_OPEN);
+            var condStmt = new ConditionalStatement()
+            {
+                condition = new() { expr = ParseExpression(), line = line }
+            };
+            ConsumeExpect(TokenType.BRACKET_CLOSE);
+            ConsumeExpect(TokenType.NEWLINE);
+            condStmt.ifScope = ParseScope();
+
+            ConsumeExpect(TokenType.ELSE);
+            ConsumeExpect(TokenType.NEWLINE);
+            condStmt.elseScope = ParseScope();
+
+            ConsumeExpect(TokenType.BOTH);
+            ConsumeExpect(TokenType.NEWLINE);
+            condStmt.bothScope = ParseScope();
+
+            return new() { stmt = condStmt, line = line };
         }
         else
         {

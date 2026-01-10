@@ -86,19 +86,20 @@ theorem Equator(f):
 
     d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
     d(a + π) = 0 - d(a)                 | Choose(d(_0) = f(_0 + π) - f(_0), a)
-
-    sorry
     
-    /*
     if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
     {
-        ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
-        
-        
+        // ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
+        ¬∃x(x ∈ ℝ ∧ d(x) = 0)
     }
     else
     {
 
     }
-    */
+    both
+    {
+
+    }
+
+    sorry
 }
