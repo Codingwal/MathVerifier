@@ -6,3 +6,4 @@
     - distinguish between expressions & statements (?)
 - multiple objects ("let" statement, ∀, ∃)
 - tuples
+- allow proof for check statement

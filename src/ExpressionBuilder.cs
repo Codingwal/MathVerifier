@@ -21,7 +21,7 @@ public static class ExpressionBuilder
                         str += ")";
                         return str;
                     },
-                    qStmt => $"{new Token(qStmt.op).ToSymbol()} {qStmt.obj} ({ExpressionToString(qStmt.stmt)})",
+                    qStmt => $"{new Token(qStmt.op).ToSymbol()}{qStmt.obj}({ExpressionToString(qStmt.stmt)})",
                     str => str,
                     unaryExpr => $"{unaryExpr.op.ToSymbol()}({ExpressionToString(unaryExpr.expr)})"
                     );

@@ -17,14 +17,6 @@ define 2:
     2 ∈ ℝ
 end
 
-theorem MP(P, Q):
-    P
-    P ⇒ Q
-⇒ Q
-{
-    sorry
-}
-
 theorem Choose(ϕ, a):
     ∀x(ϕ(x))
 ⇒ ϕ(a)
@@ -57,6 +49,21 @@ theorem T1(a, b):
     sorry
 }
 
+theorem T2(P):
+⇒ ∀x(P(x)) ⇔ ¬∃x(¬P(x))
+{
+    sorry
+}
+
+theorem T3(ϕ):
+    ¬∃x(ϕ(x))
+⇒ ∀x(¬ϕ(x))
+{
+    ¬∃x(¬¬ϕ(x)) | sorry
+    check
+    ∀x(¬ϕ(x))   | T2(¬ϕ(_0))
+}
+
 theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
     Stetig(f)
@@ -87,8 +94,7 @@ theorem Equator(f):
     
     if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
     {
-        // ∀x(¬(x ∈ ℝ ∧ f(x) = 0))
-        ¬∃x(x ∈ ℝ ∧ d(x) = 0)
+        ∀x(¬(x ∈ ℝ ∧ d(x) = 0))     | T3(_0 ∈ ℝ ∧ d(_0) = 0)
     }
     else
     {
@@ -100,4 +106,4 @@ theorem Equator(f):
     }
 
     sorry
-}
+} 

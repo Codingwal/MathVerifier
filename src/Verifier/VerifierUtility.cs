@@ -60,7 +60,14 @@ public partial class Verifier
                         else
                             return new Term(str);
                     },
-                    num => new Term(num)
+                    unExpr =>
+                    {
+                        return new Term(new UnaryExpr()
+                        {
+                            op = unExpr.op,
+                            expr = RewriteExpression(unExpr.expr, conversionDict, callback),
+                        });
+                    }
                 );
             }
         );

@@ -17,23 +17,23 @@ public partial class Verifier
 
         // Analyse statement recursively
         return expr.Match(
-            binExpr => AnalyseBinExpr(binExpr, line),
-            term => AnalyseTerm(term, line));
+            binExpr => AnalyseBinExpr(binExpr, line, recursion),
+            term => AnalyseTerm(term, line, recursion));
     }
 
-    private StmtVal AnalyseBinExpr(BinExpr binExpr, int line)
+    private StmtVal AnalyseBinExpr(BinExpr binExpr, int line, bool recursion)
     {
         switch (binExpr.op.type)
         {
             case TokenType.IMPLIES:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
 
                     // Add statements valid in this context
                     statements.EnterScope("Implies");
                     statements.Add(binExpr.lhs);
 
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
 
                     statements.ExitScope("Implies");
 
@@ -47,8 +47,8 @@ public partial class Verifier
                 }
             case TokenType.EQUIVALENT:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
 
                     if (lhs == StmtVal.UNKNOWN || rhs == StmtVal.UNKNOWN)
                         return StmtVal.UNKNOWN;
@@ -57,8 +57,8 @@ public partial class Verifier
                 }
             case TokenType.OR:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
 
                     if (lhs == StmtVal.TRUE || rhs == StmtVal.TRUE)
                         return StmtVal.TRUE;
@@ -69,8 +69,8 @@ public partial class Verifier
                 }
             case TokenType.AND:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
 
                     if (lhs == StmtVal.TRUE && rhs == StmtVal.TRUE)
                         return StmtVal.TRUE;
@@ -92,16 +92,16 @@ public partial class Verifier
         }
     }
 
-    private StmtVal AnalyseTerm(Term term, int line)
+    private StmtVal AnalyseTerm(Term term, int line, bool recursion)
     {
         return term.term.Match(
-            expr => AnalyseStatement(expr, line),
+            expr => AnalyseStatement(expr, line, recursion),
             funcCall => StmtVal.UNKNOWN,
             qStmt =>
             {
                 if (qStmt.op == TokenType.FOR_ALL)
                 {
-                    StmtVal val = AnalyseStatement(qStmt.stmt, line);
+                    StmtVal val = AnalyseStatement(qStmt.stmt, line, recursion);
                     return val;
                 }
                 else if (qStmt.op == TokenType.EXISTS)
@@ -120,7 +120,7 @@ public partial class Verifier
                                 expr = qStmt.stmt           // ϕ(x)
                             })
                         })
-                    }), line);
+                    }), line, recursion);
                 }
                 else
                     throw new();
@@ -132,7 +132,7 @@ public partial class Verifier
                 {
                     case TokenType.NOT:
                         {
-                            StmtVal val = AnalyseStatement(unaryExpr.expr, line);
+                            StmtVal val = AnalyseStatement(unaryExpr.expr, line, recursion);
                             return val switch
                             {
                                 StmtVal.TRUE => StmtVal.FALSE,
@@ -152,8 +152,20 @@ public partial class Verifier
         if (CompareExpressions(stmt, other))
             return true;
 
+        // TODO: proof exists statement with object
+
         if (other.TryAs<BinExpr>(out var binExpr))
             return ProofStatementWithBinExpr(stmt, binExpr);
+        else if (other.TryAs<Term>(out var term))
+        {
+            return term.term.Match(
+                expr => ProofStatementWith(stmt, expr),
+                funcCall => false,
+                qStmt => false, // TODO ?
+                str => false,
+                unExpr => false
+            );
+        }
 
         return false;
     }
