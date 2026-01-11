@@ -17,6 +17,12 @@ define 2:
     2 ∈ ℝ
 end
 
+theorem ℝNotEmpty():
+⇒ ∃x(x ∈ ℝ)
+{
+    sorry
+}
+
 theorem Choose(ϕ, a):
     ∀x(ϕ(x))
 ⇒ ϕ(a)
@@ -29,6 +35,7 @@ theorem AddInℝ(a, b):
     b ∈ ℝ
 ⇒ a + b ∈ ℝ
 {
+    // 0 ∈ ℝ
     sorry
 }
 
@@ -94,8 +101,15 @@ theorem Equator(f):
     
     if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
     {
-        check                       | T3(_0 ∈ ℝ ∧ d(_0) = 0)
         ∀x(¬(x ∈ ℝ ∧ d(x) = 0))     | T3(_0 ∈ ℝ ∧ d(_0) = 0)
+        ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))
+        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)
+        ∃x(x ∈ ℝ)                   | ℝNotEmpty()
+        ∃x(x ∈ ℝ ∧ d(x) ≠ 0)
+        let b: b ∈ ℝ ∧ d(b) ≠ 0
+        d(b + π) = 0 - d(b)
+        ∃x(x ∈ ℝ ∧ x > 0) ∧ ∃x(x ∈ ℝ ∧ x < 0)
+        ∃x(x ∈ ℝ ∧ x = 0)
     }
     else
     {
@@ -103,8 +117,12 @@ theorem Equator(f):
     }
     both
     {
-        2 = 2
+        ∃x(x ∈ ℝ ∧ d(x) = 0)
     }
 
-    sorry
+    let c: c ∈ ℝ ∧ d(c) = 0
+    d(c) = 0
+    0 = f(c + π) - f(c)
+    f(c) = f(c + π)
+    ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 } 

@@ -78,6 +78,13 @@ public partial class Verifier
             if (CompareUsingStatements(a, b))
                 return true;
 
+
+        // Brackets should not make a difference
+        if (a.TryAs<Term>(out var tA) && tA.term.TryAs<Expression>(out var eA))
+            a = eA;
+        if (b.TryAs<Term>(out var tB) && tB.term.TryAs<Expression>(out var eB))
+            b = eB;
+
         if (a.Index != b.Index) return false;
 
         if (a.TryAs<BinExpr>(out var binA))
@@ -104,6 +111,7 @@ public partial class Verifier
                 },
                 qStmtA =>
                 {
+
                     var qStmtB = termB.As<QuantifiedStatement>();
                     if (qStmtA.op != qStmtB.op) return false;
                     return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }), compareUsingStatements);
@@ -134,6 +142,9 @@ public partial class Verifier
 
         foreach (var stmt in statements.GetAll())
         {
+            if (!stmt.TryAs<BinExpr>(out var binExpr) || binExpr.op != new Token(TokenType.EQUALS))
+                continue;
+
             if (CompareExpressions(equalStmtA, stmt, compareUsingStatements: false))
                 return true;
             if (CompareExpressions(equalStmtB, stmt, compareUsingStatements: false))
