@@ -8,28 +8,46 @@ end
 
 define ℕ:
     0 ∈ ℕ
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)
-    ∀ ϕ((ϕ(0) ∧ ∀ n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀ n(ϕ(n)))
+    ∀n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)
+    ∀ϕ((ϕ(0) ∧ ∀n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀n(ϕ(n)))
 end
 
 define 1:
     1 = Succ(0)
 end
 
-theorem MP(P, Q):
-    P ⇒ Q
-    P
-⇒ Q
-{
-    sorry
-}
+define 2:
+    2 = Succ(1)
+end
 
 theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
 {
-    ∀ n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)   | @ℕ
-    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ        | sorry
-    0 ∈ ℕ                       | @ℕ
-    Succ(0) ∈ ℕ                 | MP(0 ∈ ℕ, Succ(0) ∈ ℕ)
-    1 ∈ ℕ                       | @1
+    0 ∈ ℕ                   | @ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ    | @ℕ
+    1 ∈ ℕ                   | @1
+}
+
+define Add:
+    ∀n(n ∈ ℕ ⇒ Add(n, 0) = n)
+    ∀a(∀b(a ∈ ℕ ∧ b ∈ ℕ ⇒ Add(a, Succ(b)) = Succ(Add(a, b))))
+end
+
+theorem Add_1_1_is_2():
+⇒ Add(1, 1) = 2
+{
+    0 ∈ ℕ   | @ℕ
+    1 ∈ ℕ   | 1_in_ℕ()
+    
+    // 1 + 1 = Succ(1 + 0)
+    ∀b(1 ∈ ℕ ∧ b ∈ ℕ ⇒ Add(1, Succ(b)) = Succ(Add(1, b)))   | @Add
+    1 ∈ ℕ ∧ 0 ∈ ℕ ⇒ Add(1, Succ(0)) = Succ(Add(1, 0))
+    Add(1, 1) = Succ(Add(1, 0))         | @1
+
+    // 1 + 0 = 1
+    1 ∈ ℕ ⇒ Add(1, 0) = 1   | @Add
+    Add(1, 0) = 1
+
+    Add(1, 1) = Succ(1)
+    Add(1, 1) = 2           | @2
 }
