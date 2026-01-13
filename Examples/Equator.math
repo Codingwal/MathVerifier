@@ -1,31 +1,8 @@
 define ℝ:
 end
 
-define π:
-    π ∈ ℝ
-end
-
-define Stetig:
-end
-
-define 0:
-    0 ∈ ℝ
-end
-
-define 2:
-    ∀x(x + x = 2 ⋅ x)
-    2 ∈ ℝ
-end
-
 theorem ℝNotEmpty():
 ⇒ ∃x(x ∈ ℝ)
-{
-    sorry
-}
-
-theorem Choose(ϕ, a):
-    ∀x(ϕ(x))
-⇒ ϕ(a)
 {
     sorry
 }
@@ -39,7 +16,7 @@ theorem AddInℝ(a, b):
     sorry
 }
 
-theorem Associative(a, b, c):
+theorem Associativeℝ(a, b, c):
     a ∈ ℝ
     b ∈ ℝ
     c ∈ ℝ
@@ -47,6 +24,26 @@ theorem Associative(a, b, c):
 {
     sorry
 }
+
+define π:
+    π ∈ ℝ
+end
+
+define 0:
+    0 ∈ ℝ
+end
+
+define 2:
+    ∀x(x + x = 2 ⋅ x)
+    2 ∈ ℝ
+end
+
+define ≠:
+    ∀a(∀b(¬(a = b) ⇔ a ≠ b))
+end
+
+define Stetig:
+end
 
 theorem T1(a, b):
     a ∈ ℝ
@@ -71,6 +68,13 @@ theorem T3(ϕ):
     ∀x(¬ϕ(x))   | T2(¬ϕ(_0))
 }
 
+theorem T4(P, Q):
+    ¬(P ∧ Q)
+⇒ ¬P ∨ ¬Q
+{
+    sorry
+}
+
 theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
     Stetig(f)
@@ -82,27 +86,30 @@ theorem Equator(f):
 
     π ∈ ℝ       | @π
 
-    d(a + π) = f((a + π) + π) - f(a + π)    | Choose(d(_0) = f(_0 + π) - f(_0), a + π)
-    d(a + π) = f(a + (π + π)) - f(a + π)    | Associative(a, π, π)
+    d(a + π) = f((a + π) + π) - f(a + π)
+    d(a + π) = f(a + (π + π)) - f(a + π)    | Associativeℝ(a, π, π)
 
-    ∀x(x + x = 2 ⋅ x)                   | @2
-    d(a + π) = f(a + 2⋅π) - f(a + π)    | Choose(_0 + _0 = 2 ⋅ _0, π)
+    π + π = 2⋅π                         | @2
+    d(a + π) = f(a + 2⋅π) - f(a + π)
 
-    f(a + 2⋅π) = f(a)           | Choose(_0 ∈ ℝ ⇒ f(_0 + 2⋅π) = f(_0), a)
+    a ∈ ℝ ⇒ f(a + 2⋅π) = f(a)
+    f(a + 2⋅π) = f(a)
     d(a + π) = f(a) - f(a + π)
 
-    f(a) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a)
+    a ∈ ℝ ⇒ f(a) ∈ ℝ
 
     a + π ∈ ℝ       | AddInℝ(a, π)
-    f(a + π) ∈ ℝ    | Choose(_0 ∈ ℝ ⇒ f(_0) ∈ ℝ, a + π)
+    a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ
 
     d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
-    d(a + π) = 0 - d(a)                 | Choose(d(_0) = f(_0 + π) - f(_0), a)
+    d(a) = f(a + π) - f(a)
+    d(a + π) = 0 - d(a)
     
+    /*
     if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
     {
         ∀x(¬(x ∈ ℝ ∧ d(x) = 0))     | T3(_0 ∈ ℝ ∧ d(_0) = 0)
-        ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))
+        ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | T4(x ∈ ℝ, d(x) = 0)
         ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)
         ∃x(x ∈ ℝ)                   | ℝNotEmpty()
         ∃x(x ∈ ℝ ∧ d(x) ≠ 0)
@@ -125,4 +132,7 @@ theorem Equator(f):
     0 = f(c + π) - f(c)
     f(c) = f(c + π)
     ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
+    */
+
+    sorry
 } 

@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 public partial class Verifier
 {
     private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
@@ -72,18 +74,21 @@ public partial class Verifier
             }
         );
     }
-    private bool CompareExpressions(Expression a, Expression b, bool compareUsingStatements = true)
+    private bool CompareExpressions(Expression a, Expression b, bool compareUsingStatements = true, Func<Expression, Expression, bool>? callback = null)
     {
-        if (compareUsingStatements)
-            if (CompareUsingStatements(a, b))
-                return true;
-
-
         // Brackets should not make a difference
         if (a.TryAs<Term>(out var tA) && tA.term.TryAs<Expression>(out var eA))
             a = eA;
         if (b.TryAs<Term>(out var tB) && tB.term.TryAs<Expression>(out var eB))
             b = eB;
+
+        if (compareUsingStatements)
+            if (CompareUsingStatements(a, b))
+                return true;
+
+        if (callback != null)
+            if (callback(a, b))
+                return true;
 
         if (a.Index != b.Index) return false;
 
@@ -91,8 +96,8 @@ public partial class Verifier
         {
             var binB = b.As<BinExpr>();
             return (binA.op == binB.op)
-                && CompareExpressions(binA.lhs, binB.lhs, compareUsingStatements)
-                && CompareExpressions(binA.rhs, binB.rhs, compareUsingStatements);
+                && CompareExpressions(binA.lhs, binB.lhs, compareUsingStatements, callback)
+                && CompareExpressions(binA.rhs, binB.rhs, compareUsingStatements, callback);
         }
         else
         {
@@ -101,12 +106,12 @@ public partial class Verifier
             if (termA.Index != termB.Index) return false;
 
             return termA.Match(
-                expr => CompareExpressions(expr, termB.As<Expression>(), compareUsingStatements),
+                expr => CompareExpressions(expr, termB.As<Expression>(), compareUsingStatements, callback),
                 funcCall =>
                 {
                     if (funcCall.name != termB.As<FuncCall>().name) return false;
                     for (int i = 0; i < funcCall.args.Count; i++)
-                        if (!CompareExpressions(funcCall.args[i], termB.As<FuncCall>().args[i], compareUsingStatements)) return false;
+                        if (!CompareExpressions(funcCall.args[i], termB.As<FuncCall>().args[i], compareUsingStatements, callback)) return false;
                     return true;
                 },
                 qStmtA =>
@@ -114,13 +119,13 @@ public partial class Verifier
 
                     var qStmtB = termB.As<QuantifiedStatement>();
                     if (qStmtA.op != qStmtB.op) return false;
-                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }), compareUsingStatements);
+                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }), compareUsingStatements, callback);
                 },
                 str => str == termB.As<string>(),
                 unExprA =>
                 {
                     var unExprB = termB.As<UnaryExpr>();
-                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements);
+                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements, callback);
                 }
             );
         }
@@ -173,5 +178,38 @@ public partial class Verifier
                 unExpr => Find(unExpr.expr, predicate)
                 )
             );
+    }
+
+    // Compare a and b
+    // If two objects are compared and the object of a is the parameter replace,
+    // All occurences of the object in a are handled as if they were the object that b had in the first comparison
+    private bool CompareExpressionsReplaceFirstMismatch(Expression a, Expression b, string replace)
+    {
+        Expression? newExpr = null;
+
+        bool Compare(Expression a, Expression b)
+        {
+            // Only handle object comparisons
+            if (!a.TryAs<Term>(out var termA) || !termA.term.TryAs<string>(out var strA))
+                return false;
+            // if (!b.TryAs<Term>(out var termB) || !termB.term.TryAs<string>(out var strB))
+            //     return false;
+
+            if (strA == replace)
+            {
+                newExpr ??= b;
+
+                // Compare with newObject instead of the object to replace
+                if (CompareExpressions(newExpr, b, compareUsingStatements: false))
+                    return true;
+            }
+            return false;
+        }
+
+        // Console.WriteLine($"Comparing.\n{ExpressionBuilder.ExpressionToString(a)}\n{ExpressionBuilder.ExpressionToString(b)}");
+
+        bool val = CompareExpressions(a, b, compareUsingStatements: false, Compare);
+        // Console.WriteLine(val);
+        return val;
     }
 }

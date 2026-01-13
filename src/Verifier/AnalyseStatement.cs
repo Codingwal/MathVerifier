@@ -161,7 +161,17 @@ public partial class Verifier
             return term.term.Match(
                 expr => ProofStatementWith(stmt, expr),
                 funcCall => false,
-                qStmt => false, // TODO ?
+                qStmt =>
+                {
+                    if (qStmt.op == TokenType.FOR_ALL)
+                    {
+                        // Use statement of quantified statement but replace the iteration variable with the
+                        // object used in the statement at its place
+                        if (CompareExpressionsReplaceFirstMismatch(qStmt.stmt, stmt, qStmt.obj))
+                            return true;
+                    }
+                    return false;
+                },
                 str => false,
                 unExpr => false
             );
