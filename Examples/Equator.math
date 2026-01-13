@@ -1,18 +1,11 @@
 define ℝ:
 end
 
-theorem ℝNotEmpty():
-⇒ ∃x(x ∈ ℝ)
-{
-    sorry
-}
-
 theorem AddInℝ(a, b):
     a ∈ ℝ
     b ∈ ℝ
 ⇒ a + b ∈ ℝ
 {
-    // 0 ∈ ℝ
     sorry
 }
 
@@ -37,6 +30,12 @@ define 2:
     ∀x(x + x = 2 ⋅ x)
     2 ∈ ℝ
 end
+
+theorem ℝNotEmpty():
+⇒ ∃x(x ∈ ℝ)
+{
+    0 ∈ ℝ   | @0
+}
 
 define ≠:
     ∀a(∀b(¬(a = b) ⇔ a ≠ b))
