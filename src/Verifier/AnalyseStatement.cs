@@ -4,16 +4,8 @@ public partial class Verifier
     {
         // Check if the statement has already been proven
         foreach (var stmt in statements.GetAll())
-        {
-            if (recursion)
-            {
-                if (ProofStatementWith(expr, stmt)) return StmtVal.TRUE;
-            }
-            else
-            {
-                if (CompareExpressions(expr, stmt)) return StmtVal.TRUE;
-            }
-        }
+            if (ProofStatementWith(expr, stmt, recursion))
+                return StmtVal.TRUE;
 
         // Analyse statement recursively
         return expr.Match(
@@ -148,7 +140,7 @@ public partial class Verifier
             });
     }
 
-    private bool ProofStatementWith(Expression stmt, Expression other)
+    private bool ProofStatementWith(Expression stmt, Expression other, bool recursion = true)
     {
         if (CompareExpressions(stmt, other))
             return true;
@@ -163,30 +155,26 @@ public partial class Verifier
             }
         }
 
-        if (other.TryAs<BinExpr>(out var binExpr))
-            return ProofStatementWithBinExpr(stmt, binExpr);
-        else if (other.TryAs<Term>(out var term))
-        {
-            return term.term.Match(
-                expr => ProofStatementWith(stmt, expr),
-                funcCall => false,
-                qStmt =>
+        return other.Match(
+            binExpr => recursion && ProofStatementWithBinExpr(stmt, binExpr), // Proof with binary expression uses recursion
+            termB => termB.term.Match(
+                exprB => ProofStatementWith(stmt, exprB, recursion),
+                funcCallB => false,
+                qStmtB =>
                 {
-                    if (qStmt.op == TokenType.FOR_ALL)
+                    if (qStmtB.op == TokenType.FOR_ALL)
                     {
                         // Use statement of quantified statement but replace the iteration variable with the
                         // object used in the statement at its place
-                        if (CompareExpressionsReplaceFirstMismatch(qStmt.stmt, stmt, qStmt.obj))
+                        if (CompareExpressionsReplaceFirstMismatch(qStmtB.stmt, stmt, qStmtB.obj))
                             return true;
                     }
                     return false;
                 },
-                str => false,
-                unExpr => false
+                strB => false,
+                unExprB => false
+                )
             );
-        }
-
-        return false;
     }
 
     private bool ProofStatementWithBinExpr(Expression stmt, BinExpr binExpr)
