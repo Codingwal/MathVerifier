@@ -119,7 +119,17 @@ theorem Equator(f):
 
         ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | DefinitionUnd(x ∈ ℝ, d(x) = 0)
         ∀x(x ∈ ℝ ⇒ ¬(d(x) = 0))     | DefinitionImplikation(x ∈ ℝ, ¬(d(x) = 0))
-        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)        | sorry                 // Doppelter All-Quantor 
+
+        ∀a(∀b(¬(a = b) ⇔ a ≠ b))    | @≠
+        ∀b(∀a(¬(a = b) ⇔ a ≠ b))   
+        ∀a(¬(a = 0) ⇔ a ≠ 0)
+        ∀x(¬(d(x) = 0) ⇔ d(x) ≠ 0)
+
+        x ∈ ℝ ⇒ (¬(d(x) = 0) ⇔ d(x) ≠ 0)
+        x ∈ ℝ ⇒ ¬(d(x) = 0)
+
+        ∀x(¬(d(x) = 0) ⇒ d(x) ≠ 0)
+        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)
 
         ∃x(x ∈ ℝ)                   | ℝNotEmpty()
         ∃x(x ∈ ℝ ∧ d(x) ≠ 0)        | T2(_0 ∈ ℝ, d(_0) ≠ 0)

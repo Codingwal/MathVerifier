@@ -145,14 +145,11 @@ public partial class Verifier
         if (CompareExpressions(stmt, other))
             return true;
 
-        if (stmt.TryAs<Term>(out var t) && t.term.TryAs<QuantifiedStatement>(out var qS))
+        if (stmt.TryAs<Term>(out var termA) && termA.term.TryAs<QuantifiedStatement>(out var qStmtA) && qStmtA.op == TokenType.EXISTS)
         {
-            if (qS.op == TokenType.EXISTS)
-            {
-                // If there is an object for which P is true, ∃x(P(x)) is also true
-                if (CompareExpressionsReplaceFirstMismatch(qS.stmt, other, qS.obj))
-                    return true;
-            }
+            // If there is an object for which P is true, ∃x(P(x)) is also true
+            if (CompareExpressionsReplaceFirstMismatch(qStmtA.stmt, other, qStmtA.obj))
+                return true;
         }
 
         return other.Match(

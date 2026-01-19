@@ -1,4 +1,4 @@
-- use definition statement to create ∀ & ∃
+- use definition statement to create ∀
 - proof by contradiction
 - require proof of existence for definitions
 - improve SyntaxChecker
@@ -6,7 +6,5 @@
     - distinguish between expressions & statements (?)
 - multiple objects ("let" statement, ∀, ∃)
 - tuples
-- allow proof for check statement
 
 - start "_n" from 1 not 0
-- rename ExpressionBuilder

@@ -132,27 +132,15 @@ public partial class Verifier
     }
     private bool CompareUsingStatements(Expression a, Expression b)
     {
-        Expression equalStmtA = new BinExpr()
-        {
-            lhs = a,
-            op = new(TokenType.EQUALS),
-            rhs = b
-        };
-        Expression equalStmtB = new BinExpr()
-        {
-            lhs = b,
-            op = new(TokenType.EQUALS),
-            rhs = a
-        };
-
         foreach (var stmt in statements.GetAll())
         {
             if (!stmt.TryAs<BinExpr>(out var binExpr) || binExpr.op != new Token(TokenType.EQUALS))
                 continue;
 
-            if (CompareExpressions(equalStmtA, stmt, compareUsingStatements: false))
+            // Check if a = b or b = a is a proven statement
+            if (CompareExpressions(new BinExpr() { lhs = a, op = new(TokenType.EQUALS), rhs = b }, stmt, compareUsingStatements: false))
                 return true;
-            if (CompareExpressions(equalStmtB, stmt, compareUsingStatements: false))
+            if (CompareExpressions(new BinExpr() { lhs = b, op = new(TokenType.EQUALS), rhs = a }, stmt, compareUsingStatements: false))
                 return true;
         }
         return false;
