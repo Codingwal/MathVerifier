@@ -7,3 +7,6 @@
 - multiple objects ("let" statement, ∀, ∃)
 - tuples
 - allow proof for check statement
+
+- start "_n" from 1 not 0
+- rename ExpressionBuilder

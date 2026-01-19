@@ -197,7 +197,7 @@ public partial class Verifier
             Expression newExpr = RewriteExpression(arg, conversionDict);
             for (int i = 0; i < call.args.Count; i++) conversionDict.Remove($"_{i}");
 
-            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line}.");
+            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line} (Expected {call.args.Count}).");
 
             // A second rewrite is required because the first only converts to the objects used in the theorem
             newExpr = RewriteExpression(newExpr, conversionDict);

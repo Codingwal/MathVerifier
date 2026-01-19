@@ -85,6 +85,7 @@ public partial class Verifier
                 }
             case TokenType.ELEMENT_OF:
             case TokenType.SUBSET:
+            case TokenType.STRING:
                 return StmtVal.UNKNOWN;
             default:
                 Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");

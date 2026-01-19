@@ -33,9 +33,15 @@ public class ScopeStack<T>
     }
     public IEnumerable<T> GetAll()
     {
-        foreach (Scope scope in scopes)
-            foreach (T value in scope.statements)
-                yield return value;
+        // Use for loops instead of foreach iteration because the collection might be modified 
+        // while iterating (for example analysing a P => Q statement while trying to proof with another statement)
+        // These modifications will be reverted before the next element is called but C# doesn't know that
+        for (int i = 0; i < scopes.Count; i++)
+        {
+            Scope scope = scopes[i];
+            for (int j = 0; j < scope.statements.Count; j++)
+                yield return scope.statements[j];
+        }
     }
     public bool Contains(T value)
     {

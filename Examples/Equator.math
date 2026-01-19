@@ -1,3 +1,56 @@
+// Grundlegende Definitionen und Axiome
+
+define >:
+end
+
+define <:
+end
+
+define ≠:
+    ∀a(∀b(¬(a = b) ⇔ a ≠ b))
+end
+
+theorem DefinitionExistenz(P):
+⇒ ¬∃x(¬P(x)) ⇔ ∀x(P(x))
+{
+    sorry
+}
+
+/*
+theorem ExistenzZuAllQuantor(ϕ):
+    ¬∃x(ϕ(x))
+⇒ ∀x(¬ϕ(x))
+{
+    ¬∃x(¬¬ϕ(x))
+    ∀x(¬ϕ(x))   | DefinitionExistenz(¬ϕ(_0))
+}
+*/
+
+theorem DefinitionUnd(P, Q):
+⇒ ¬(P ∧ Q) ⇔ ¬P ∨ ¬Q
+{
+    sorry
+}
+
+theorem DefinitionImplikation(P, Q):
+⇒ (P ⇒ Q) ⇔ ¬P ∨ Q
+{
+    sorry
+}
+
+theorem T2(P, Q):
+    ∀x(P(x) ⇒ Q(x))
+    ∃x(P(x))
+⇒ ∃x(P(x) ∧ Q(x))
+{
+    let a: P(a)
+    P(a) ⇒ Q(a)
+    P(a) ∧ Q(a)
+    ∃x(P(x) ∧ Q(x))
+}
+
+// Definitionen und Sätze zu den reellen Zahlen
+
 define ℝ:
 end
 
@@ -37,13 +90,6 @@ theorem ℝNotEmpty():
     0 ∈ ℝ   | @0
 }
 
-define ≠:
-    ∀a(∀b(¬(a = b) ⇔ a ≠ b))
-end
-
-define Stetig:
-end
-
 theorem T1(a, b):
     a ∈ ℝ
     b ∈ ℝ
@@ -52,27 +98,10 @@ theorem T1(a, b):
     sorry
 }
 
-theorem T2(P):
-⇒ ∀x(P(x)) ⇔ ¬∃x(¬P(x))
-{
-    sorry
-}
+define Stetig:
+end
 
-theorem T3(ϕ):
-    ¬∃x(ϕ(x))
-⇒ ∀x(¬ϕ(x))
-{
-    ¬∃x(¬¬ϕ(x)) | sorry
-    check
-    ∀x(¬ϕ(x))   | T2(¬ϕ(_0))
-}
-
-theorem T4(P, Q):
-    ¬(P ∧ Q)
-⇒ ¬P ∨ ¬Q
-{
-    sorry
-}
+// Beweis
 
 theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
@@ -80,42 +109,54 @@ theorem Equator(f):
     ∀x(x ∈ ℝ ⇒ f(x + 2⋅π) = f(x))    // f ist Periodisch
 ⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 {
+    // Differenz-Funktion von gegenüberliegenden Punkten
     let d: ∀x(d(x) = f(x + π) - f(x))
-    let a: a ∈ ℝ
-
-    π ∈ ℝ       | @π
-
-    d(a + π) = f((a + π) + π) - f(a + π)
-    d(a + π) = f(a + (π + π)) - f(a + π)    | Associativeℝ(a, π, π)
-
-    π + π = 2⋅π                         | @2
-    d(a + π) = f(a + 2⋅π) - f(a + π)
-
-    a ∈ ℝ ⇒ f(a + 2⋅π) = f(a)
-    f(a + 2⋅π) = f(a)
-    d(a + π) = f(a) - f(a + π)
-
-    a ∈ ℝ ⇒ f(a) ∈ ℝ
-
-    a + π ∈ ℝ       | AddInℝ(a, π)
-    a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ
-
-    d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
-    d(a) = f(a + π) - f(a)
-    d(a + π) = 0 - d(a)
     
-    /*
-    if (¬∃x(x ∈ ℝ ∧ d(x) = 0))
+    /* Angenommen d(x) hat keine Nullstelle */
+    if (∀x(¬(x ∈ ℝ ∧ d(x) = 0)))
     {
-        ∀x(¬(x ∈ ℝ ∧ d(x) = 0))     | T3(_0 ∈ ℝ ∧ d(_0) = 0)
-        ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | T4(x ∈ ℝ, d(x) = 0)
-        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)
+        /* ∃x(x ∈ ℝ ∧ d(x) ≠ 0) */
+
+        ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | DefinitionUnd(x ∈ ℝ, d(x) = 0)
+        ∀x(x ∈ ℝ ⇒ ¬(d(x) = 0))     | DefinitionImplikation(x ∈ ℝ, ¬(d(x) = 0))
+        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)        | sorry                 // Doppelter All-Quantor 
+
         ∃x(x ∈ ℝ)                   | ℝNotEmpty()
-        ∃x(x ∈ ℝ ∧ d(x) ≠ 0)
-        let b: b ∈ ℝ ∧ d(b) ≠ 0
-        d(b + π) = 0 - d(b)
-        ∃x(x ∈ ℝ ∧ x > 0) ∧ ∃x(x ∈ ℝ ∧ x < 0)
-        ∃x(x ∈ ℝ ∧ x = 0)
+        ∃x(x ∈ ℝ ∧ d(x) ≠ 0)        | T2(_0 ∈ ℝ, d(_0) ≠ 0)
+
+        let a: a ∈ ℝ ∧ d(a) ≠ 0
+        
+        a ∈ ℝ
+
+        /* d(a + π) = 0 - d(a) */
+
+        π ∈ ℝ       | @π
+
+        d(a + π) = f((a + π) + π) - f(a + π)
+        d(a + π) = f(a + (π + π)) - f(a + π)    | Associativeℝ(a, π, π)
+
+        π + π = 2⋅π                         | @2
+        d(a + π) = f(a + 2⋅π) - f(a + π)
+
+        a ∈ ℝ ⇒ f(a + 2⋅π) = f(a)
+        f(a + 2⋅π) = f(a)
+        d(a + π) = f(a) - f(a + π)
+
+        a ∈ ℝ ⇒ f(a) ∈ ℝ
+
+        a + π ∈ ℝ       | AddInℝ(a, π)
+        a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ
+
+        d(a + π) = 0 - (f(a + π) - f(a))    | T1(f(a), f(a + π))
+        d(a) = f(a + π) - f(a)
+        d(a + π) = 0 - d(a)
+
+
+        // d(a + π) = -d(a) ∧ d(a) ≠ 0, also gibt es Werte größer und kleiner als 0
+        ∃x(x ∈ ℝ ∧ x > 0) ∧ ∃x(x ∈ ℝ ∧ x < 0)   | sorry
+
+        // d ist stetig, also muss es eine Nullstelle geben (Wiederspruch zur Annahme)
+        ∃x(x ∈ ℝ ∧ x = 0)   | sorry
     }
     else
     {
@@ -123,15 +164,19 @@ theorem Equator(f):
     }
     both
     {
-        ∃x(x ∈ ℝ ∧ d(x) = 0)
+        ∃x(x ∈ ℝ ∧ d(x) = 0)    | sorry
     }
+
+    /* f(c) = f(c + π) */
 
     let c: c ∈ ℝ ∧ d(c) = 0
     d(c) = 0
+    c ∈ ℝ
+    d(c) = f(c + π) - f(c)
     0 = f(c + π) - f(c)
-    f(c) = f(c + π)
-    ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
-    */
+    f(c) = f(c + π)         | sorry
+    c ∈ ℝ ∧ f(c) = f(c + π)
 
-    sorry
-} 
+    // c ist ein Beispiel
+    ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
+}

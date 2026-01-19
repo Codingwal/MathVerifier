@@ -27,6 +27,7 @@ public static class Program
         // Console.Write(Formatter.Format(ast));
         // Console.WriteLine("-------------------------\n");
 
+        // Check syntax
         Console.WriteLine("Checking syntax...");
         SyntaxChecker checker = new(ast);
         checker.Check();
