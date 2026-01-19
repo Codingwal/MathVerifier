@@ -161,6 +161,12 @@ public partial class Verifier
                 {
                     if (qStmtB.op == TokenType.FOR_ALL)
                     {
+                        // Generate statement from quantified statement for eached object used in statement
+                        // This does not work for terms (e.g. "a + b")
+                        foreach (string obj in GetAllObjects(stmt))
+                            if (ProofStatementWith(stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(obj) } }), recursion))
+                                return true;
+
                         // Use statement of quantified statement but replace the iteration variable with the
                         // object used in the statement at its place
                         if (CompareExpressionsReplaceFirstMismatch(qStmtB.stmt, stmt, qStmtB.obj))

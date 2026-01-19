@@ -213,19 +213,19 @@ public partial class Verifier
         return val;
     }
 
-    // private List<string> GetAllObjects(Expression expr)
-    // {
-    //     List<string> objects = new();
+    private List<string> GetAllObjects(Expression expr)
+    {
+        List<string> objects = new();
 
-    //     ForEach(expr, expr =>
-    //     {
-    //         if (!expr.TryAs<Term>(out var term)) return;
-    //         if (!term.term.TryAs<string>(out var str)) return;
+        ForEach(expr, expr =>
+        {
+            if (!expr.TryAs<Term>(out var term)) return;
+            if (!term.term.TryAs<string>(out var str)) return;
 
-    //         if (!objects.Contains(str))
-    //             objects.Add(str);
-    //     });
+            if (!objects.Contains(str))
+                objects.Add(str);
+        });
 
-    //     return objects;
-    // }
+        return objects;
+    }
 }

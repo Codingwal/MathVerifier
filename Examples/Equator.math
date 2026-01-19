@@ -49,6 +49,14 @@ theorem T2(P, Q):
     ∃x(P(x) ∧ Q(x))
 }
 
+theorem ImplikationTransitiv(P, Q, R):
+    P ⇒ Q
+    Q ⇒ R
+⇒ P ⇒ R
+{
+    sorry
+}
+
 // Definitionen und Sätze zu den reellen Zahlen
 
 define ℝ:
@@ -120,19 +128,14 @@ theorem Equator(f):
         ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | DefinitionUnd(x ∈ ℝ, d(x) = 0)
         ∀x(x ∈ ℝ ⇒ ¬(d(x) = 0))     | DefinitionImplikation(x ∈ ℝ, ¬(d(x) = 0))
 
-        ∀a(∀b(¬(a = b) ⇔ a ≠ b))    | @≠
-        ∀b(∀a(¬(a = b) ⇔ a ≠ b))   
-        ∀a(¬(a = 0) ⇔ a ≠ 0)
+        ∀a(¬(a = 0) ⇔ a ≠ 0)        | @≠
         ∀x(¬(d(x) = 0) ⇔ d(x) ≠ 0)
 
-        x ∈ ℝ ⇒ (¬(d(x) = 0) ⇔ d(x) ≠ 0)
-        x ∈ ℝ ⇒ ¬(d(x) = 0)
-
-        ∀x(¬(d(x) = 0) ⇒ d(x) ≠ 0)
-        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)
+        ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)    | ImplikationTransitiv(x ∈ ℝ, ¬(d(x) = 0), d(x) ≠ 0)
 
         ∃x(x ∈ ℝ)                   | ℝNotEmpty()
         ∃x(x ∈ ℝ ∧ d(x) ≠ 0)        | T2(_0 ∈ ℝ, d(_0) ≠ 0)
+        
 
         let a: a ∈ ℝ ∧ d(a) ≠ 0
         
