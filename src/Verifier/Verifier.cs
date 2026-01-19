@@ -68,7 +68,7 @@ public partial class Verifier
                     // Print statements
                     Console.WriteLine("\nCurrent statements:");
                     foreach (var s in statements.GetAll())
-                        Console.WriteLine(ExpressionBuilder.ExpressionToString(s));
+                        Console.WriteLine(Utility.Expr2Str(s));
                     Console.WriteLine("-------------------\n");
 
                     statements.ExitScope("Check command");
@@ -134,9 +134,9 @@ public partial class Verifier
         if (stmtVal == StmtVal.TRUE)
             return;
         else if (stmtVal == StmtVal.FALSE)
-            Logger.Error($"Statement in line {stmt.line} is false.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
+            Logger.Error($"Statement in line {stmt.line} is false.\n{Utility.Expr2Str(stmt.stmt.As<Expression>())}");
         else
-            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{ExpressionBuilder.ExpressionToString(stmt.stmt.As<Expression>())}");
+            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{Utility.Expr2Str(stmt.stmt.As<Expression>())}");
     }
 
     private void AddProofToStatements(Variant<FuncCall, string, Command>? proof, int line, out bool sorry)
@@ -212,7 +212,7 @@ public partial class Verifier
 
             Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
                 $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {line}." +
-                $"\n{ExpressionBuilder.ExpressionToString(req)}");
+                $"\n{Utility.Expr2Str(req)}");
         }
 
         // Rewrite hypothesis and add it to the verified statements
