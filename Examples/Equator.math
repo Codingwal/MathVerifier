@@ -16,16 +16,6 @@ theorem DefinitionExistenz(P):
     sorry
 }
 
-/*
-theorem ExistenzZuAllQuantor(ϕ):
-    ¬∃x(ϕ(x))
-⇒ ∀x(¬ϕ(x))
-{
-    ¬∃x(¬¬ϕ(x))
-    ∀x(¬ϕ(x))   | DefinitionExistenz(¬ϕ(_0))
-}
-*/
-
 theorem DefinitionUnd(P, Q):
 ⇒ ¬(P ∧ Q) ⇔ ¬P ∨ ¬Q
 {
@@ -145,7 +135,7 @@ theorem Equator(f):
 ⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 {
     // Differenz-Funktion von gegenüberliegenden Punkten
-    let d: ∀x(d(x) = f(x + π) - f(x))
+    let d: ∀x(d(x) = f(x + π) - f(x))   | sorry
 
     // d ist als Addition einer stetigen Funktion definitiert, also muss d auch stetig sein
     Stetig(d)   | sorry
@@ -173,13 +163,13 @@ theorem Equator(f):
 
         d(a + π) = f((a + π) + π) - f(a + π)
 
-        a ∈ ℝ
         π ∈ ℝ       | @π
         d(a + π) = f(a + (π + π)) - f(a + π)    | Assoziativℝ(a, π, π)
 
         π + π = 2⋅π                         | @2
         d(a + π) = f(a + 2⋅π) - f(a + π)
 
+        a ∈ ℝ
         f(a + 2⋅π) = f(a)
         d(a + π) = f(a) - f(a + π)
 
@@ -203,7 +193,7 @@ theorem Equator(f):
     }
     both
     {
-        ∃x(x ∈ ℝ ∧ d(x) = 0)
+       ∃x(x ∈ ℝ ∧ d(x) = 0)
     }
 
     /* f(c) = f(c + π) */

@@ -78,7 +78,17 @@ public partial class Verifier
             {
                 statements.EnterScope("Definition statement");
                 AddProofToStatements(stmt.proof, stmt.line, out var sorry);
-                // TODO: require exists statement
+                if (!sorry)
+                {
+                    // Verify that an object with the specified rules exists
+                    Expression existsStmt = new Term(new QuantifiedStatement()
+                    {
+                        op = TokenType.EXISTS,
+                        obj = "_obj_",
+                        stmt = RewriteExpression(defStmt.stmt, new() { { defStmt.obj, new Term("_obj_") } })
+                    });
+                    VerifyStatementLine(new StatementLine() { line = stmt.line, stmt = existsStmt });
+                }
                 statements.ExitScope("Definition statement");
                 statements.Add(defStmt.stmt);
             }
@@ -157,7 +167,7 @@ public partial class Verifier
         else if (proof.TryAs<Command>(out var command))
         {
             if (command == Command.SORRY)
-            {                
+            {
                 sorry = true;
             }
         }
