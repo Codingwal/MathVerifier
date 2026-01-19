@@ -1,6 +1,5 @@
 - use definition statement to create ∀
 - proof by contradiction
-- require proof of existence for definitions
 - improve SyntaxChecker
     - check operators
     - distinguish between expressions & statements (?)

@@ -1,14 +1,18 @@
 // Grundlegende Definitionen und Axiome
 
 define >:
-end
+{
+}
 
 define <:
-end
+{
+}
 
 define ≠:
     ∀a(∀b(¬(a = b) ⇔ a ≠ b))
-end
+{
+    sorry
+}
 
 theorem DefinitionExistenz(P):
 ⇒ ¬∃x(¬P(x)) ⇔ ∀x(P(x))
@@ -50,7 +54,14 @@ theorem ImplikationTransitiv(P, Q, R):
 // Definitionen und Sätze zu den reellen Zahlen
 
 define ℝ:
-end
+{
+}
+
+theorem ℝNotEmpty():
+⇒ ∃x(x ∈ ℝ)
+{
+    sorry
+}
 
 theorem AddInℝ(a, b):
     a ∈ ℝ
@@ -71,21 +82,21 @@ theorem Assoziativℝ(a, b, c):
 
 define π:
     π ∈ ℝ
-end
+{
+    ∃x(x ∈ ℝ) | ℝNotEmpty()
+}
 
 define 0:
     0 ∈ ℝ
-end
+{
+    ∃x(x ∈ ℝ) | ℝNotEmpty()
+}
 
 define 2:
     ∀x(x + x = 2 ⋅ x)
     2 ∈ ℝ
-end
-
-theorem ℝNotEmpty():
-⇒ ∃x(x ∈ ℝ)
 {
-    0 ∈ ℝ   | @0
+    sorry
 }
 
 theorem T5(a, b):
@@ -115,7 +126,8 @@ theorem T7(f, a, b):
 }
 
 define Stetig:
-end
+{
+}
 
 theorem Stetigkeit_Nullstellensatz(f):
     Stetig(f)

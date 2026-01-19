@@ -1,8 +1,10 @@
 define 1:
-end
+{
+}
 
 define 2:
-end
+{
+}
 
 theorem Test(f):
     1 + 1 = 2

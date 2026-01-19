@@ -82,12 +82,13 @@ public class Parser
         ConsumeExpect(TokenType.NEWLINE);
 
         // Rules
-        while (Peek().type != TokenType.END)
+        while (Peek().type != TokenType.CURLY_OPEN)
         {
             definition.rules.Add(ParseExpressionLine());
         }
-        ConsumeExpect(TokenType.END);
-        ConsumeExpect(TokenType.NEWLINE);
+
+        // Proof of existence
+        definition.proof = ParseScope();
 
         return definition;
     }
@@ -130,8 +131,10 @@ public class Parser
         Scope scope = new();
         ConsumeExpect(TokenType.CURLY_OPEN);
         ConsumeExpect(TokenType.NEWLINE);
+
         while (Peek().type != TokenType.CURLY_CLOSE)
             scope.statements.Add(ParseStatementLine());
+            
         ConsumeExpect(TokenType.CURLY_CLOSE);
         ConsumeExpect(TokenType.NEWLINE);
         return scope;

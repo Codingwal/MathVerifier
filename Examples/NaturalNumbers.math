@@ -1,24 +1,33 @@
 define 0:
-end
+{
+}
 
 define Succ:
     ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))
     ¬∃n(Succ(n) = 0)
-end
+{
+    sorry
+}
 
 define ℕ:
     0 ∈ ℕ
     ∀n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)
     ∀ϕ((ϕ(0) ∧ ∀n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀n(ϕ(n)))
-end
+{
+    sorry
+}
 
 define 1:
     1 = Succ(0)
-end
+{
+    sorry
+}
 
 define 2:
     2 = Succ(1)
-end
+{
+    sorry
+}
 
 theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
@@ -31,7 +40,9 @@ theorem 1_in_ℕ():
 define Add:
     ∀n(n ∈ ℕ ⇒ Add(n, 0) = n)
     ∀a(∀b(a ∈ ℕ ∧ b ∈ ℕ ⇒ Add(a, Succ(b)) = Succ(Add(a, b))))
-end
+{
+    sorry
+}
 
 theorem Add_1_1_is_2():
 ⇒ Add(1, 1) = 2

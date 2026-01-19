@@ -60,6 +60,8 @@ public class SyntaxChecker
             CheckExpressionLine(rule);
 
         objects.ExitScope("Definition");
+
+        CheckScope(definition.proof);
     }
     private void CheckExpressionLine(ExpressionLine exprLine)
     {
@@ -97,7 +99,6 @@ public class SyntaxChecker
         // Handle definition statements (let x: P(x))
         if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
         {
-            Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
             Logger.Assert(defStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {stmtLine.line})");
             Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
             objects.Add(defStmt.obj);
@@ -121,8 +122,8 @@ public class SyntaxChecker
                 for (int i = 0; i < 5; i++)
                     objects.Add($"_{i}");
 
-                foreach (var arg in funcCall.args)
-                    CheckExpression(arg, stmtLine.line);
+                // foreach (var arg in funcCall.args)
+                // CheckExpression(arg, stmtLine.line);
 
                 objects.ExitScope("Proof-FuncCall");
             },

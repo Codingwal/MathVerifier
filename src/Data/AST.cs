@@ -105,6 +105,7 @@ public struct Definition
     public string name;
     public List<ExpressionLine> rules;
     public int line;
+    public Scope proof; // Proof that such an object exists
     public Definition()
     {
         name = "";

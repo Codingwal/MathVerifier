@@ -21,10 +21,7 @@ public partial class Verifier
     public void Verify()
     {
         foreach (var e in ast.data)
-            e.Switch(
-                VerifyTheorem,
-                definition => definitions.Add(definition.name, definition)
-                );
+            e.Switch(VerifyTheorem, VerifyDefinition);
     }
     private void VerifyTheorem(Theorem theorem)
     {
@@ -45,6 +42,39 @@ public partial class Verifier
 
         statements.ExitScope("Theorem");
         theorems.Add(theorem.name, theorem);
+    }
+    private void VerifyDefinition(Definition definition)
+    {
+        statements.EnterScope("Definition");
+
+        VerifyScope(definition.proof, out bool sorryStatement);
+
+        if (!sorryStatement && definition.rules.Count > 0)
+        {
+            QuantifiedStatement existsStmt = new()
+            {
+                op = TokenType.EXISTS,
+                obj = "_obj_",
+                stmt = null!,
+            };
+
+            foreach (var stmt in definition.rules)
+            {
+                Expression stmtRewritten = RewriteExpression(stmt.expr, new() { { definition.name, new Term("_obj_") } });
+                if (existsStmt.stmt == null)
+                    existsStmt.stmt = stmtRewritten;
+                else
+                    existsStmt.stmt = new BinExpr() { lhs = existsStmt.stmt, op = new(TokenType.AND), rhs = stmtRewritten };
+            }
+
+            StmtVal val = AnalyseStatement(new Term(existsStmt), definition.line);
+            Logger.Assert(val == StmtVal.TRUE, $"Failed to verify existence of object \"{definition.name}\" defined in line {definition.line}."
+                + $"\n{Utility.Expr2Str(new Term(existsStmt))}");
+        }
+
+        statements.ExitScope("Definition");
+
+        definitions.Add(definition.name, definition);
     }
 
     private void VerifyScope(Scope scope, out bool sorryStatement)
