@@ -158,26 +158,41 @@ public partial class Verifier
         return false;
     }
 
-    private bool Find(Expression expr, Func<Expression, bool> predicate)
+    private void ForEach(Expression expr, Action<Expression> callback)
     {
-        if (predicate(expr))
-            return true;
+        callback(expr);
 
-        return expr.Match(
-            binExpr => Find(binExpr.lhs, predicate) || Find(binExpr.rhs, predicate),
-            term => term.term.Match(
-                expr => Find(expr, predicate),
+        expr.Switch(
+            binExpr =>
+            {
+                ForEach(binExpr.lhs, callback);
+                ForEach(binExpr.rhs, callback);
+            },
+            term => term.term.Switch(
+                expr => ForEach(expr, callback),
                 funcCall =>
                 {
                     foreach (var arg in funcCall.args)
-                        if (Find(arg, predicate)) return true;
-                    return false;
+                        ForEach(arg, callback);
                 },
-                qStmt => Find(qStmt.stmt, predicate),
-                str => false,
-                unExpr => Find(unExpr.expr, predicate)
+                qStmt => ForEach(qStmt.stmt, callback),
+                str => { },
+                unExpr => ForEach(unExpr.expr, callback)
                 )
             );
+    }
+
+    private bool Find(Expression expr, Func<Expression, bool> predicate)
+    {
+        bool found = false;
+
+        ForEach(expr, expr =>
+        {
+            if (predicate(expr))
+                found = true;
+        });
+
+        return found;
     }
 
     // Compare a and b
@@ -206,10 +221,23 @@ public partial class Verifier
             return false;
         }
 
-        // Console.WriteLine($"Comparing.\n{ExpressionBuilder.ExpressionToString(a)}\n{ExpressionBuilder.ExpressionToString(b)}");
-
         bool val = CompareExpressions(a, b, compareUsingStatements: false, Compare);
-        // Console.WriteLine(val);
         return val;
     }
+
+    // private List<string> GetAllObjects(Expression expr)
+    // {
+    //     List<string> objects = new();
+
+    //     ForEach(expr, expr =>
+    //     {
+    //         if (!expr.TryAs<Term>(out var term)) return;
+    //         if (!term.term.TryAs<string>(out var str)) return;
+
+    //         if (!objects.Contains(str))
+    //             objects.Add(str);
+    //     });
+
+    //     return objects;
+    // }
 }
