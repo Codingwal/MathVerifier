@@ -142,6 +142,11 @@ public partial class Verifier
             {
                 Logger.Error($"Expected statement but found tuple in line {line}");
                 throw new();
+            },
+            setEnumNotation =>
+            {
+                Logger.Error($"Expected statement but found set (enumeration notation) in line {line}");
+                throw new();
             });
     }
 
@@ -181,9 +186,8 @@ public partial class Verifier
                 },
                 strB => false,
                 unExprB => false,
-                tupleB => throw new()
-                )
-            );
+                tupleB => throw new(),
+                setEnumNotation => throw new()));
     }
 
     private bool ProofStatementWithBinExpr(Expression stmt, BinExpr binExpr)

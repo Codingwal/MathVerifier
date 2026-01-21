@@ -35,10 +35,14 @@ public struct Tuple()
 {
     public List<Expression> elements = [];
 }
-
-public struct Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term)
+public struct SetEnumNotation()
 {
-    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term = term;
+    public List<Expression> elements = [];
+}
+
+public struct Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple, SetEnumNotation> term)
+{
+    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple, SetEnumNotation> term = term;
 }
 
 public struct DefinitionStatement

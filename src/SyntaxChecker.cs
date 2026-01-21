@@ -145,6 +145,12 @@ public class SyntaxChecker
 
     private void CheckExpression(Expression expr, int line)
     {
+        void CheckList(List<Expression> list)
+        {
+            foreach (var e in list)
+                CheckExpression(e, line);
+        }
+
         expr.Switch(
             binExpr =>
             {
@@ -160,8 +166,7 @@ public class SyntaxChecker
                     funcCall =>
                     {
                         Logger.Assert(objects.Contains(funcCall.name), $"Reference to undefined function \"{funcCall.name}\" in line {line}.");
-                        foreach (var arg in funcCall.args)
-                            CheckExpression(arg, line);
+                        CheckList(funcCall.args);
                     },
                     qStmt =>
                     {
@@ -179,11 +184,8 @@ public class SyntaxChecker
                         // Operator is checked on creation
                         CheckExpression(unExpr.expr, line);
                     },
-                    tuple =>
-                    {
-                        foreach (var e in tuple.elements)
-                            CheckExpression(e, line);
-                    });
+                    tuple => CheckList(tuple.elements),
+                    setEnumNotation => CheckList(setEnumNotation.elements));
             });
     }
 }

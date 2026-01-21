@@ -316,6 +316,18 @@ public class Parser
                 }
                 ConsumeExpect(TokenType.SQUARE_CLOSE);
                 return new Term(tuple);
+            case TokenType.CURLY_OPEN:
+                Consume();
+                SetEnumNotation set = new();
+                while (true)
+                {
+                    set.elements.Add(ParseExpression());
+                    if (Peek().type == TokenType.CURLY_CLOSE)
+                        break;
+                    ConsumeExpect(TokenType.COMMA);
+                }
+                ConsumeExpect(TokenType.CURLY_CLOSE);
+                return new Term(set);
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

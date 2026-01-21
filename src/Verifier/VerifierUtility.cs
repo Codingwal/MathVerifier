@@ -1,6 +1,6 @@
 public partial class Verifier
 {
-    private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
+    private static Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
     {
         if (callback != null)
         {
@@ -9,6 +9,13 @@ public partial class Verifier
                 return tmp;
         }
 
+        List<Expression> RewriteList(List<Expression> list)
+        {
+            List<Expression> newList = [];
+            foreach (Expression expr in list)
+                newList.Add(RewriteExpression(expr, conversionDict, callback));
+            return newList;
+        }
 
         return old.Match(
             binExpr =>
@@ -36,9 +43,7 @@ public partial class Verifier
                         }
                         else name = funcCall.name;
 
-                        FuncCall newFuncCall = new() { name = name };
-                        foreach (Expression expr in funcCall.args)
-                            newFuncCall.args.Add(RewriteExpression(expr, conversionDict, callback));
+                        FuncCall newFuncCall = new() { name = name, args = RewriteList(funcCall.args) };
                         return new Term(newFuncCall);
                     },
                     qStmt =>
@@ -68,13 +73,8 @@ public partial class Verifier
                             expr = RewriteExpression(unExpr.expr, conversionDict, callback),
                         });
                     },
-                    tuple =>
-                    {
-                        Tuple newTuple = new();
-                        foreach (var e in tuple.elements)
-                            newTuple.elements.Add(RewriteExpression(e, conversionDict, callback));
-                        return new Term(newTuple);
-                    }
+                    tuple => new Term(new Tuple() { elements = RewriteList(tuple.elements) }),
+                    setEnumNotation => new Term(new SetEnumNotation() { elements = RewriteList(setEnumNotation.elements) })
                 );
             }
         );
@@ -110,14 +110,20 @@ public partial class Verifier
             var termB = b.As<Term>().term;
             if (termA.Index != termB.Index) return false;
 
+            bool CompareList(List<Expression> a, List<Expression> b)
+            {
+                if (a.Count != b.Count) return false;
+                for (int i = 0; i < a.Count; i++)
+                    if (!CompareExpressions(a[i], b[i], compareUsingStatements, callback)) return false;
+                return true;
+            }
+
             return termA.Match(
                 expr => CompareExpressions(expr, termB.As<Expression>(), compareUsingStatements, callback),
-                funcCall =>
+                funcCallA =>
                 {
-                    if (funcCall.name != termB.As<FuncCall>().name) return false;
-                    for (int i = 0; i < funcCall.args.Count; i++)
-                        if (!CompareExpressions(funcCall.args[i], termB.As<FuncCall>().args[i], compareUsingStatements, callback)) return false;
-                    return true;
+                    if (funcCallA.name != termB.As<FuncCall>().name) return false;
+                    return CompareList(funcCallA.args, termB.As<FuncCall>().args);
                 },
                 qStmtA =>
                 {
@@ -132,14 +138,8 @@ public partial class Verifier
                     var unExprB = termB.As<UnaryExpr>();
                     return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements, callback);
                 },
-                tupleA =>
-                {
-                    var tupleB = termB.As<Tuple>();
-                    for (int i = 0; i < tupleA.elements.Count; i++)
-                        if (!CompareExpressions(tupleA.elements[i], tupleB.elements[i], compareUsingStatements, callback))
-                            return false;
-                    return true;
-                }
+                tupleA => CompareList(tupleA.elements, termB.As<Tuple>().elements),
+                setEnumNotationA => CompareList(setEnumNotationA.elements, termB.As<SetEnumNotation>().elements)
             );
         }
     }
@@ -159,9 +159,15 @@ public partial class Verifier
         return false;
     }
 
-    private void ForEach(Expression expr, Action<Expression> callback)
+    private static void ForEach(Expression expr, Action<Expression> callback)
     {
         callback(expr);
+
+        void ForEachList(List<Expression> list)
+        {
+            foreach (var e in list)
+                ForEach(e, callback);
+        }
 
         expr.Switch(
             binExpr =>
@@ -171,22 +177,17 @@ public partial class Verifier
             },
             term => term.term.Switch(
                 expr => ForEach(expr, callback),
-                funcCall =>
-                {
-                    foreach (var arg in funcCall.args)
-                        ForEach(arg, callback);
-                },
+                funcCall => ForEachList(funcCall.args),
                 qStmt => ForEach(qStmt.stmt, callback),
                 str => { },
                 unExpr => ForEach(unExpr.expr, callback),
-                tuple =>
-                {
-                    foreach (var e in tuple.elements)
-                        ForEach(e, callback);
-                }));
+                tuple => ForEachList(tuple.elements),
+                setEnumNotation => ForEachList(setEnumNotation.elements)
+                )
+            );
     }
 
-    private bool Find(Expression expr, Func<Expression, bool> predicate)
+    private static bool Find(Expression expr, Func<Expression, bool> predicate)
     {
         bool found = false;
 
@@ -229,7 +230,7 @@ public partial class Verifier
         return val;
     }
 
-    private List<string> GetAllObjects(Expression expr)
+    private static List<string> GetAllObjects(Expression expr)
     {
         List<string> objects = new();
 
@@ -245,7 +246,7 @@ public partial class Verifier
         return objects;
     }
 
-    private bool ContainsReplaceArgs(Expression expr)
+    private static bool ContainsReplaceArgs(Expression expr)
     {
         return Find(expr,
                 expr => expr.TryAs<Term>(out var term)
