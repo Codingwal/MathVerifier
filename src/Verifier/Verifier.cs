@@ -258,13 +258,4 @@ public partial class Verifier
         // Rewrite hypothesis and add it to the verified statements
         statements.Add(RewriteExpression(theorem.hypothesis.expr, conversionDict, RewriteCallback));
     }
-
-    private bool ContainsReplaceArgs(Expression expr)
-    {
-        return Find(expr,
-                expr => expr.TryAs<Term>(out var term)
-                    && term.term.TryAs<string>(out var str)
-                    && str[0] == '_');
-    }
-
 }

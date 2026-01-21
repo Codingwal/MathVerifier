@@ -30,10 +30,18 @@ public struct UnaryExpr
     public Token op;
     public Expression expr;
 }
+public struct Tuple
+{
+    public List<Expression> elements;
+    public Tuple()
+    {
+        elements = new();
+    }
+}
 public struct Term
 {
-    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr> term;
-    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr> term)
+    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term;
+    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term)
     {
         this.term = term;
     }

@@ -1,17 +1,58 @@
-define 1:
+/*
+define ℤ:
+    ∀a(∀b(a ∈ ℕ ∧ b ℕ ⇒ [a, b] ∈ ℤ))
 {
-}
-
-define 2:
-{
+    sorry
 }
 
 theorem Test(f):
     1 + 1 = 2
 ⇒ ∀x(x = x)
 {
-    let a: a = 1
+    let z: z ∈ ℕ × ℕ
+    
+    let a: ∃x([a, x] = z)
+    let b: [a, b] = z
+}
+*/
 
-    a + a = 1 + 1
-    a + a = 2
+define ∅:
+    ¬∃x(x ∈ ∅)
+{
+    sorry
+}
+
+define Pair:
+    // ∀a(∀b([a, b] = {a, {∅, b}}))
+    ∀a(∀b( ∀x( x ∈ [a, b] ⇔ x = a ∨ ∀y(y ∈ x ⇔ y = ∅ ∨ y = b) ) ))
+{
+    sorry
+}
+
+theorem Test(a, b):
+⇒ a = a
+{
+    a = a
+    b = b
+
+    [a, b] = [a, b]
+
+    ∀c( ∀x( x ∈ [a, c] ⇔ x = a ∨ ∀y(y ∈ x ⇔ y = ∅ ∨ y = c) ) ) | @Pair
+    ∀x( x ∈ [a, b] ⇔ x = a ∨ ∀y(y ∈ x ⇔ y = ∅ ∨ y = b) )
+    a ∈ [a, b] ⇔ a = a ∨ ∀y(y ∈ a ⇔ y = ∅ ∨ y = b)
+    a ∈ [a, b]
+
+    let c: c = a
+    let d: d = b
+    [a, b] = [c, d]
+
+    let z: z = [a, b]
+
+    [a, b] = z
+    ∃f([a, f] = z)
+    
+    let e: ∃f([e, f] = z)
+    let f: [e, f] = z
+
+    [e, f] = [a, b]
 }

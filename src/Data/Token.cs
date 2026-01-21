@@ -18,6 +18,8 @@ public struct Token : ICustomFormatting
         BRACKET_CLOSE,
         CURLY_OPEN,
         CURLY_CLOSE,
+        SQUARE_OPEN,
+        SQUARE_CLOSE,
 
         // Set statements
         ELEMENT_OF,
@@ -71,6 +73,8 @@ public struct Token : ICustomFormatting
         {")", TokenType.BRACKET_CLOSE},
         {"{", TokenType.CURLY_OPEN},
         {"}", TokenType.CURLY_CLOSE},
+        {"[", TokenType.SQUARE_OPEN},
+        {"]", TokenType.SQUARE_CLOSE},
 
         // Set statements
         {"∈", TokenType.ELEMENT_OF},

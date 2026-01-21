@@ -137,6 +137,11 @@ public partial class Verifier
                     default:
                         throw new();
                 }
+            },
+            tuple =>
+            {
+                Logger.Error($"Expected statement but found tuple in line {line}");
+                throw new();
             });
     }
 
@@ -175,7 +180,8 @@ public partial class Verifier
                     return false;
                 },
                 strB => false,
-                unExprB => false
+                unExprB => false,
+                tupleB => throw new()
                 )
             );
     }

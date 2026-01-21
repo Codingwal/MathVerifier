@@ -1,5 +1,3 @@
-using System.Linq.Expressions;
-
 public partial class Verifier
 {
     private Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
@@ -57,8 +55,8 @@ public partial class Verifier
                     },
                     str =>
                     {
-                        if (conversionDict.ContainsKey(str))
-                            return conversionDict[str];
+                        if (conversionDict.TryGetValue(str, out Expression? value))
+                            return value;
                         else
                             return new Term(str);
                     },
@@ -69,6 +67,13 @@ public partial class Verifier
                             op = unExpr.op,
                             expr = RewriteExpression(unExpr.expr, conversionDict, callback),
                         });
+                    },
+                    tuple =>
+                    {
+                        Tuple newTuple = new();
+                        foreach (var e in tuple.elements)
+                            newTuple.elements.Add(RewriteExpression(e, conversionDict, callback));
+                        return new Term(newTuple);
                     }
                 );
             }
@@ -126,6 +131,14 @@ public partial class Verifier
                 {
                     var unExprB = termB.As<UnaryExpr>();
                     return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements, callback);
+                },
+                tupleA =>
+                {
+                    var tupleB = termB.As<Tuple>();
+                    for (int i = 0; i < tupleA.elements.Count; i++)
+                        if (!CompareExpressions(tupleA.elements[i], tupleB.elements[i], compareUsingStatements, callback))
+                            return false;
+                    return true;
                 }
             );
         }
@@ -165,9 +178,12 @@ public partial class Verifier
                 },
                 qStmt => ForEach(qStmt.stmt, callback),
                 str => { },
-                unExpr => ForEach(unExpr.expr, callback)
-                )
-            );
+                unExpr => ForEach(unExpr.expr, callback),
+                tuple =>
+                {
+                    foreach (var e in tuple.elements)
+                        ForEach(e, callback);
+                }));
     }
 
     private bool Find(Expression expr, Func<Expression, bool> predicate)
@@ -227,5 +243,13 @@ public partial class Verifier
         });
 
         return objects;
+    }
+
+    private bool ContainsReplaceArgs(Expression expr)
+    {
+        return Find(expr,
+                expr => expr.TryAs<Term>(out var term)
+                    && term.term.TryAs<string>(out var str)
+                    && str[0] == '_');
     }
 }

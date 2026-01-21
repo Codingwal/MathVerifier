@@ -134,7 +134,7 @@ public class Parser
 
         while (Peek().type != TokenType.CURLY_CLOSE)
             scope.statements.Add(ParseStatementLine());
-            
+
         ConsumeExpect(TokenType.CURLY_CLOSE);
         ConsumeExpect(TokenType.NEWLINE);
         return scope;
@@ -304,6 +304,18 @@ public class Parser
                 Term term = new(ParseExpression());
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
                 return term;
+            case TokenType.SQUARE_OPEN:
+                Consume();
+                Tuple tuple = new();
+                while (true)
+                {
+                    tuple.elements.Add(ParseExpression());
+                    if (Peek().type == TokenType.SQUARE_CLOSE)
+                        break;
+                    ConsumeExpect(TokenType.COMMA);
+                }
+                ConsumeExpect(TokenType.SQUARE_CLOSE);
+                return new Term(tuple);
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

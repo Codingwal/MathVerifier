@@ -21,7 +21,15 @@ public static class Utility
                     },
                     qStmt => $"{new Token(qStmt.op).ToSymbol()}{qStmt.obj}({Expr2Str(qStmt.stmt)})",
                     str => str,
-                    unaryExpr => $"{unaryExpr.op.ToSymbol()}({Expr2Str(unaryExpr.expr)})"
+                    unaryExpr => $"{unaryExpr.op.ToSymbol()}({Expr2Str(unaryExpr.expr)})",
+                    tuple =>
+                    {
+                        string str = $"[";
+                        for (int i = 0; i < tuple.elements.Count; i++)
+                            str += Expr2Str(tuple.elements[i]) + ((i + 1 < tuple.elements.Count) ? "," : "");
+                        str += "]";
+                        return str;
+                    }
                     );
             }
         );

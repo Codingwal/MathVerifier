@@ -178,6 +178,11 @@ public class SyntaxChecker
                     {
                         // Operator is checked on creation
                         CheckExpression(unExpr.expr, line);
+                    },
+                    tuple =>
+                    {
+                        foreach (var e in tuple.elements)
+                            CheckExpression(e, line);
                     });
             });
     }

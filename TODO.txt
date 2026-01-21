@@ -4,6 +4,7 @@
     - check operators
     - distinguish between expressions & statements (?)
 - multiple objects ("let" statement, ∀, ∃)
-- tuples (?)
 
 - start "_n" from 1 not 0
+
+- SyntaxChecker: theorem argument verification
