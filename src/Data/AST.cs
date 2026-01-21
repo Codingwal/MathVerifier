@@ -9,15 +9,10 @@ public enum Command
 }
 
 // Expressions
-public struct FuncCall
+public struct FuncCall()
 {
-    public string name;
-    public List<Expression> args;
-    public FuncCall()
-    {
-        name = "";
-        args = new();
-    }
+    public string name = "";
+    public List<Expression> args = [];
 }
 public struct BinExpr
 {
@@ -30,28 +25,20 @@ public struct UnaryExpr
     public Token op;
     public Expression expr;
 }
-public struct Tuple
-{
-    public List<Expression> elements;
-    public Tuple()
-    {
-        elements = new();
-    }
-}
-public struct Term
-{
-    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term;
-    public Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term)
-    {
-        this.term = term;
-    }
-}
-
 public struct QuantifiedStatement
 {
     public TokenType op;
     public string obj;
     public Expression stmt;
+}
+public struct Tuple()
+{
+    public List<Expression> elements = [];
+}
+
+public struct Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term)
+{
+    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple> term = term;
 }
 
 public struct DefinitionStatement
@@ -67,13 +54,9 @@ public struct ExpressionLine
     public Expression expr;
     public int line;
 }
-public struct Scope
+public struct Scope()
 {
-    public List<StatementLine> statements;
-    public Scope()
-    {
-        statements = new();
-    }
+    public List<StatementLine> statements = [];
 }
 public struct ConditionalStatement
 {
@@ -89,44 +72,25 @@ public struct StatementLine
     public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
 
-public struct Theorem
+public struct Theorem()
 {
-    public string name;
-    public List<string> parameters;
-    public List<ExpressionLine> requirements;
-    public ExpressionLine hypothesis;
-    public Scope proof;
-    public int line;
-    public Theorem()
-    {
-        name = "";
-        parameters = new();
-        requirements = new();
-        hypothesis = new();
-        proof = new();
-        line = -1;
-    }
+    public string name = "";
+    public List<string> parameters = [];
+    public List<ExpressionLine> requirements = [];
+    public ExpressionLine hypothesis = new();
+    public Scope proof = new();
+    public int line = -1;
 }
 
-public struct Definition
+public struct Definition()
 {
-    public string name;
-    public List<ExpressionLine> rules;
-    public int line;
-    public Scope proof; // Proof that such an object exists
-    public Definition()
-    {
-        name = "";
-        rules = new();
-        line = -1;
-    }
+    public string name = "";
+    public List<ExpressionLine> rules = [];
+    public int line = -1;
+    public Scope proof = new(); // Proof that such an object exists
 }
 
-public struct Data
+public struct Data()
 {
-    public List<Variant<Theorem, Definition>> data;
-    public Data()
-    {
-        data = new();
-    }
+    public List<Variant<Theorem, Definition>> data = [];
 }
