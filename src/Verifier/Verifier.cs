@@ -192,7 +192,7 @@ public partial class Verifier
         else if (proof.TryAs<string>(out var str))
         {
             foreach (var rule in definitions[str].rules)
-                statements.Add(RewriteExpression(rule.expr, new()));
+                statements.Add(RenameIterationVars(rule.expr));
         }
         else if (proof.TryAs<Command>(out var command))
         {
@@ -208,8 +208,8 @@ public partial class Verifier
         Theorem theorem = theorems[funcCall.name];
 
         // Setup conversion lists (inspect arguments)
-        Dictionary<string, Expression> conversionDict = new();
-        Dictionary<string, Expression> replaceArgs = new();
+        Dictionary<string, Expression> conversionDict = [];
+        Dictionary<string, Expression> replaceArgs = [];
         for (int i = 0; i < theorem.parameters.Count; i++)
         {
             if (ContainsReplaceArgs(funcCall.args[i]))
@@ -237,10 +237,11 @@ public partial class Verifier
             Expression newExpr = RewriteExpression(arg, conversionDict);
             for (int i = 0; i < call.args.Count; i++) conversionDict.Remove($"_{i}");
 
-            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line} (Expected {call.args.Count}).");
+            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line} (Expected {call.args.Count})."
+                + $"\n{Utility.Expr2Str(newExpr)}");
 
             // A second rewrite is required because the first only converts to the objects used in the theorem
-            newExpr = RewriteExpression(newExpr, conversionDict);
+            // newExpr = RewriteExpression(newExpr, conversionDict);
 
             return newExpr;
         }
@@ -248,7 +249,8 @@ public partial class Verifier
         // Rewrite and verify requirements
         foreach (var requirement in theorem.requirements)
         {
-            Expression req = RewriteExpression(requirement.expr, conversionDict, RewriteCallback);
+            Expression req = RenameIterationVars(requirement.expr);
+            req = RewriteExpression(req, conversionDict, RewriteCallback);
 
             Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
                 $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {line}." +
@@ -256,6 +258,8 @@ public partial class Verifier
         }
 
         // Rewrite hypothesis and add it to the verified statements
-        statements.Add(RewriteExpression(theorem.hypothesis.expr, conversionDict, RewriteCallback));
+        // Rewrite twice because iteration variables need to be renamed in the first iteration
+        Expression hypo = RenameIterationVars(theorem.hypothesis.expr);
+        statements.Add(RewriteExpression(hypo, conversionDict, RewriteCallback));
     }
 }

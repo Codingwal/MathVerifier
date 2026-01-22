@@ -1,6 +1,25 @@
 public partial class Verifier
 {
-    private static Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict, Func<Expression, Expression?>? callback = null)
+    private static Expression RenameIterationVars(Expression old)
+    {
+        Dictionary<string, Expression> conversionDict = [];
+
+        Expression? Callback(Expression expr)
+        {
+            if (!expr.TryAs<Term>(out var term)) return null;
+            if (!term.term.TryAs<QuantifiedStatement>(out var qStmt)) return null;
+
+            conversionDict.Add(qStmt.obj, new Term($"_{qStmt.obj}"));
+            Expression newStmt = RewriteExpression(qStmt.stmt, conversionDict, Callback);
+            conversionDict.Remove(qStmt.obj);
+
+            return new Term(new QuantifiedStatement() { op = qStmt.op, obj = $"_{qStmt.obj}", stmt = newStmt });
+        }
+
+        return RewriteExpression(old, conversionDict, Callback);
+    }
+    private static Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict,
+        Func<Expression, Expression?>? callback = null)
     {
         if (callback != null)
         {
@@ -37,7 +56,7 @@ public partial class Verifier
                         if (conversionDict.TryGetValue(funcCall.name, out var newExpr))
                         {
                             if (!newExpr.TryAs<Term>(out var term) || !term.term.TryAs(out string newName))
-                                Logger.Error($"Expected object as argument (parameter {funcCall.name} is used as a function)");
+                                Logger.Error($"Expression \"{Utility.Expr2Str(newExpr)}\" can't be used as a function (previous name: {funcCall.name}).");
                             else
                                 name = newName;
                         }
@@ -46,18 +65,7 @@ public partial class Verifier
                         FuncCall newFuncCall = new() { name = name, args = RewriteList(funcCall.args) };
                         return new Term(newFuncCall);
                     },
-                    qStmt =>
-                    {
-                        QuantifiedStatement newStmt = new()
-                        {
-                            op = qStmt.op,
-                            obj = $"_{qStmt.obj}"
-                        };
-                        conversionDict.Add(qStmt.obj, new Term(newStmt.obj));
-                        newStmt.stmt = RewriteExpression(qStmt.stmt, conversionDict, callback);
-                        conversionDict.Remove(qStmt.obj);
-                        return new Term(newStmt);
-                    },
+                    qStmt => new Term(new QuantifiedStatement() { op = qStmt.op, obj = qStmt.obj, stmt = RewriteExpression(qStmt.stmt, conversionDict, callback) }),
                     str =>
                     {
                         if (conversionDict.TryGetValue(str, out Expression? value))
@@ -65,17 +73,10 @@ public partial class Verifier
                         else
                             return new Term(str);
                     },
-                    unExpr =>
-                    {
-                        return new Term(new UnaryExpr()
-                        {
-                            op = unExpr.op,
-                            expr = RewriteExpression(unExpr.expr, conversionDict, callback),
-                        });
-                    },
+                    unExpr => new Term(new UnaryExpr() { op = unExpr.op, expr = RewriteExpression(unExpr.expr, conversionDict, callback), }),
                     tuple => new Term(new Tuple() { elements = RewriteList(tuple.elements) }),
                     setEnumNotation => new Term(new SetEnumNotation() { elements = RewriteList(setEnumNotation.elements) })
-                );
+                    );
             }
         );
     }
@@ -251,6 +252,7 @@ public partial class Verifier
         return Find(expr,
                 expr => expr.TryAs<Term>(out var term)
                     && term.term.TryAs<string>(out var str)
-                    && str[0] == '_');
+                    && str[0] == '_'
+                    && char.IsNumber(str[1]));
     }
 }

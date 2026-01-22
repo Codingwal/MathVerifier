@@ -1,28 +1,31 @@
-/*
-define ℤ:
-    ∀a(∀b(a ∈ ℕ ∧ b ℕ ⇒ [a, b] ∈ ℤ))
+theorem DefinitionExistenz(P):
+⇒ ∃y(P(y)) ⇔ ¬∀y(¬P(y))
 {
     sorry
 }
 
-theorem Test(f):
-    1 + 1 = 2
-⇒ ∀x(x = x)
+// A set of type {x: x ∈ B ∧ ϕ(x)} always exists
+theorem MengenExistenz(B, ϕ):
+⇒ ∃M(∀x( x ∈ M ⇔ x ∈ B ∧ ϕ(x) ))
 {
-    let z: z ∈ ℕ × ℕ
-    
-    let a: ∃x([a, x] = z)
-    let b: [a, b] = z
+    sorry
 }
-*/
 
 define ∅:
     ¬∃x(x ∈ ∅)
 {
-    sorry
+    let B: ∃x(x ∈ B)    | sorry
+
+    ∃M(∀x( x ∈ M ⇔ x ∈ B ∧ ¬(x = x) )) | MengenExistenz(B, ¬(_0 = _0))
+    ¬∀M(¬∀x( x ∈ M ⇔ x ∈ B ∧ ¬(x = x) )) | DefinitionExistenz(∀x( x ∈ _0 ⇔ x ∈ B ∧ ¬(x = x) ))
+    ¬∀M(¬∀x(¬(x ∈ M)))  | sorry
+    ¬∀M(∃x(x ∈ M))      | DefinitionExistenz(_0 ∈ M)
+    ¬∀M(¬¬∃x(x ∈ M))
+    ∃M(¬∃x(x ∈ M))      | DefinitionExistenz(¬∃x(x ∈ _0))
 }
 
 define SetEnumNotation:
+    ∅ = {}
     ∀a(∀b( ∀x(x ∈ {a, b} ⇔ x = a ∨ x = b) ))
 {
     sorry
@@ -37,5 +40,5 @@ define Pair:
 theorem Test(a, b):
 ⇒ a = a
 {
-
+    
 }

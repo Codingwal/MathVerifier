@@ -319,12 +319,11 @@ public class Parser
             case TokenType.CURLY_OPEN:
                 Consume();
                 SetEnumNotation set = new();
-                while (true)
+                while (Peek().type != TokenType.CURLY_CLOSE)
                 {
                     set.elements.Add(ParseExpression());
-                    if (Peek().type == TokenType.CURLY_CLOSE)
-                        break;
-                    ConsumeExpect(TokenType.COMMA);
+                    if (Peek().type != TokenType.CURLY_CLOSE)
+                        ConsumeExpect(TokenType.COMMA);
                 }
                 ConsumeExpect(TokenType.CURLY_CLOSE);
                 return new Term(set);
