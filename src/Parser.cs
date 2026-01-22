@@ -236,17 +236,9 @@ public class Parser
         ConsumeExpect(TokenType.BRACKET_CLOSE);
         return funcCall;
     }
-    private Expression ParseExpression(int minPrec = 0)
+    private IExpression ParseExpression(int minPrec = 0)
     {
-        Expression lhs;
-        if (Peek().type == TokenType.BRACKET_OPEN)
-        {
-            Consume();
-            lhs = ParseExpression();
-            ConsumeExpect(TokenType.BRACKET_CLOSE);
-        }
-        else
-            lhs = new(ParseTerm());
+        IExpression lhs = ParseTerm();
 
         while (true)
         {
@@ -263,7 +255,7 @@ public class Parser
         }
         return lhs;
     }
-    private Term ParseTerm()
+    private IExpression ParseTerm()
     {
         switch (Peek().type)
         {
@@ -275,7 +267,7 @@ public class Parser
                 ConsumeExpect(TokenType.BRACKET_OPEN);
                 stmt.stmt = ParseExpression();
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
-                return new(stmt);
+                return stmt;
             case TokenType.STRING:
                 string str = Consume().GetString();
                 if (Peek().type == TokenType.BRACKET_OPEN)
@@ -289,21 +281,21 @@ public class Parser
                             ConsumeExpect(TokenType.COMMA);
                     }
                     ConsumeExpect(TokenType.BRACKET_CLOSE);
-                    return new(funcCall);
+                    return funcCall;
                 }
                 else
-                    return new(str);
+                    return new Variable(str);
             case TokenType.NOT:
-                return new(new UnaryExpr()
+                return new UnaryExpr()
                 {
                     op = Consume(),
                     expr = ParseTerm()
-                });
+                };
             case TokenType.BRACKET_OPEN:
                 Consume();
-                Term term = new(ParseExpression());
+                IExpression expr = ParseExpression();
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
-                return term;
+                return expr;
             case TokenType.SQUARE_OPEN:
                 Consume();
                 Tuple tuple = new();
@@ -315,7 +307,7 @@ public class Parser
                     ConsumeExpect(TokenType.COMMA);
                 }
                 ConsumeExpect(TokenType.SQUARE_CLOSE);
-                return new Term(tuple);
+                return tuple;
             case TokenType.CURLY_OPEN:
                 Consume();
                 SetEnumNotation set = new();
@@ -326,7 +318,7 @@ public class Parser
                         ConsumeExpect(TokenType.COMMA);
                 }
                 ConsumeExpect(TokenType.CURLY_CLOSE);
-                return new Term(set);
+                return set;
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

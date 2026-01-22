@@ -1,6 +1,6 @@
 public partial class Verifier
 {
-    private StmtVal AnalyseStatement(Expression expr, int line, bool recursion = true)
+    private StmtVal AnalyseStatement(IExpression expr, int line, bool recursion = true)
     {
         // Check if the statement has already been proven
         foreach (var stmt in statements.GetAll())
@@ -8,9 +8,56 @@ public partial class Verifier
                 return StmtVal.TRUE;
 
         // Analyse statement recursively
-        return expr.Match(
-            binExpr => AnalyseBinExpr(binExpr, line, recursion),
-            term => AnalyseTerm(term, line, recursion));
+        if (expr is BinExpr binExpr)
+            return AnalyseBinExpr(binExpr, line, recursion);
+        else if (expr is QuantifiedStatement qStmt)
+        {
+            if (qStmt.op == TokenType.FOR_ALL)
+            {
+                StmtVal val = AnalyseStatement(qStmt.stmt, line, recursion);
+                return val;
+            }
+            else if (qStmt.op == TokenType.EXISTS)
+            {
+                // ∃x(ϕ(x)) ⇔ ¬∀x(¬ϕ(x))
+                return AnalyseStatement(new UnaryExpr() // ¬∀x(¬ϕ(x))
+                {
+                    op = new(TokenType.NOT),
+                    expr = new QuantifiedStatement() // ∀x(¬ϕ(x))
+                    {
+                        op = TokenType.FOR_ALL,
+                        obj = qStmt.obj,
+                        stmt = new UnaryExpr() // ¬ϕ(x)
+                        {
+                            op = new(TokenType.NOT),
+                            expr = qStmt.stmt // ϕ(x)
+                        }
+                    }
+                }, line, recursion);
+            }
+            else
+                throw new();
+        }
+        else if ((expr is FuncCall) || (expr is Variable))
+            return StmtVal.UNKNOWN;
+        if (expr is UnaryExpr unaryExpr)
+        {
+            if (unaryExpr.op.type == TokenType.NOT)
+            {
+                StmtVal val = AnalyseStatement(unaryExpr.expr, line, recursion);
+                return val switch
+                {
+                    StmtVal.TRUE => StmtVal.FALSE,
+                    StmtVal.FALSE => StmtVal.TRUE,
+                    StmtVal.UNKNOWN => StmtVal.UNKNOWN,
+                    _ => throw new()
+                };
+            }
+            else throw new();
+        }
+        else if (expr is IObjectCtor)
+            Logger.Error($"Expected statement but found object constructor ({line}).");
+        throw new();
     }
 
     private StmtVal AnalyseBinExpr(BinExpr binExpr, int line, bool recursion)
@@ -85,112 +132,44 @@ public partial class Verifier
         }
     }
 
-    private StmtVal AnalyseTerm(Term term, int line, bool recursion)
-    {
-        return term.term.Match(
-            expr => AnalyseStatement(expr, line, recursion),
-            funcCall => StmtVal.UNKNOWN,
-            qStmt =>
-            {
-                if (qStmt.op == TokenType.FOR_ALL)
-                {
-                    StmtVal val = AnalyseStatement(qStmt.stmt, line, recursion);
-                    return val;
-                }
-                else if (qStmt.op == TokenType.EXISTS)
-                {
-                    // ∃x(ϕ(x)) ⇔ ¬∀x(¬ϕ(x))
-                    return AnalyseStatement(new Term(new UnaryExpr() // ¬∀x(¬ϕ(x))
-                    {
-                        op = new(TokenType.NOT),
-                        expr = new Term(new QuantifiedStatement() // ∀x(¬ϕ(x))
-                        {
-                            op = TokenType.FOR_ALL,
-                            obj = qStmt.obj,
-                            stmt = new Term(new UnaryExpr() // ¬ϕ(x)
-                            {
-                                op = new(TokenType.NOT),
-                                expr = qStmt.stmt           // ϕ(x)
-                            })
-                        })
-                    }), line, recursion);
-                }
-                else
-                    throw new();
-            },
-            str => StmtVal.UNKNOWN,
-            unaryExpr =>
-            {
-                switch (unaryExpr.op.type)
-                {
-                    case TokenType.NOT:
-                        {
-                            StmtVal val = AnalyseStatement(unaryExpr.expr, line, recursion);
-                            return val switch
-                            {
-                                StmtVal.TRUE => StmtVal.FALSE,
-                                StmtVal.FALSE => StmtVal.TRUE,
-                                StmtVal.UNKNOWN => StmtVal.UNKNOWN,
-                                _ => throw new()
-                            };
-                        }
-                    default:
-                        throw new();
-                }
-            },
-            tuple =>
-            {
-                Logger.Error($"Expected statement but found tuple in line {line}");
-                throw new();
-            },
-            setEnumNotation =>
-            {
-                Logger.Error($"Expected statement but found set (enumeration notation) in line {line}");
-                throw new();
-            });
-    }
-
-    private bool ProofStatementWith(Expression stmt, Expression other, bool recursion = true)
+    private bool ProofStatementWith(IExpression stmt, IExpression other, bool recursion = true)
     {
         if (CompareExpressions(stmt, other))
             return true;
 
-        if (stmt.TryAs<Term>(out var termA) && termA.term.TryAs<QuantifiedStatement>(out var qStmtA) && qStmtA.op == TokenType.EXISTS)
+        if (stmt is QuantifiedStatement qStmtA && qStmtA.op == TokenType.EXISTS)
         {
             // If there is an object for which P is true, ∃x(P(x)) is also true
             if (CompareExpressionsReplaceFirstMismatch(qStmtA.stmt, other, qStmtA.obj))
                 return true;
         }
 
-        return other.Match(
-            binExpr => recursion && ProofStatementWithBinExpr(stmt, binExpr), // Proof with binary expression uses recursion
-            termB => termB.term.Match(
-                exprB => ProofStatementWith(stmt, exprB, recursion),
-                funcCallB => false,
-                qStmtB =>
-                {
-                    if (qStmtB.op == TokenType.FOR_ALL)
-                    {
-                        // Generate statement from quantified statement for eached object used in statement
-                        // This does not work for terms (e.g. "a + b")
-                        foreach (string obj in GetAllObjects(stmt))
-                            if (ProofStatementWith(stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(obj) } }), recursion))
-                                return true;
+        if (other is BinExpr binExpr)
+            return recursion && ProofStatementWithBinExpr(stmt, binExpr);
+        else if (other is QuantifiedStatement qStmtB)
+        {
+            if (qStmtB.op == TokenType.FOR_ALL)
+            {
+                // Generate statement from quantified statement for eached object used in statement
+                // This does not work for terms (e.g. "a + b")
+                foreach (string obj in GetAllObjects(stmt))
+                    if (ProofStatementWith(stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Variable(obj) } }), recursion))
+                        return true;
 
-                        // Use statement of quantified statement but replace the iteration variable with the
-                        // object used in the statement at its place
-                        if (CompareExpressionsReplaceFirstMismatch(qStmtB.stmt, stmt, qStmtB.obj))
-                            return true;
-                    }
-                    return false;
-                },
-                strB => false,
-                unExprB => false,
-                tupleB => throw new(),
-                setEnumNotation => throw new()));
+                // Use statement of quantified statement but replace the iteration variable with the
+                // object used in the statement at its place
+                if (CompareExpressionsReplaceFirstMismatch(qStmtB.stmt, stmt, qStmtB.obj))
+                    return true;
+            }
+            return false;
+        }
+        else if (other is IObjectCtor)
+            throw new();
+        else
+            return false;
     }
 
-    private bool ProofStatementWithBinExpr(Expression stmt, BinExpr binExpr)
+    private bool ProofStatementWithBinExpr(IExpression stmt, BinExpr binExpr)
     {
         if (Token.GetBinOpType(binExpr.op.type) != Token.BinOpType.Stmt2Stmt)
             return false;

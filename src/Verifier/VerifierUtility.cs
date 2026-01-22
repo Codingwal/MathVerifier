@@ -1,93 +1,84 @@
 public partial class Verifier
 {
-    private static Expression RenameIterationVars(Expression old)
+    private static IExpression RenameIterationVars(IExpression old)
     {
-        Dictionary<string, Expression> conversionDict = [];
+        Dictionary<string, IExpression> conversionDict = [];
 
-        Expression? Callback(Expression expr)
+        IExpression? Callback(IExpression expr)
         {
-            if (!expr.TryAs<Term>(out var term)) return null;
-            if (!term.term.TryAs<QuantifiedStatement>(out var qStmt)) return null;
+            if (expr is not QuantifiedStatement qStmt) return null;
 
-            conversionDict.Add(qStmt.obj, new Term($"_{qStmt.obj}"));
-            Expression newStmt = RewriteExpression(qStmt.stmt, conversionDict, Callback);
+            conversionDict.Add(qStmt.obj, new Variable($"_{qStmt.obj}"));
+            IExpression newStmt = RewriteExpression(qStmt.stmt, conversionDict, Callback);
             conversionDict.Remove(qStmt.obj);
 
-            return new Term(new QuantifiedStatement() { op = qStmt.op, obj = $"_{qStmt.obj}", stmt = newStmt });
+            return new QuantifiedStatement() { op = qStmt.op, obj = $"_{qStmt.obj}", stmt = newStmt };
         }
 
         return RewriteExpression(old, conversionDict, Callback);
     }
-    private static Expression RewriteExpression(Expression old, Dictionary<string, Expression> conversionDict,
-        Func<Expression, Expression?>? callback = null)
+    private static IExpression RewriteExpression(IExpression old, Dictionary<string, IExpression> conversionDict, Func<IExpression, IExpression?>? callback = null)
     {
+        // Use callback if present
         if (callback != null)
         {
-            Expression? tmp = callback(old);
+            IExpression? tmp = callback(old);
             if (tmp != null)
                 return tmp;
         }
 
-        List<Expression> RewriteList(List<Expression> list)
+        List<IExpression> RewriteList(List<IExpression> list)
         {
-            List<Expression> newList = [];
-            foreach (Expression expr in list)
+            List<IExpression> newList = [];
+            foreach (IExpression expr in list)
                 newList.Add(RewriteExpression(expr, conversionDict, callback));
             return newList;
         }
 
-        return old.Match(
-            binExpr =>
+        if (old is BinExpr binExpr)
+        {
+            return new BinExpr()
             {
-                return new BinExpr()
-                {
-                    lhs = RewriteExpression(binExpr.lhs, conversionDict, callback),
-                    op = binExpr.op,
-                    rhs = RewriteExpression(binExpr.rhs, conversionDict, callback),
-                };
-            },
-            term =>
+                lhs = RewriteExpression(binExpr.lhs, conversionDict, callback),
+                op = binExpr.op,
+                rhs = RewriteExpression(binExpr.rhs, conversionDict, callback),
+            };
+        }
+        else if (old is FuncCall funcCall)
+        {
+            string name = "";
+            if (conversionDict.TryGetValue(funcCall.name, out var newExpr))
             {
-                return term.term.Match(
-                    expr => RewriteExpression(expr, conversionDict, callback),
-                    funcCall =>
-                    {
-                        string name = "";
-                        if (conversionDict.TryGetValue(funcCall.name, out var newExpr))
-                        {
-                            if (!newExpr.TryAs<Term>(out var term) || !term.term.TryAs(out string newName))
-                                Logger.Error($"Expression \"{Utility.Expr2Str(newExpr)}\" can't be used as a function (previous name: {funcCall.name}).");
-                            else
-                                name = newName;
-                        }
-                        else name = funcCall.name;
-
-                        FuncCall newFuncCall = new() { name = name, args = RewriteList(funcCall.args) };
-                        return new Term(newFuncCall);
-                    },
-                    qStmt => new Term(new QuantifiedStatement() { op = qStmt.op, obj = qStmt.obj, stmt = RewriteExpression(qStmt.stmt, conversionDict, callback) }),
-                    str =>
-                    {
-                        if (conversionDict.TryGetValue(str, out Expression? value))
-                            return value;
-                        else
-                            return new Term(str);
-                    },
-                    unExpr => new Term(new UnaryExpr() { op = unExpr.op, expr = RewriteExpression(unExpr.expr, conversionDict, callback), }),
-                    tuple => new Term(new Tuple() { elements = RewriteList(tuple.elements) }),
-                    setEnumNotation => new Term(new SetEnumNotation() { elements = RewriteList(setEnumNotation.elements) })
-                    );
+                if (newExpr is not Variable var)
+                    Logger.Error($"Expression \"{Utility.Expr2Str(newExpr)}\" can't be used as a function (previous name: {funcCall.name}).");
+                else
+                    name = var.str;
             }
-        );
-    }
-    private bool CompareExpressions(Expression a, Expression b, bool compareUsingStatements = true, Func<Expression, Expression, bool>? callback = null)
-    {
-        // Brackets should not make a difference
-        if (a.TryAs<Term>(out var tA) && tA.term.TryAs<Expression>(out var eA))
-            a = eA;
-        if (b.TryAs<Term>(out var tB) && tB.term.TryAs<Expression>(out var eB))
-            b = eB;
+            else name = funcCall.name;
 
+            FuncCall newFuncCall = new() { name = name, args = RewriteList(funcCall.args) };
+            return newFuncCall;
+        }
+        else if (old is QuantifiedStatement qStmt)
+            return new QuantifiedStatement() { op = qStmt.op, obj = qStmt.obj, stmt = RewriteExpression(qStmt.stmt, conversionDict, callback) };
+        else if (old is Variable var)
+        {
+            if (conversionDict.TryGetValue(var.str, out IExpression? value))
+                return value;
+            else
+                return new Variable(var.str);
+        }
+        else if (old is UnaryExpr unExpr)
+            return new UnaryExpr() { op = unExpr.op, expr = RewriteExpression(unExpr.expr, conversionDict, callback) };
+        else if (old is Tuple tuple)
+            return new Tuple() { elements = RewriteList(tuple.elements) };
+        else if (old is SetEnumNotation setEnumNotation)
+            return new SetEnumNotation() { elements = RewriteList(setEnumNotation.elements) };
+        else
+            throw new();
+    }
+    private bool CompareExpressions(IExpression a, IExpression b, bool compareUsingStatements = true, Func<IExpression, IExpression, bool>? callback = null)
+    {
         if (compareUsingStatements)
             if (CompareUsingStatements(a, b))
                 return true;
@@ -96,59 +87,58 @@ public partial class Verifier
             if (callback(a, b))
                 return true;
 
-        if (a.Index != b.Index) return false;
+        if (a.GetType() != b.GetType()) return false;
 
-        if (a.TryAs<BinExpr>(out var binA))
+        bool CompareList(List<IExpression> a, List<IExpression> b)
         {
-            var binB = b.As<BinExpr>();
+            if (a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+                if (!CompareExpressions(a[i], b[i], compareUsingStatements, callback)) return false;
+            return true;
+        }
+
+        if (a is BinExpr binA)
+        {
+            var binB = (BinExpr)b;
             return (binA.op == binB.op)
                 && CompareExpressions(binA.lhs, binB.lhs, compareUsingStatements, callback)
                 && CompareExpressions(binA.rhs, binB.rhs, compareUsingStatements, callback);
         }
-        else
+        else if (a is FuncCall funcCallA)
         {
-            var termA = a.As<Term>().term;
-            var termB = b.As<Term>().term;
-            if (termA.Index != termB.Index) return false;
-
-            bool CompareList(List<Expression> a, List<Expression> b)
-            {
-                if (a.Count != b.Count) return false;
-                for (int i = 0; i < a.Count; i++)
-                    if (!CompareExpressions(a[i], b[i], compareUsingStatements, callback)) return false;
-                return true;
-            }
-
-            return termA.Match(
-                expr => CompareExpressions(expr, termB.As<Expression>(), compareUsingStatements, callback),
-                funcCallA =>
-                {
-                    if (funcCallA.name != termB.As<FuncCall>().name) return false;
-                    return CompareList(funcCallA.args, termB.As<FuncCall>().args);
-                },
-                qStmtA =>
-                {
-
-                    var qStmtB = termB.As<QuantifiedStatement>();
-                    if (qStmtA.op != qStmtB.op) return false;
-                    return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Term(qStmtA.obj) } }), compareUsingStatements, callback);
-                },
-                str => str == termB.As<string>(),
-                unExprA =>
-                {
-                    var unExprB = termB.As<UnaryExpr>();
-                    return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements, callback);
-                },
-                tupleA => CompareList(tupleA.elements, termB.As<Tuple>().elements),
-                setEnumNotationA => CompareList(setEnumNotationA.elements, termB.As<SetEnumNotation>().elements)
-            );
+            if (funcCallA.name != ((FuncCall)b).name) return false;
+            return CompareList(funcCallA.args, ((FuncCall)b).args);
         }
+        else if (a is QuantifiedStatement qStmtA)
+        {
+            var qStmtB = (QuantifiedStatement)b;
+            if (qStmtA.op != qStmtB.op) return false;
+            return CompareExpressions(qStmtA.stmt, RewriteExpression(qStmtB.stmt, new() { { qStmtB.obj, new Variable(qStmtA.obj) } }), compareUsingStatements, callback);
+        }
+        else if (a is Variable var)
+        {
+            return var.str == ((Variable)b).str;
+        }
+        else if (a is UnaryExpr unExprA)
+        {
+            var unExprB = (UnaryExpr)b;
+            return unExprA.op == unExprB.op && CompareExpressions(unExprA.expr, unExprB.expr, compareUsingStatements, callback);
+        }
+        else if (a is Tuple tupleA)
+        {
+            return CompareList(tupleA.elements, ((Tuple)b).elements);
+        }
+        else if (a is SetEnumNotation setEnumNotationA)
+        {
+            return CompareList(setEnumNotationA.elements, ((SetEnumNotation)b).elements);
+        }
+        else throw new();
     }
-    private bool CompareUsingStatements(Expression a, Expression b)
+    private bool CompareUsingStatements(IExpression a, IExpression b)
     {
         foreach (var stmt in statements.GetAll())
         {
-            if (!stmt.TryAs<BinExpr>(out var binExpr) || binExpr.op != new Token(TokenType.EQUALS))
+            if (stmt is not BinExpr binExpr || binExpr.op != new Token(TokenType.EQUALS))
                 continue;
 
             // Check if a = b or b = a is a proven statement
@@ -160,35 +150,38 @@ public partial class Verifier
         return false;
     }
 
-    private static void ForEach(Expression expr, Action<Expression> callback)
+    private static void ForEach(IExpression expr, Action<IExpression> callback)
     {
         callback(expr);
 
-        void ForEachList(List<Expression> list)
+        void ForEachList(List<IExpression> list)
         {
             foreach (var e in list)
                 ForEach(e, callback);
         }
 
-        expr.Switch(
-            binExpr =>
-            {
-                ForEach(binExpr.lhs, callback);
-                ForEach(binExpr.rhs, callback);
-            },
-            term => term.term.Switch(
-                expr => ForEach(expr, callback),
-                funcCall => ForEachList(funcCall.args),
-                qStmt => ForEach(qStmt.stmt, callback),
-                str => { },
-                unExpr => ForEach(unExpr.expr, callback),
-                tuple => ForEachList(tuple.elements),
-                setEnumNotation => ForEachList(setEnumNotation.elements)
-                )
-            );
+        switch (expr)
+        {
+            case BinExpr binExpr:
+                ForEach(binExpr.lhs, callback); ForEach(binExpr.rhs, callback); break;
+            case FuncCall funcCall:
+                ForEachList(funcCall.args); break;
+            case QuantifiedStatement qStmt:
+                ForEach(qStmt.stmt, callback); break;
+            case Variable var:
+                break;
+            case UnaryExpr unExpr:
+                ForEach(unExpr.expr, callback); break;
+            case Tuple tuple:
+                ForEachList(tuple.elements); break;
+            case SetEnumNotation setEnumNotation:
+                ForEachList(setEnumNotation.elements); break;
+            default:
+                throw new();
+        }
     }
 
-    private static bool Find(Expression expr, Func<Expression, bool> predicate)
+    private static bool Find(IExpression expr, Func<IExpression, bool> predicate)
     {
         bool found = false;
 
@@ -204,19 +197,15 @@ public partial class Verifier
     // Compare a and b
     // If two objects are compared and the object of a is the parameter replace,
     // All occurences of the object in a are handled as if they were the object that b had in the first comparison
-    private bool CompareExpressionsReplaceFirstMismatch(Expression a, Expression b, string replace)
+    private bool CompareExpressionsReplaceFirstMismatch(IExpression a, IExpression b, string replace)
     {
-        Expression? newExpr = null;
+        IExpression? newExpr = null;
 
-        bool Compare(Expression a, Expression b)
+        bool Compare(IExpression a, IExpression b)
         {
-            // Only handle object comparisons
-            if (!a.TryAs<Term>(out var termA) || !termA.term.TryAs<string>(out var strA))
-                return false;
-            // if (!b.TryAs<Term>(out var termB) || !termB.term.TryAs<string>(out var strB))
-            //     return false;
+            if (a is not Variable varA) return false;
 
-            if (strA == replace)
+            if (varA.str == replace)
             {
                 newExpr ??= b;
 
@@ -231,28 +220,26 @@ public partial class Verifier
         return val;
     }
 
-    private static List<string> GetAllObjects(Expression expr)
+    private static List<string> GetAllObjects(IExpression expr)
     {
-        List<string> objects = new();
+        List<string> objects = [];
 
         ForEach(expr, expr =>
         {
-            if (!expr.TryAs<Term>(out var term)) return;
-            if (!term.term.TryAs<string>(out var str)) return;
+            if (expr is not Variable var) return;
 
-            if (!objects.Contains(str))
-                objects.Add(str);
+            if (!objects.Contains(var.str))
+                objects.Add(var.str);
         });
 
         return objects;
     }
 
-    private static bool ContainsReplaceArgs(Expression expr)
+    private static bool ContainsReplaceArgs(IExpression expr)
     {
         return Find(expr,
-                expr => expr.TryAs<Term>(out var term)
-                    && term.term.TryAs<string>(out var str)
-                    && str[0] == '_'
-                    && char.IsNumber(str[1]));
+                expr => expr is Variable var
+                    && var.str[0] == '_'
+                    && char.IsNumber(var.str[1]));
     }
 }

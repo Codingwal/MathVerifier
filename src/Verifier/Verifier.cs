@@ -8,7 +8,7 @@ public partial class Verifier
     }
 
     private readonly Data ast;
-    private ScopeStack<Expression> statements;
+    private ScopeStack<IExpression> statements;
     private Dictionary<string, Theorem> theorems;
     private Dictionary<string, Definition> definitions;
     public Verifier(Data ast)
@@ -60,16 +60,16 @@ public partial class Verifier
 
             foreach (var stmt in definition.rules)
             {
-                Expression stmtRewritten = RewriteExpression(stmt.expr, new() { { definition.name, new Term("_obj_") } });
+                IExpression stmtRewritten = RewriteExpression(stmt.expr, new() { { definition.name, new Variable("_obj_") } });
                 if (existsStmt.stmt == null)
                     existsStmt.stmt = stmtRewritten;
                 else
                     existsStmt.stmt = new BinExpr() { lhs = existsStmt.stmt, op = new(TokenType.AND), rhs = stmtRewritten };
             }
 
-            StmtVal val = AnalyseStatement(new Term(existsStmt), definition.line);
+            StmtVal val = AnalyseStatement(existsStmt, definition.line);
             Logger.Assert(val == StmtVal.TRUE, $"Failed to verify existence of object \"{definition.name}\" defined in line {definition.line}."
-                + $"\n{Utility.Expr2Str(new Term(existsStmt))}");
+                + $"\n{Utility.Expr2Str(existsStmt)}");
         }
 
         statements.ExitScope("Definition");
@@ -111,13 +111,13 @@ public partial class Verifier
                 if (!sorry)
                 {
                     // Verify that an object with the specified rules exists
-                    Expression existsStmt = new Term(new QuantifiedStatement()
+                    IExpression existsStmt = new QuantifiedStatement()
                     {
                         op = TokenType.EXISTS,
                         obj = "_obj_",
-                        stmt = RewriteExpression(defStmt.stmt, new() { { defStmt.obj, new Term("_obj_") } })
-                    });
-                    VerifyStatementLine(new StatementLine() { line = stmt.line, stmt = existsStmt });
+                        stmt = RewriteExpression(defStmt.stmt, new() { { defStmt.obj, new Variable("_obj_") } })
+                    };
+                    VerifyStatementLine(new StatementLine() { line = stmt.line, stmt = new(existsStmt) });
                 }
                 statements.ExitScope("Definition statement");
                 statements.Add(defStmt.stmt);
@@ -131,7 +131,7 @@ public partial class Verifier
                 statements.ExitScope("If");
 
                 statements.EnterScope("Else");
-                statements.Add(new Term(new UnaryExpr() { op = new(TokenType.NOT), expr = condStmt.condition.expr }));
+                statements.Add(new UnaryExpr() { op = new(TokenType.NOT), expr = condStmt.condition.expr });
                 VerifyScope(condStmt.elseScope, out bool _);
                 VerifyScope(condStmt.bothScope, out bool _);
                 statements.ExitScope("Else");
@@ -141,7 +141,7 @@ public partial class Verifier
             else
             {
                 VerifyStatementLine(stmt);
-                statements.Add(stmt.stmt.As<Expression>());
+                statements.Add(stmt.stmt.As<IExpression>());
             }
         }
     }
@@ -167,16 +167,16 @@ public partial class Verifier
 
         AddProofToStatements(stmt.proof, stmt.line, out bool sorry);
 
-        StmtVal stmtVal = sorry ? StmtVal.TRUE : AnalyseStatement(stmt.stmt.As<Expression>(), stmt.line);
+        StmtVal stmtVal = sorry ? StmtVal.TRUE : AnalyseStatement(stmt.stmt.As<IExpression>(), stmt.line);
 
         statements.ExitScope("Statement");
 
         if (stmtVal == StmtVal.TRUE)
             return;
         else if (stmtVal == StmtVal.FALSE)
-            Logger.Error($"Statement in line {stmt.line} is false.\n{Utility.Expr2Str(stmt.stmt.As<Expression>())}");
+            Logger.Error($"Statement in line {stmt.line} is false.\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
         else
-            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{Utility.Expr2Str(stmt.stmt.As<Expression>())}");
+            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
     }
 
     private void AddProofToStatements(Variant<FuncCall, string, Command>? proof, int line, out bool sorry)
@@ -208,8 +208,8 @@ public partial class Verifier
         Theorem theorem = theorems[funcCall.name];
 
         // Setup conversion lists (inspect arguments)
-        Dictionary<string, Expression> conversionDict = [];
-        Dictionary<string, Expression> replaceArgs = [];
+        Dictionary<string, IExpression> conversionDict = [];
+        Dictionary<string, IExpression> replaceArgs = [];
         for (int i = 0; i < theorem.parameters.Count; i++)
         {
             if (ContainsReplaceArgs(funcCall.args[i]))
@@ -218,30 +218,25 @@ public partial class Verifier
                 conversionDict.Add(theorem.parameters[i], funcCall.args[i]);
         }
 
-        Expression? RewriteCallback(Expression old)
+        IExpression? RewriteCallback(IExpression old)
         {
-            if (!old.TryAs<Term>(out var term)) return null; // Ignore BinExpr
-
             // Arguments with replace args can't be used as objects
-            if (term.term.TryAs<string>(out var str))
+            if (old is Variable var)
             {
-                Logger.Assert(!replaceArgs.ContainsKey(str), $"Can't use replace arguments if the argument is used as an object!");
+                Logger.Assert(!replaceArgs.ContainsKey(var.str), $"Can't use replace arguments if the argument is used as an object!");
                 return null;
             }
 
-            if (!term.term.TryAs<FuncCall>(out var call)) return null; // Ignore everything except FuncCall
+            if (old is not FuncCall call) return null;
             if (!replaceArgs.TryGetValue(call.name, out var arg)) return null; // Ignore if not in replaceArgs
 
             // Rewrite functions passed as replace args
             for (int i = 0; i < call.args.Count; i++) conversionDict.Add($"_{i}", call.args[i]);
-            Expression newExpr = RewriteExpression(arg, conversionDict);
+            IExpression newExpr = RewriteExpression(arg, conversionDict);
             for (int i = 0; i < call.args.Count; i++) conversionDict.Remove($"_{i}");
 
             Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line} (Expected {call.args.Count})."
                 + $"\n{Utility.Expr2Str(newExpr)}");
-
-            // A second rewrite is required because the first only converts to the objects used in the theorem
-            // newExpr = RewriteExpression(newExpr, conversionDict);
 
             return newExpr;
         }
@@ -249,7 +244,7 @@ public partial class Verifier
         // Rewrite and verify requirements
         foreach (var requirement in theorem.requirements)
         {
-            Expression req = RenameIterationVars(requirement.expr);
+            IExpression req = RenameIterationVars(requirement.expr);
             req = RewriteExpression(req, conversionDict, RewriteCallback);
 
             Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
@@ -259,7 +254,7 @@ public partial class Verifier
 
         // Rewrite hypothesis and add it to the verified statements
         // Rewrite twice because iteration variables need to be renamed in the first iteration
-        Expression hypo = RenameIterationVars(theorem.hypothesis.expr);
+        IExpression hypo = RenameIterationVars(theorem.hypothesis.expr);
         statements.Add(RewriteExpression(hypo, conversionDict, RewriteCallback));
     }
 }

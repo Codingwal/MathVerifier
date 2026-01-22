@@ -107,7 +107,7 @@ public class SyntaxChecker
         else if (stmtLine.stmt.TryAs<Command>(out var command))
             Logger.Assert(command == Command.CHECK, $"Expected check command in line {stmtLine.line}");
         else
-            CheckExpression(stmtLine.stmt.As<Expression>(), stmtLine.line);
+            CheckExpression(stmtLine.stmt.As<IExpression>(), stmtLine.line);
 
         // Check proof
         stmtLine.proof?.Switch(
@@ -143,49 +143,50 @@ public class SyntaxChecker
             CheckStatementLine(stmtLine);
     }
 
-    private void CheckExpression(Expression expr, int line)
+    private void CheckExpression(IExpression expr, int line)
     {
-        void CheckList(List<Expression> list)
+        void CheckList(List<IExpression> list)
         {
             foreach (var e in list)
                 CheckExpression(e, line);
         }
 
-        expr.Switch(
-            binExpr =>
-            {
+        switch (expr)
+        {
+            case BinExpr binExpr:
                 CheckExpression(binExpr.lhs, line);
                 if (binExpr.op.type == TokenType.STRING)
                     Logger.Assert(objects.Contains(binExpr.op.GetString()), $"Reference to undefined binary operator \"{binExpr.op.GetString()}\" in line {line}.");
                 CheckExpression(binExpr.rhs, line);
-            },
-            term =>
-            {
-                term.term.Switch(
-                    expr => CheckExpression(expr, line),
-                    funcCall =>
-                    {
-                        Logger.Assert(objects.Contains(funcCall.name), $"Reference to undefined function \"{funcCall.name}\" in line {line}.");
-                        CheckList(funcCall.args);
-                    },
-                    qStmt =>
-                    {
-                        // Operator is checked on creation
-                        Logger.Assert(qStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
-                        Logger.Assert(!objects.Contains(qStmt.obj), $"An object with name \"{qStmt.obj}\" has already been defined! (line {line})");
-                        objects.EnterScope("Quantified statement");
-                        objects.Add(qStmt.obj);
-                        CheckExpression(qStmt.stmt, line);
-                        objects.ExitScope("Quantified statement");
-                    },
-                    str => Logger.Assert(objects.Contains(str), $"Reference to undefined object \"{str}\" in line {line}."),
-                    unExpr =>
-                    {
-                        // Operator is checked on creation
-                        CheckExpression(unExpr.expr, line);
-                    },
-                    tuple => CheckList(tuple.elements),
-                    setEnumNotation => CheckList(setEnumNotation.elements));
-            });
+                break;
+            case FuncCall funcCall:
+                Logger.Assert(objects.Contains(funcCall.name), $"Reference to undefined function \"{funcCall.name}\" in line {line}.");
+                CheckList(funcCall.args);
+                break;
+            case QuantifiedStatement qStmt:
+                // Operator is checked on creation
+                Logger.Assert(qStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
+                Logger.Assert(!objects.Contains(qStmt.obj), $"An object with name \"{qStmt.obj}\" has already been defined! (line {line})");
+                objects.EnterScope("Quantified statement");
+                objects.Add(qStmt.obj);
+                CheckExpression(qStmt.stmt, line);
+                objects.ExitScope("Quantified statement");
+                break;
+            case Variable var:
+                Logger.Assert(objects.Contains(var.str), $"Reference to undefined object \"{var.str}\" in line {line}.");
+                break;
+            case UnaryExpr unExpr:
+                // Operator is checked on creation
+                CheckExpression(unExpr.expr, line);
+                break;
+            case Tuple tuple:
+                CheckList(tuple.elements);
+                break;
+            case SetEnumNotation setEnumNotation:
+                CheckList(setEnumNotation.elements);
+                break;
+            default:
+                throw new();
+        }
     }
 }

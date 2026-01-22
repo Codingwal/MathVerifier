@@ -1,5 +1,3 @@
-global using Expression = Variant<BinExpr, Term>;
-
 // Miscellaneous
 public enum Command
 {
@@ -9,53 +7,55 @@ public enum Command
 }
 
 // Expressions
-public struct FuncCall()
+public interface IExpression { }
+public interface IObjectCtor : IExpression { }
+
+public struct BinExpr : IExpression
+{
+    public IExpression lhs;
+    public Token op;
+    public IExpression rhs;
+}
+public struct UnaryExpr : IExpression
+{
+    public Token op;
+    public IExpression expr;
+}
+public struct FuncCall() : IExpression
 {
     public string name = "";
-    public List<Expression> args = [];
+    public List<IExpression> args = [];
 }
-public struct BinExpr
-{
-    public Expression lhs;
-    public Token op;
-    public Expression rhs;
-}
-public struct UnaryExpr
-{
-    public Token op;
-    public Expression expr;
-}
-public struct QuantifiedStatement
+public struct QuantifiedStatement : IExpression
 {
     public TokenType op;
     public string obj;
-    public Expression stmt;
+    public IExpression stmt;
 }
-public struct Tuple()
+public struct Tuple() : IObjectCtor
 {
-    public List<Expression> elements = [];
+    public List<IExpression> elements = [];
 }
-public struct SetEnumNotation()
+public struct SetEnumNotation() : IObjectCtor
 {
-    public List<Expression> elements = [];
-}
-
-public struct Term(Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple, SetEnumNotation> term)
-{
-    public Variant<Expression, FuncCall, QuantifiedStatement, string, UnaryExpr, Tuple, SetEnumNotation> term = term;
+    public List<IExpression> elements = [];
 }
 
 public struct DefinitionStatement
 {
     public string obj;
-    public Expression stmt;
+    public IExpression stmt;
+}
+public struct Variable(string _str) : IExpression
+{
+    public string str = _str;
 }
 
 // High-level
 
 public struct ExpressionLine
 {
-    public Expression expr;
+    public IExpression expr;
     public int line;
 }
 public struct Scope()
@@ -72,7 +72,7 @@ public struct ConditionalStatement
 public struct StatementLine
 {
     public int line;
-    public Variant<Expression, Command, DefinitionStatement, ConditionalStatement> stmt;
+    public Variant<IExpression, Command, DefinitionStatement, ConditionalStatement> stmt;
     public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
 
