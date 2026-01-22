@@ -48,8 +48,7 @@ public class SyntaxChecker
     private void CheckDefinition(Definition definition)
     {
         // Check name
-        Logger.Assert(definition.name[0] != '_', $"Object names are not allowed to start with '_'! (line {definition.line})");
-        Logger.Assert(!objects.Contains(definition.name), $"An object with the name {definition.name} has already been defined! (line {definition.line}).");
+        CheckObjDeclaration(definition.name, definition.line);
         objects.Add(definition.name);
         definitions.Add(definition.name);
 
@@ -99,8 +98,7 @@ public class SyntaxChecker
         // Handle definition statements (let x: P(x))
         if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
         {
-            Logger.Assert(defStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {stmtLine.line})");
-            Logger.Assert(!objects.Contains(defStmt.obj), $"An object with name \"{defStmt.obj}\" has already been defined! (line {stmtLine.line})");
+            CheckObjDeclaration(defStmt.obj, stmtLine.line);
             objects.Add(defStmt.obj);
             CheckExpression(defStmt.stmt, stmtLine.line);
         }
@@ -151,6 +149,7 @@ public class SyntaxChecker
                 CheckExpression(e, line);
         }
 
+
         switch (expr)
         {
             case BinExpr binExpr:
@@ -165,8 +164,7 @@ public class SyntaxChecker
                 break;
             case QuantifiedStatement qStmt:
                 // Operator is checked on creation
-                Logger.Assert(qStmt.obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
-                Logger.Assert(!objects.Contains(qStmt.obj), $"An object with name \"{qStmt.obj}\" has already been defined! (line {line})");
+                CheckObjDeclaration(qStmt.obj, line);
                 objects.EnterScope("Quantified statement");
                 objects.Add(qStmt.obj);
                 CheckExpression(qStmt.stmt, line);
@@ -185,8 +183,20 @@ public class SyntaxChecker
             case SetEnumNotation setEnumNotation:
                 CheckList(setEnumNotation.elements);
                 break;
+            case SetBuilder setBuilder:
+                CheckObjDeclaration(setBuilder.obj, line);
+                objects.EnterScope("Set Builder");
+                objects.Add(setBuilder.obj);
+                CheckExpression(setBuilder.requirement, line);
+                objects.ExitScope("Set Builder");
+                break;
             default:
                 throw new();
         }
+    }
+    private void CheckObjDeclaration(string obj, int line)
+    {
+        Logger.Assert(obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
+        Logger.Assert(!objects.Contains(obj), $"An object with name \"{obj}\" has already been defined! (line {line})");
     }
 }

@@ -4,6 +4,12 @@ theorem DefinitionExistenz(P):
     sorry
 }
 
+theorem GleicheMenge(A, B):
+⇒ A = B ⇔ ∀x(x ∈ A ⇔ x ∈ B)
+{
+    sorry
+}
+
 // A set of type {x: x ∈ B ∧ ϕ(x)} always exists
 theorem MengenExistenz(B, ϕ):
 ⇒ ∃M(∀x( x ∈ M ⇔ x ∈ B ∧ ϕ(x) ))
@@ -11,17 +17,47 @@ theorem MengenExistenz(B, ϕ):
     sorry
 }
 
+theorem DefinitionSetBuilder(ϕ):
+⇒ ∀x(x ∈ {y: ϕ(y)} ⇔ ϕ(x))
+{
+    sorry
+}
+
+theorem SetBuilderExistenz(B, ϕ):
+⇒ ∃A( A = {x: x ∈ B ∧ ϕ(x)} )
+{
+    let M: ∀x( x ∈ M ⇔ x ∈ B ∧ ϕ(x) )       | MengenExistenz(B, ϕ)
+    ∀x( x ∈ M ⇔ x ∈ {y: y ∈ B ∧ ϕ(y)} )     | DefinitionSetBuilder(_0 ∈ B ∧ ϕ(_0))
+    M = {y: y ∈ B ∧ ϕ(y)}                    | GleicheMenge(M, {y: y ∈ B ∧ ϕ(y)})
+
+/*
+    ∃M(∀x( x ∈ M ⇔ x ∈ B ∧ ϕ(x) ))              | MengenExistenz(B, ϕ)
+    ¬∀M(¬∀x( x ∈ M ⇔ x ∈ B ∧ ϕ(x) ))            | DefinitionExistenz(∀x( x ∈ _0 ⇔ x ∈ B ∧ ϕ(x) ))
+    check   | DefinitionSetBuilder(_0 ∈ B ∧ ϕ(_0))
+    ¬∀M(¬∀x( x ∈ M ⇔ x ∈ {y: y ∈ B ∧ ϕ(y)} ))   | DefinitionSetBuilder(_0 ∈ B ∧ ϕ(_0))
+    ¬∀M( ¬(M = {y: y ∈ B ∧ ϕ(y)}) )              | GleicheMenge(M, {y: y ∈ B ∧ ϕ(y)})
+    ∃M( M = {y: y ∈ B ∧ ϕ(y)} )
+*/
+}
+
 define ∅:
     ¬∃x(x ∈ ∅)
 {
     let B: ∃x(x ∈ B)    | sorry
 
+    check       | MengenExistenz(B, ¬(_0 = _0))
+    let M: M = {x: x ∈ B ∧ ¬(x = x)} | MengenExistenz(B, ¬(_0 = _0))
+
+    ∀x(x ∈ M ⇔ x ∈ B ∧ ¬(x = x))    | DefinitionSetBuilder(_0 ∈ B ∧ ¬(_0 = _0))
+
+/*
     ∃M(∀x( x ∈ M ⇔ x ∈ B ∧ ¬(x = x) )) | MengenExistenz(B, ¬(_0 = _0))
     ¬∀M(¬∀x( x ∈ M ⇔ x ∈ B ∧ ¬(x = x) )) | DefinitionExistenz(∀x( x ∈ _0 ⇔ x ∈ B ∧ ¬(x = x) ))
     ¬∀M(¬∀x(¬(x ∈ M)))  | sorry
     ¬∀M(∃x(x ∈ M))      | DefinitionExistenz(_0 ∈ M)
     ¬∀M(¬¬∃x(x ∈ M))
     ∃M(¬∃x(x ∈ M))      | DefinitionExistenz(¬∃x(x ∈ _0))
+*/
 }
 
 define SetEnumNotation:

@@ -310,15 +310,40 @@ public class Parser
                 return tuple;
             case TokenType.CURLY_OPEN:
                 Consume();
-                SetEnumNotation set = new();
-                while (Peek().type != TokenType.CURLY_CLOSE)
+                if (Peek().type == TokenType.CURLY_CLOSE)
                 {
-                    set.elements.Add(ParseExpression());
-                    if (Peek().type != TokenType.CURLY_CLOSE)
-                        ConsumeExpect(TokenType.COMMA);
+                    Consume();
+                    return new SetEnumNotation();
                 }
-                ConsumeExpect(TokenType.CURLY_CLOSE);
-                return set;
+
+                IExpression e = ParseExpression(); // Must be parsed first so that the next token can be looked at
+
+                Token token = Consume();
+                if (token.type == TokenType.COMMA)
+                {
+                    SetEnumNotation set = new();
+                    set.elements.Add(e);
+                    while (Peek().type != TokenType.CURLY_CLOSE)
+                    {
+                        set.elements.Add(ParseExpression());
+                        if (Peek().type != TokenType.CURLY_CLOSE)
+                            ConsumeExpect(TokenType.COMMA);
+                    }
+                    ConsumeExpect(TokenType.CURLY_CLOSE);
+                    return set;
+                }
+                else if (token.type == TokenType.COLON)
+                {
+                    Logger.Assert(e is Variable, $"Expected variable instead of expression \"{Utility.Expr2Str(e)}\" in line {line}");
+                    SetBuilder set = new() { obj = ((Variable)e).str, requirement = ParseExpression() };
+                    ConsumeExpect(TokenType.CURLY_CLOSE);
+                    return set;
+                }
+                else
+                {
+                    Logger.Error($"Expected \",\" or \":\" but found \"{token.type}\" in line {line}");
+                    throw new();
+                }
             default:
                 Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
                 throw new();

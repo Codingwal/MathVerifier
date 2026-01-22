@@ -40,6 +40,11 @@ public struct SetEnumNotation() : IObjectCtor
 {
     public List<IExpression> elements = [];
 }
+public struct SetBuilder : IObjectCtor
+{
+    public string obj;
+    public IExpression requirement;
+}
 
 public struct DefinitionStatement
 {

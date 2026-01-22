@@ -6,13 +6,23 @@ public partial class Verifier
 
         IExpression? Callback(IExpression expr)
         {
-            if (expr is not QuantifiedStatement qStmt) return null;
+            if (expr is QuantifiedStatement qStmt)
+            {
+                conversionDict.Add(qStmt.obj, new Variable($"_{qStmt.obj}"));
+                IExpression newStmt = RewriteExpression(qStmt.stmt, conversionDict, Callback);
+                conversionDict.Remove(qStmt.obj);
 
-            conversionDict.Add(qStmt.obj, new Variable($"_{qStmt.obj}"));
-            IExpression newStmt = RewriteExpression(qStmt.stmt, conversionDict, Callback);
-            conversionDict.Remove(qStmt.obj);
+                return new QuantifiedStatement() { op = qStmt.op, obj = $"_{qStmt.obj}", stmt = newStmt };
+            }
+            else if (expr is SetBuilder setBuilder)
+            {
+                conversionDict.Add(setBuilder.obj, new Variable($"_{setBuilder.obj}"));
+                IExpression newStmt = RewriteExpression(setBuilder.requirement, conversionDict, Callback);
+                conversionDict.Remove(setBuilder.obj);
 
-            return new QuantifiedStatement() { op = qStmt.op, obj = $"_{qStmt.obj}", stmt = newStmt };
+                return new SetBuilder() { obj = $"_{setBuilder.obj}", requirement = newStmt };
+            }
+            return null;
         }
 
         return RewriteExpression(old, conversionDict, Callback);
@@ -34,6 +44,8 @@ public partial class Verifier
                 newList.Add(RewriteExpression(expr, conversionDict, callback));
             return newList;
         }
+
+        // TODO: use switch?b
 
         if (old is BinExpr binExpr)
         {
@@ -74,6 +86,8 @@ public partial class Verifier
             return new Tuple() { elements = RewriteList(tuple.elements) };
         else if (old is SetEnumNotation setEnumNotation)
             return new SetEnumNotation() { elements = RewriteList(setEnumNotation.elements) };
+        else if (old is SetBuilder setBuilder)
+            return new SetBuilder() { obj = setBuilder.obj, requirement = RewriteExpression(setBuilder.requirement, conversionDict, callback) };
         else
             throw new();
     }
@@ -96,6 +110,8 @@ public partial class Verifier
                 if (!CompareExpressions(a[i], b[i], compareUsingStatements, callback)) return false;
             return true;
         }
+
+        // TODO: rewrite as switch?
 
         if (a is BinExpr binA)
         {
@@ -132,6 +148,12 @@ public partial class Verifier
         {
             return CompareList(setEnumNotationA.elements, ((SetEnumNotation)b).elements);
         }
+        else if (a is SetBuilder setBuilderA)
+        {
+            var setBuilderB = (SetBuilder)b;
+            IExpression reqBRewritten = RewriteExpression(setBuilderB.requirement, new() { { setBuilderB.obj, new Variable(setBuilderA.obj) } });
+            return CompareExpressions(setBuilderA.requirement, reqBRewritten, compareUsingStatements, callback);
+        }
         else throw new();
     }
     private bool CompareUsingStatements(IExpression a, IExpression b)
@@ -145,6 +167,12 @@ public partial class Verifier
             if (CompareExpressions(new BinExpr() { lhs = a, op = new(TokenType.EQUALS), rhs = b }, stmt, compareUsingStatements: false))
                 return true;
             if (CompareExpressions(new BinExpr() { lhs = b, op = new(TokenType.EQUALS), rhs = a }, stmt, compareUsingStatements: false))
+                return true;
+
+            // Check if a ⇔ b or b ⇔ a is a proven statement
+            if (CompareExpressions(new BinExpr() { lhs = a, op = new(TokenType.EQUIVALENT), rhs = b }, stmt, compareUsingStatements: false))
+                return true;
+            if (CompareExpressions(new BinExpr() { lhs = b, op = new(TokenType.EQUIVALENT), rhs = a }, stmt, compareUsingStatements: false))
                 return true;
         }
         return false;
@@ -176,6 +204,8 @@ public partial class Verifier
                 ForEachList(tuple.elements); break;
             case SetEnumNotation setEnumNotation:
                 ForEachList(setEnumNotation.elements); break;
+            case SetBuilder setBuilder:
+                ForEach(setBuilder.requirement, callback); break;
             default:
                 throw new();
         }
