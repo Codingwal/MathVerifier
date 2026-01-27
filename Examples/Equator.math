@@ -141,90 +141,139 @@ theorem Stetigkeit_Nullstellensatz(f):
 /* Der eigentliche Beweis */
 
 theorem Equator(f):
+
+    // Bedingungen:
     ∀x(x ∈ ℝ ⇒ f(x) ∈ ℝ)            // f: ℝ → ℝ
-    Stetig(f)
-    ∀x(x ∈ ℝ ⇒ f(x + 2⋅π) = f(x))    // f ist Periodisch
-⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
+    Stetig(f)                        // f ist stetig
+    ∀x(x ∈ ℝ ⇒ f(x + 2⋅π) = f(x))    // f ist periodisch
+
+// Hypothese:
+⇒ ∃x(x ∈ ℝ ∧ f(x) = f(x + π))       // Zwei gegenüberliegende Punkte haben den gleichen Wert
 {
-    // Differenz-Funktion von gegenüberliegenden Punkten
+    // Definiere d als Differenzfunktion von gegenüberliegenden Punkten
+    // Für diese Definition muss eigentlich zuerst bewiesen werden, dass ein Objekt
+    // mit diesen Eigenschaften existiert. Dies überspringen wir hier mithilfe von "sorry"
     let d: ∀x(d(x) = f(x + π) - f(x))   | sorry
 
     // d ist als Addition einer stetigen Funktion definitiert, also muss d auch stetig sein
     Stetig(d)   | sorry
     
-    /* Angenommen d(x) hat keine Nullstelle */
+    // Angenommen d(x) hat keine Nullstelle...
+    // ⇔ ¬∃x(x ∈ ℝ ∧ d(x) = 0)
     if (∀x(¬(x ∈ ℝ ∧ d(x) = 0)))
     {
-        /* ∃x(x ∈ ℝ ∧ d(x) ≠ 0) */
+        // Wir müssen zuerst Beweisen, dass offensichtlich
+        // ein Wert ungleich 0 existiert. ( ∃x(x ∈ ℝ ∧ d(x) ≠ 0) )
 
+        // ¬(P ∧ Q) ⇔ ¬P ∨ ¬Q
         ∀x(¬(x ∈ ℝ) ∨ ¬(d(x) = 0))  | DefinitionUnd(x ∈ ℝ, d(x) = 0)
+
+        // ¬P ∨ Q ⇔ (P ⇒ Q)
         ∀x(x ∈ ℝ ⇒ ¬(d(x) = 0))     | DefinitionImplikation(x ∈ ℝ, ¬(d(x) = 0))
 
+        // ¬(a = b) ⇔ a ≠ b
         ∀a(¬(a = 0) ⇔ a ≠ 0)        | @≠
         ∀x(¬(d(x) = 0) ⇔ d(x) ≠ 0)
 
+        // Folgt offensichtlich aus "d(x) hat keine Nullstelle"
         ∀x(x ∈ ℝ ⇒ d(x) ≠ 0)    | ImplikationTransitiv(x ∈ ℝ, ¬(d(x) = 0), d(x) ≠ 0)
 
+        // Es existiert ein x ∈ ℝ und für alle x ∈ ℝ gilt d(x) ≠ 0, also existiert ein x ∈ ℝ mit d(x) ≠ 0
         ∃x(x ∈ ℝ)               | ℝNotEmpty()
         ∃x(x ∈ ℝ ∧ d(x) ≠ 0)    | T1(_0 ∈ ℝ, d(_0) ≠ 0)
         
-
+        // Wir wählen a als eine reelle Zahl mit d(a) ≠ 0. 
+        // Die Existenz eines solchen Objekts haben wir gerade eben bewiesen.
         let a: a ∈ ℝ ∧ d(a) ≠ 0
 
-        /* d(a + π) = 0 - d(a) */
+        // Im folgenden beweisen wir d(a + π) = -d(a)
 
+        // Einsetzen von a + π in den Funktionsterm von d (siehe Definition von d)
         d(a + π) = f((a + π) + π) - f(a + π)
 
+        // a, π ∈ ℝ, also können wir das Assoziativgesetz anwenden
         π ∈ ℝ       | @π
         d(a + π) = f(a + (π + π)) - f(a + π)    | Assoziativℝ(a, π, π)
 
+        // π + π können wir zu 2⋅π zusammenfassen 
+        // (In diesem Fall Teil der Definition von 2, in Realität wäre das ein seperates Axiom, 
+        // hergeleitet mithilfe der Definition der Multiplikation)
         π + π = 2⋅π                         | @2
         d(a + π) = f(a + 2⋅π) - f(a + π)
 
+        // a ∈ ℝ, also können wir die dritte Bedingung des Beweises anweden: f ist periodisch
         a ∈ ℝ
         f(a + 2⋅π) = f(a)
         d(a + π) = f(a) - f(a + π)
 
+        // Offensichtlich gilt f(a + π) ∈ ℝ. Das Beweisen wir hier mithilfe der
+        // Abgeschlossenheit der Addition über ℝ und der Defintion von f als reelle Funktion
         a + π ∈ ℝ                           | AddInℝ(a, π)
         a + π ∈ ℝ ⇒ f(a + π) ∈ ℝ
+
+        // a - b = -(b - a)
+        // Da wir den Operator "-" hier nicht definiert haben, schreiben wir stattdessen einfach "0 - ...".
+        // Die Umformung ist grundsätzlich einfach zu Beweisen. Wir kürzen diese hier ab,
+        // da dazu Gesetze wie Kommutativität usw. nötig werden (Herleitbar aber umständlich) 
         d(a + π) = 0 - (f(a + π) - f(a))    | T5(f(a), f(a + π))
 
+        // f(a + π) - f(a) kann als d(a) zusammengefasst werden.
         d(a) = f(a + π) - f(a)
         d(a + π) = 0 - d(a)
 
 
-        // d(a + π) = -d(a) ∧ d(a) ≠ 0, also gibt es Werte größer und kleiner als 0
+        // d(a + π) = -d(a) und d(a) ≠ 0, also gibt es Werte größer und kleiner als 0
         ∃x(x ∈ ℝ ∧ d(x) > 0) ∧ ∃x(x ∈ ℝ ∧ d(x) < 0)   | T7(d, a, a + π)
 
-        // d ist stetig, also muss es eine Nullstelle geben (Wiederspruch zur Annahme)
+        // d ist stetig und es gibt Werte größer und kleiner als 0,
+        // also muss es eine Nullstelle geben (Nullstellensatz)
+        // Diese Aussage stellt außerdem ein Wiederspruch zur Annahme dar und widerlegt diese damit
         ∃x(x ∈ ℝ ∧ d(x) = 0)   | Stetigkeit_Nullstellensatz(d)
     }
     else
     {
+        // Angenommen ¬∀x(¬(x ∈ ℝ ∧ d(x) = 0))
+        // (Gegenteil zur eigentlichen Annahme, beide Fälle müssen betrachtet werden)
+
+        // ¬∀x(¬P(x)) ⇔ ∃x(P(x))
+        // Die doppelte Verneinung hat keine weitere Bedeutung. Sie hilft in diesem Fall
+        // allerdings beim Analysieren und erspart zusätzliche Schritte (→ technische Gründe)
         ¬¬∃x(x ∈ ℝ ∧ d(x) = 0)
     }
     both
     {
-       ∃x(x ∈ ℝ ∧ d(x) = 0)
+        // Wie zuvor gesehen folgt aus beiden Fällen, dass d eine Nullstelle hat
+        // (Einmal per Widerspruch und ansonsten direkt aus der Annahme)
+        ∃x(x ∈ ℝ ∧ d(x) = 0)
     }
 
-    /* f(c) = f(c + π) */
-
+    // Wir wählen c als eine Nullstelle von d. Die Existenz haben wir gerade (aufwändig) bewiesen
     let c: c ∈ ℝ ∧ d(c) = 0
 
+    // Per Definition ist c eine reelle Zahl, also können wir c in den Funktionsterm von d einsetzen
     c ∈ ℝ
     d(c) = f(c + π) - f(c)
 
+    // Wir verwenden die Definition als Nullstelle
     d(c) = 0
     0 = f(c + π) - f(c)
 
+    // Offensichtlich gilt f(c + π) ∈ ℝ.
+    // Formal müssen wir dazu die Abgeschlossenheit der Addition in ℝ und die Definition von f verwenden
+    // Das gleiche haben wir schon mit f(a + π) gemacht.
     π ∈ ℝ                   | @π
     c + π ∈ ℝ               | AddInℝ(c, π)
     c + π ∈ ℝ ⇒ f(c + π) ∈ ℝ
+
+    // 0 = a - b ⇔ b = a
+    // Auch dieser Zusammenhang ist offensichtlich, deswegen ersparen wir uns hier einen umständlichen Beweis
     f(c) = f(c + π)         | T6(f(c + π), f(c))
 
-
-    // Also: ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
+    // c ∈ ℝ und f(c) = f(c + π), also können wir die Aussagen mit einem "und" logisch Verknüpfen.
     c ∈ ℝ ∧ f(c) = f(c + π)
+
+    // Somit existiert eine Stelle, die exakt den gleichen Wert wie die gegenüberliegende Stelle hat.
+    // c ist ein Beispiel für solch eine Stelle. (P(c) ⇒ ∃x(P(x)))
+    // Damit ist die Hypothese bewiesen.
     ∃x(x ∈ ℝ ∧ f(x) = f(x + π))
 }
