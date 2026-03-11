@@ -35,9 +35,9 @@ public partial class Verifier
         // Verify hypothesis
         if (!sorryStatement)
         {
-            StmtVal val = AnalyseStatement(theorem.hypothesis.expr, theorem.hypothesis.line);
-            Logger.Assert(val != StmtVal.FALSE, $"Hypothesis in line {theorem.hypothesis.line} is false.");
-            Logger.Assert(val != StmtVal.UNKNOWN, $"Failed to verify hypothesis in line {theorem.hypothesis.line}");
+            StmtVal val = AnalyseStatement(theorem.hypothesis.expr, theorem.hypothesis.lineInfo);
+            Logger.Assert(val != StmtVal.FALSE, $"Hypothesis is false ({theorem.hypothesis.lineInfo}).");
+            Logger.Assert(val != StmtVal.UNKNOWN, $"Failed to verify hypothesis ({theorem.hypothesis.lineInfo}).");
         }
 
         statements.ExitScope("Theorem");
@@ -67,8 +67,8 @@ public partial class Verifier
                     existsStmt.stmt = new BinExpr() { lhs = existsStmt.stmt, op = new(TokenType.AND), rhs = stmtRewritten };
             }
 
-            StmtVal val = AnalyseStatement(existsStmt, definition.line);
-            Logger.Assert(val == StmtVal.TRUE, $"Failed to verify existence of object \"{definition.name}\" defined in line {definition.line}."
+            StmtVal val = AnalyseStatement(existsStmt, definition.lineInfo);
+            Logger.Assert(val == StmtVal.TRUE, $"Failed to verify existence of object \"{definition.name}\" ({definition.lineInfo})."
                 + $"\n{Utility.Expr2Str(existsStmt)}");
         }
 
@@ -93,7 +93,7 @@ public partial class Verifier
                 else if (cmd == Command.CHECK)
                 {
                     statements.EnterScope("Check command");
-                    AddProofToStatements(stmt.proof, stmt.line, out var _);
+                    AddProofToStatements(stmt.proof, stmt.lineInfo, out var _);
 
                     // Print statements
                     Console.WriteLine("\nCurrent statements:");
@@ -107,7 +107,7 @@ public partial class Verifier
             else if (stmt.stmt.TryAs<DefinitionStatement>(out var defStmt))
             {
                 statements.EnterScope("Definition statement");
-                AddProofToStatements(stmt.proof, stmt.line, out var sorry);
+                AddProofToStatements(stmt.proof, stmt.lineInfo, out var sorry);
                 if (!sorry)
                 {
                     // Verify that an object with the specified rules exists
@@ -117,7 +117,7 @@ public partial class Verifier
                         obj = "_obj_",
                         stmt = RewriteExpression(defStmt.stmt, new() { { defStmt.obj, new Variable("_obj_") } })
                     };
-                    VerifyStatementLine(new StatementLine() { line = stmt.line, stmt = new(existsStmt) });
+                    VerifyStatementLine(new StatementLine() { lineInfo = stmt.lineInfo, stmt = new(existsStmt) });
                 }
                 statements.ExitScope("Definition statement");
                 statements.Add(defStmt.stmt);
@@ -161,25 +161,25 @@ public partial class Verifier
 
     private void VerifyStatementLine(StatementLine stmt)
     {
-        Console.WriteLine($"Verifying statement in line {stmt.line}.");
+        // Logger.Info($"Verifying statement ({stmt.lineInfo}).");
 
         statements.EnterScope("Statement"); // Proof statements should get deleted after verifying the statement
 
-        AddProofToStatements(stmt.proof, stmt.line, out bool sorry);
+        AddProofToStatements(stmt.proof, stmt.lineInfo, out bool sorry);
 
-        StmtVal stmtVal = sorry ? StmtVal.TRUE : AnalyseStatement(stmt.stmt.As<IExpression>(), stmt.line);
+        StmtVal stmtVal = sorry ? StmtVal.TRUE : AnalyseStatement(stmt.stmt.As<IExpression>(), stmt.lineInfo);
 
         statements.ExitScope("Statement");
 
         if (stmtVal == StmtVal.TRUE)
             return;
         else if (stmtVal == StmtVal.FALSE)
-            Logger.Error($"Statement in line {stmt.line} is false.\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
+            Logger.Error($"Statement is false ({stmt.lineInfo}).\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
         else
-            Logger.Error($"Failed to verify statement in line {stmt.line}.\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
+            Logger.Error($"Failed to verify statement ({stmt.lineInfo}).\n{Utility.Expr2Str(stmt.stmt.As<IExpression>())}");
     }
 
-    private void AddProofToStatements(Variant<FuncCall, string, Command>? proof, int line, out bool sorry)
+    private void AddProofToStatements(Variant<FuncCall, string, Command>? proof, LineInfo lineInfo, out bool sorry)
     {
         sorry = false;
 
@@ -187,7 +187,7 @@ public partial class Verifier
 
         if (proof.TryAs<FuncCall>(out var funcCall))
         {
-            HandleFuncCallProof(funcCall, line);
+            HandleFuncCallProof(funcCall, lineInfo);
         }
         else if (proof.TryAs<string>(out var str))
         {
@@ -203,7 +203,7 @@ public partial class Verifier
         }
     }
 
-    private void HandleFuncCallProof(FuncCall funcCall, int line)
+    private void HandleFuncCallProof(FuncCall funcCall, LineInfo lineInfo)
     {
         Theorem theorem = theorems[funcCall.name];
 
@@ -235,7 +235,7 @@ public partial class Verifier
             IExpression newExpr = RewriteExpression(arg, conversionDict);
             for (int i = 0; i < call.args.Count; i++) conversionDict.Remove($"_{i}");
 
-            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} in line {line} (Expected {call.args.Count})."
+            Logger.Assert(!ContainsReplaceArgs(newExpr), $"Too many replacement arguments used in call to theorem {theorem.name} (Expected {call.args.Count}) ({lineInfo})."
                 + $"\n{Utility.Expr2Str(newExpr)}");
 
             return newExpr;
@@ -247,8 +247,8 @@ public partial class Verifier
             IExpression req = RenameIterationVars(requirement.expr);
             req = RewriteExpression(req, conversionDict, RewriteCallback);
 
-            Logger.Assert(AnalyseStatement(req, requirement.line) == StmtVal.TRUE,
-                $"Failed to verify theorem requirement in line {requirement.line}. Theorem is referenced in line {line}." +
+            Logger.Assert(AnalyseStatement(req, requirement.lineInfo) == StmtVal.TRUE,
+                $"Failed to verify theorem requirement ({requirement.lineInfo}). Theorem is referenced at ({lineInfo})." +
                 $"\n{Utility.Expr2Str(req)}");
         }
 

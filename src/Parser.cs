@@ -1,30 +1,26 @@
-public class Parser
+public class Parser(List<TokenLine> _tokens)
 {
-    private List<List<Token>> tokens;
-    private int line;
-    private int index;
-
-    public Parser(List<List<Token>> tokens)
-    {
-        this.tokens = tokens;
-        line = 1;
-        index = 0;
-    }
+    private List<TokenLine> tokens = _tokens;
+    private LineInfo lineInfo;
+    private int lineIndex = 0;
+    private int index = 0;
 
     private Token Peek()
     {
-        return tokens[line - 1][index];
+        return tokens[lineIndex].tokens[index];
     }
     private Token Consume()
     {
         Token token = Peek();
+        lineInfo = tokens[lineIndex].lineInfo;
+
         index++;
 
         // If the end of the line has been reached, skip lines until the next token is found
-        while (index >= tokens[line - 1].Count)
+        while (index >= tokens[lineIndex].tokens.Count)
         {
             index = 0;
-            line++;
+            lineIndex++;
         }
 
         // If the token is of type NEWLINE, skip all additional NEWLINE tokens
@@ -32,7 +28,7 @@ public class Parser
         {
             while (Peek().type == TokenType.NEWLINE)
             {
-                line++;
+                lineIndex++;
                 index = 0;
             }
         }
@@ -43,7 +39,7 @@ public class Parser
     {
         Token consumed = Consume();
         if (consumed.type != type)
-            Logger.Error($"Expected token of type \"{type}\" but found \"{consumed}\" in line {line}");
+            Logger.Error($"Expected token of type \"{type}\" but found \"{consumed}\" ({lineInfo})");
         return consumed;
     }
 
@@ -64,7 +60,7 @@ public class Parser
                     Consume();
                     break;
                 default:
-                    Logger.Error($"Invalid token \"{Peek()}\" outside of theorem/definition in line {line}");
+                    Logger.Error($"Invalid token \"{Peek()}\" outside of theorem/definition ({lineInfo})");
                     break;
             }
         }
@@ -76,7 +72,7 @@ public class Parser
         Definition definition = new()
         {
             name = ConsumeExpect(TokenType.STRING).GetString(),
-            line = line
+            lineInfo = lineInfo
         };
         ConsumeExpect(TokenType.COLON);
         ConsumeExpect(TokenType.NEWLINE);
@@ -94,7 +90,7 @@ public class Parser
     }
     private Theorem ParseTheorem()
     {
-        Theorem theorem = new() { line = line };
+        Theorem theorem = new() { lineInfo = lineInfo };
 
         ConsumeExpect(TokenType.THEOREM);
         theorem.name = ConsumeExpect(TokenType.STRING).GetString();
@@ -144,7 +140,7 @@ public class Parser
         var exprLine = new ExpressionLine()
         {
             expr = ParseExpression(),
-            line = line
+            lineInfo = lineInfo
         };
         ConsumeExpect(TokenType.NEWLINE);
         return exprLine;
@@ -155,7 +151,7 @@ public class Parser
         {
             Consume();
             ConsumeExpect(TokenType.NEWLINE);
-            return new() { stmt = Command.SORRY, line = line };
+            return new() { stmt = Command.SORRY, lineInfo = lineInfo };
         }
         else if (Peek().type == TokenType.IF) // Parse conditional statement
         {
@@ -163,7 +159,7 @@ public class Parser
             ConsumeExpect(TokenType.BRACKET_OPEN);
             var condStmt = new ConditionalStatement()
             {
-                condition = new() { expr = ParseExpression(), line = line }
+                condition = new() { expr = ParseExpression(), lineInfo = lineInfo }
             };
             ConsumeExpect(TokenType.BRACKET_CLOSE);
             ConsumeExpect(TokenType.NEWLINE);
@@ -177,7 +173,7 @@ public class Parser
             ConsumeExpect(TokenType.NEWLINE);
             condStmt.bothScope = ParseScope();
 
-            return new() { stmt = condStmt, line = line };
+            return new() { stmt = condStmt, lineInfo = lineInfo };
         }
 
         StatementLine stmt;
@@ -190,15 +186,15 @@ public class Parser
             };
             ConsumeExpect(TokenType.COLON);
             defStmt.stmt = ParseExpression();
-            stmt = new() { stmt = defStmt, line = line };
+            stmt = new() { stmt = defStmt, lineInfo = lineInfo };
         }
         else if (Peek().type == TokenType.CHECK) // Parse check command
         {
             Consume();
-            stmt = new() { stmt = Command.CHECK, line = line };
+            stmt = new() { stmt = Command.CHECK, lineInfo = lineInfo };
         }
         else // Parse expression statement
-            stmt = new() { stmt = new(ParseExpression()), line = line };
+            stmt = new() { stmt = new(ParseExpression()), lineInfo = lineInfo };
 
         // Parse proof
         if (Peek().type == TokenType.PIPE)
@@ -334,18 +330,18 @@ public class Parser
                 }
                 else if (token.type == TokenType.COLON)
                 {
-                    Logger.Assert(e is Variable, $"Expected variable instead of expression \"{Utility.Expr2Str(e)}\" in line {line}");
+                    Logger.Assert(e is Variable, $"Expected variable instead of expression \"{Utility.Expr2Str(e)}\" ({lineInfo})");
                     SetBuilder set = new() { obj = ((Variable)e).str, requirement = ParseExpression() };
                     ConsumeExpect(TokenType.CURLY_CLOSE);
                     return set;
                 }
                 else
                 {
-                    Logger.Error($"Expected \",\" or \":\" but found \"{token.type}\" in line {line}");
+                    Logger.Error($"Expected \",\" or \":\" but found \"{token.type}\" ({lineInfo})");
                     throw new();
                 }
             default:
-                Logger.Error($"Invalid term \"{Peek()}\" in line {line}");
+                Logger.Error($"Invalid term \"{Peek()}\" ({lineInfo})");
                 throw new();
         }
     }

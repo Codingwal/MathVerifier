@@ -20,15 +20,15 @@ public class SyntaxChecker
     private void CheckTheorem(Theorem theorem)
     {
         // Check name
-        Logger.Assert(!theorems.ContainsKey(theorem.name), $"A theorem with the name \"{theorem.name}\" has already been defined! (line {theorem.line})");
+        Logger.Assert(!theorems.ContainsKey(theorem.name), $"A theorem with the name \"{theorem.name}\" has already been defined! ({theorem.lineInfo})");
 
         objects.EnterScope("Theorem");
 
         // Check parameters
         foreach (string param in theorem.parameters)
         {
-            Logger.Assert(param[0] != '_', $"Object names are not allowed to start with '_'! (line {theorem.line})");
-            Logger.Assert(!objects.Contains(param), $"An object with the name \"{param}\" has already been defined! (line {theorem.line})");
+            Logger.Assert(param[0] != '_', $"Object names are not allowed to start with '_'! ({theorem.lineInfo})");
+            Logger.Assert(!objects.Contains(param), $"An object with the name \"{param}\" has already been defined! ({theorem.lineInfo})");
             objects.Add(param);
         }
 
@@ -48,7 +48,7 @@ public class SyntaxChecker
     private void CheckDefinition(Definition definition)
     {
         // Check name
-        CheckObjDeclaration(definition.name, definition.line);
+        CheckObjDeclaration(definition.name, definition.lineInfo);
         objects.Add(definition.name);
         definitions.Add(definition.name);
 
@@ -64,14 +64,14 @@ public class SyntaxChecker
     }
     private void CheckExpressionLine(ExpressionLine exprLine)
     {
-        CheckExpression(exprLine.expr, exprLine.line);
+        CheckExpression(exprLine.expr, exprLine.lineInfo);
     }
     private void CheckStatementLine(StatementLine stmtLine)
     {
         // Handle sorry statement
         if (stmtLine.stmt.TryAs<Command>(out var cmd) && cmd == Command.SORRY)
         {
-            Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.line}.");
+            Logger.Assert(stmtLine.proof == null, $"Unexpected proof in line {stmtLine.lineInfo}.");
             return;
         }
 
@@ -98,22 +98,22 @@ public class SyntaxChecker
         // Handle definition statements (let x: P(x))
         if (stmtLine.stmt.TryAs<DefinitionStatement>(out var defStmt))
         {
-            CheckObjDeclaration(defStmt.obj, stmtLine.line);
+            CheckObjDeclaration(defStmt.obj, stmtLine.lineInfo);
             objects.Add(defStmt.obj);
-            CheckExpression(defStmt.stmt, stmtLine.line);
+            CheckExpression(defStmt.stmt, stmtLine.lineInfo);
         }
         else if (stmtLine.stmt.TryAs<Command>(out var command))
-            Logger.Assert(command == Command.CHECK, $"Expected check command in line {stmtLine.line}");
+            Logger.Assert(command == Command.CHECK, $"Expected check command in line {stmtLine.lineInfo}");
         else
-            CheckExpression(stmtLine.stmt.As<IExpression>(), stmtLine.line);
+            CheckExpression(stmtLine.stmt.As<IExpression>(), stmtLine.lineInfo);
 
         // Check proof
         stmtLine.proof?.Switch(
             funcCall =>
             {
-                Logger.Assert(theorems.ContainsKey(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" as proof in line {stmtLine.line}.");
+                Logger.Assert(theorems.ContainsKey(funcCall.name), $"Reference to undefined theorem \"{funcCall.name}\" as proof in line {stmtLine.lineInfo}.");
                 Logger.Assert(funcCall.args.Count == theorems[funcCall.name].parameters.Count,
-                    $"Expected {theorems[funcCall.name].parameters.Count} arguments but found {funcCall.args.Count} at reference to theorem {funcCall.name} in line {stmtLine.line}");
+                    $"Expected {theorems[funcCall.name].parameters.Count} arguments but found {funcCall.args.Count} at reference to theorem {funcCall.name} ({stmtLine.lineInfo})");
 
                 objects.EnterScope("Proof-FuncCall");
 
@@ -127,11 +127,11 @@ public class SyntaxChecker
             },
             definitionRef =>
             {
-                Logger.Assert(definitions.Contains(definitionRef), $"Reference to undefined object \"{definitionRef}\" as proof in line {stmtLine.line}.");
+                Logger.Assert(definitions.Contains(definitionRef), $"Reference to undefined object \"{definitionRef}\" as proof in line {stmtLine.lineInfo}.");
             },
             cmd =>
             {
-                Logger.Assert(cmd == Command.SORRY, $"Unexpected command {cmd} as proof in line {stmtLine.line}.");
+                Logger.Assert(cmd == Command.SORRY, $"Unexpected command {cmd} as proof in line {stmtLine.lineInfo}.");
             });
     }
 
@@ -141,41 +141,41 @@ public class SyntaxChecker
             CheckStatementLine(stmtLine);
     }
 
-    private void CheckExpression(IExpression expr, int line)
+    private void CheckExpression(IExpression expr, LineInfo lineInfo)
     {
         void CheckList(List<IExpression> list)
         {
             foreach (var e in list)
-                CheckExpression(e, line);
+                CheckExpression(e, lineInfo);
         }
 
 
         switch (expr)
         {
             case BinExpr binExpr:
-                CheckExpression(binExpr.lhs, line);
+                CheckExpression(binExpr.lhs, lineInfo);
                 if (binExpr.op.type == TokenType.STRING)
-                    Logger.Assert(objects.Contains(binExpr.op.GetString()), $"Reference to undefined binary operator \"{binExpr.op.GetString()}\" in line {line}.");
-                CheckExpression(binExpr.rhs, line);
+                    Logger.Assert(objects.Contains(binExpr.op.GetString()), $"Reference to undefined binary operator \"{binExpr.op.GetString()}\" ({lineInfo}).");
+                CheckExpression(binExpr.rhs, lineInfo);
                 break;
             case FuncCall funcCall:
-                Logger.Assert(objects.Contains(funcCall.name), $"Reference to undefined function \"{funcCall.name}\" in line {line}.");
+                Logger.Assert(objects.Contains(funcCall.name), $"Reference to undefined function \"{funcCall.name}\" ({lineInfo}).");
                 CheckList(funcCall.args);
                 break;
             case QuantifiedStatement qStmt:
                 // Operator is checked on creation
-                CheckObjDeclaration(qStmt.obj, line);
+                CheckObjDeclaration(qStmt.obj, lineInfo);
                 objects.EnterScope("Quantified statement");
                 objects.Add(qStmt.obj);
-                CheckExpression(qStmt.stmt, line);
+                CheckExpression(qStmt.stmt, lineInfo);
                 objects.ExitScope("Quantified statement");
                 break;
             case Variable var:
-                Logger.Assert(objects.Contains(var.str), $"Reference to undefined object \"{var.str}\" in line {line}.");
+                Logger.Assert(objects.Contains(var.str), $"Reference to undefined object \"{var.str}\" ({lineInfo}).");
                 break;
             case UnaryExpr unExpr:
                 // Operator is checked on creation
-                CheckExpression(unExpr.expr, line);
+                CheckExpression(unExpr.expr, lineInfo);
                 break;
             case Tuple tuple:
                 CheckList(tuple.elements);
@@ -184,19 +184,19 @@ public class SyntaxChecker
                 CheckList(setEnumNotation.elements);
                 break;
             case SetBuilder setBuilder:
-                CheckObjDeclaration(setBuilder.obj, line);
+                CheckObjDeclaration(setBuilder.obj, lineInfo);
                 objects.EnterScope("Set Builder");
                 objects.Add(setBuilder.obj);
-                CheckExpression(setBuilder.requirement, line);
+                CheckExpression(setBuilder.requirement, lineInfo);
                 objects.ExitScope("Set Builder");
                 break;
             default:
                 throw new();
         }
     }
-    private void CheckObjDeclaration(string obj, int line)
+    private void CheckObjDeclaration(string obj, LineInfo lineInfo)
     {
-        Logger.Assert(obj[0] != '_', $"Object names are not allowed to start with '_'! (line {line})");
-        Logger.Assert(!objects.Contains(obj), $"An object with name \"{obj}\" has already been defined! (line {line})");
+        Logger.Assert(obj[0] != '_', $"Object names are not allowed to start with '_'! ({lineInfo})");
+        Logger.Assert(!objects.Contains(obj), $"An object with name \"{obj}\" has already been defined! ({lineInfo})");
     }
 }

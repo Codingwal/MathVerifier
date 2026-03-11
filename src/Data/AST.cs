@@ -61,7 +61,7 @@ public struct Variable(string _str) : IExpression
 public struct ExpressionLine
 {
     public IExpression expr;
-    public int line;
+    public LineInfo lineInfo;
 }
 public struct Scope()
 {
@@ -76,7 +76,7 @@ public struct ConditionalStatement
 }
 public struct StatementLine
 {
-    public int line;
+    public LineInfo lineInfo;
     public Variant<IExpression, Command, DefinitionStatement, ConditionalStatement> stmt;
     public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
 }
@@ -88,14 +88,14 @@ public struct Theorem()
     public List<ExpressionLine> requirements = [];
     public ExpressionLine hypothesis = new();
     public Scope proof = new();
-    public int line = -1;
+    public LineInfo lineInfo = default;
 }
 
 public struct Definition()
 {
     public string name = "";
     public List<ExpressionLine> rules = [];
-    public int line = -1;
+    public LineInfo lineInfo = default;
     public Scope proof = new(); // Proof that such an object exists
 }
 

@@ -1,6 +1,6 @@
 public partial class Verifier
 {
-    private StmtVal AnalyseStatement(IExpression expr, int line, bool recursion = true)
+    private StmtVal AnalyseStatement(IExpression expr, LineInfo lineInfo, bool recursion = true)
     {
         // Check if the statement has already been proven
         foreach (var stmt in statements.GetAll())
@@ -9,12 +9,12 @@ public partial class Verifier
 
         // Analyse statement recursively
         if (expr is BinExpr binExpr)
-            return AnalyseBinExpr(binExpr, line, recursion);
+            return AnalyseBinExpr(binExpr, lineInfo, recursion);
         else if (expr is QuantifiedStatement qStmt)
         {
             if (qStmt.op == TokenType.FOR_ALL)
             {
-                StmtVal val = AnalyseStatement(qStmt.stmt, line, recursion);
+                StmtVal val = AnalyseStatement(qStmt.stmt, lineInfo, recursion);
                 return val;
             }
             else if (qStmt.op == TokenType.EXISTS)
@@ -33,7 +33,7 @@ public partial class Verifier
                             expr = qStmt.stmt // ϕ(x)
                         }
                     }
-                }, line, recursion);
+                }, lineInfo, recursion);
             }
             else
                 throw new();
@@ -44,7 +44,7 @@ public partial class Verifier
         {
             if (unaryExpr.op.type == TokenType.NOT)
             {
-                StmtVal val = AnalyseStatement(unaryExpr.expr, line, recursion);
+                StmtVal val = AnalyseStatement(unaryExpr.expr, lineInfo, recursion);
                 return val switch
                 {
                     StmtVal.TRUE => StmtVal.FALSE,
@@ -56,23 +56,23 @@ public partial class Verifier
             else throw new();
         }
         else if (expr is IObjectCtor)
-            Logger.Error($"Expected statement but found object constructor ({line}).");
+            Logger.Error($"Expected statement but found object constructor ({lineInfo}).");
         throw new();
     }
 
-    private StmtVal AnalyseBinExpr(BinExpr binExpr, int line, bool recursion)
+    private StmtVal AnalyseBinExpr(BinExpr binExpr, LineInfo lineInfo, bool recursion)
     {
         switch (binExpr.op.type)
         {
             case TokenType.IMPLIES:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, lineInfo, recursion);
 
                     // Add statements valid in this context
                     statements.EnterScope("Implies");
                     statements.Add(binExpr.lhs);
 
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, lineInfo, recursion);
 
                     statements.ExitScope("Implies");
 
@@ -86,8 +86,8 @@ public partial class Verifier
                 }
             case TokenType.EQUIVALENT:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, lineInfo, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, lineInfo, recursion);
 
                     if (lhs == StmtVal.UNKNOWN || rhs == StmtVal.UNKNOWN)
                         return StmtVal.UNKNOWN;
@@ -96,8 +96,8 @@ public partial class Verifier
                 }
             case TokenType.OR:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, lineInfo, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, lineInfo, recursion);
 
                     if (lhs == StmtVal.TRUE || rhs == StmtVal.TRUE)
                         return StmtVal.TRUE;
@@ -108,8 +108,8 @@ public partial class Verifier
                 }
             case TokenType.AND:
                 {
-                    StmtVal lhs = AnalyseStatement(binExpr.lhs, line, recursion);
-                    StmtVal rhs = AnalyseStatement(binExpr.rhs, line, recursion);
+                    StmtVal lhs = AnalyseStatement(binExpr.lhs, lineInfo, recursion);
+                    StmtVal rhs = AnalyseStatement(binExpr.rhs, lineInfo, recursion);
 
                     if (lhs == StmtVal.TRUE && rhs == StmtVal.TRUE)
                         return StmtVal.TRUE;
@@ -127,7 +127,7 @@ public partial class Verifier
             case TokenType.STRING:
                 return StmtVal.UNKNOWN;
             default:
-                Logger.Error($"Invalid statement operator {binExpr.op} in line {line}");
+                Logger.Error($"Invalid statement operator {binExpr.op} ({lineInfo}).");
                 throw new();
         }
     }
@@ -174,8 +174,8 @@ public partial class Verifier
         if (Token.GetBinOpType(binExpr.op.type) != Token.BinOpType.Stmt2Stmt)
             return false;
 
-        StmtVal lhs = AnalyseStatement(binExpr.lhs, -1, recursion: false);
-        StmtVal rhs = AnalyseStatement(binExpr.rhs, -1, recursion: false);
+        StmtVal lhs = AnalyseStatement(binExpr.lhs, LineInfo.Invalid, recursion: false);
+        StmtVal rhs = AnalyseStatement(binExpr.rhs, LineInfo.Invalid, recursion: false);
 
         switch (binExpr.op.type)
         {
