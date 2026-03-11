@@ -1,0 +1,38 @@
+#include Examples/NatürlicheZahlen.math
+
+define Add_Inv:
+    ∀n( n ∈ ℕ ⇒ n + Add_Inv(n) = 0 )
+{
+    sorry
+}
+
+define -:
+    ∀a(∀b( a - b = a + Add_Inv(b) ))
+{
+    sorry
+}
+
+define Mult_Inv:
+    ∀n( n ∈ ℕ ⇒ n ⋅ Mult_Inv(n) = 1 )
+{
+    sorry
+}
+
+define /:
+    ∀a(∀b( a / b = a ⋅ Mult_Inv(b) ))
+{
+    sorry
+}
+
+theorem Div_0(x):
+    x ∈ ℕ
+⇒ 0 / x = 0
+{
+    sorry
+
+    // Der folgende Beweis ist leider ungültig, weil Mult_Inv(x) nicht in ℕ ist (Außer bei x = 1)
+    
+    // ∀b( 0 / b = 0 ⋅ Mult_Inv(b) )   | @/
+    // 0 / x = 0 ⋅ Mult_Inv(x)
+    // 0 / x = 0               | Mult_0(Mult_Inv(x))
+}

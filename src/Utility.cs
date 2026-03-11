@@ -15,7 +15,7 @@ public static class Utility
 
         return expr switch
         {
-            BinExpr binExpr => $"{Expr2Str(binExpr.lhs)} {binExpr.op.ToSymbol()} {Expr2Str(binExpr.rhs)}",
+            BinExpr binExpr => $"({Expr2Str(binExpr.lhs)} {binExpr.op.ToSymbol()} {Expr2Str(binExpr.rhs)})",
             FuncCall funcCall => $"{funcCall.name}({ExprList2Str(funcCall.args)})",
             QuantifiedStatement qStmt => $"{new Token(qStmt.op).ToSymbol()}{qStmt.obj}({Expr2Str(qStmt.stmt)})",
             UnaryExpr unExpr => $"{unExpr.op.ToSymbol()}({Expr2Str(unExpr.expr)})",

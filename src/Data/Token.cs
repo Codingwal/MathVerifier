@@ -39,12 +39,6 @@ public struct Token : ICustomFormatting
         EXISTS,
         FOR_ALL,
 
-        // Binary operators 
-        PLUS,
-        MINUS,
-        STAR,
-        BACKSLASH,
-
         // Misc
         SEMICOLON,
         COLON,
@@ -94,12 +88,6 @@ public struct Token : ICustomFormatting
         {"∃", TokenType.EXISTS},
         {"∀", TokenType.FOR_ALL},
 
-        // Binary operators
-        {"+", TokenType.PLUS},
-        {"-", TokenType.MINUS},
-        {"⋅", TokenType.STAR},
-        {"÷", TokenType.BACKSLASH},
-
         // Misc
         {",", TokenType.COMMA},
         {";", TokenType.SEMICOLON},
@@ -138,11 +126,6 @@ public struct Token : ICustomFormatting
             TokenType.SUBSET => 100,
             TokenType.EQUALS => 100,
 
-            // Expr x Expr => Expr
-            TokenType.PLUS => 200,
-            TokenType.MINUS => 200,
-            TokenType.STAR => 201,
-            TokenType.BACKSLASH => 201,
             TokenType.STRING => 250, // Operator object
             _ => -1,
         };

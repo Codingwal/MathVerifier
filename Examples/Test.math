@@ -1,7 +1,121 @@
-#include Examples/NaturalNumbers.math
+#include Examples/Prequel.math
 
-theorem Test():
-⇒ 1 = 1
+define S:
+    S(0) = 0
+    ∀n( n ∈ ℕ ⇒ S(n + 1) = (n + 1) + S(n) )
 {
+    sorry
+}
+
+define G:
+    ∀n( n ∈ ℕ ⇒ G(n) = (n ⋅ (n + 1)) / 2 )
+{
+    sorry
+}
+
+theorem Induktionsanfang():
+⇒ G(0) = S(0)
+{
+    0 ∈ ℕ   | @ℕ
+    0 ∈ ℕ ⇒ G(0) = (0 ⋅ (0 + 1)) / 2   | @G
+    G(0) = (0 ⋅ (0 + 1)) / 2
+
+    1 ∈ ℕ           | 1_in_ℕ()
+    0 + 1 ∈ ℕ       | Add_in_ℕ(0, 1)
+    G(0) = 0 / 2    | Mult_0(0 + 1)         
+
+    2 ∈ ℕ       | 2_in_ℕ()
+    G(0) = 0    | Div_0(2)
+
+    G(0) = S(0)     | @S
+}
+
+theorem Induktionsschritt(x):
+    x ∈ ℕ
+    G(x) = S(x)
+⇒ G(x + 1) = S(x + 1)
+{
+    // Stimmt eigentlich nicht!
+    Mult_Inv(2) ∈ ℕ     | sorry
+
+    1 ∈ ℕ       | 1_in_ℕ()
+    x + 1 ∈ ℕ   | Add_in_ℕ(x, 1)
+    x + 1 ∈ ℕ ⇒ G(x + 1) = ((x + 1) ⋅ ((x + 1) + 1)) / 2    | @G
+
+    G(x + 1) = ((x + 1) ⋅ (x + (1 + 1))) / 2    | Add_Assoziativ(x, 1, 1)
+
+    1 + 1 = 2   | Add_1_1_is_2()
+    G(x + 1) = ((x + 1) ⋅ (x + 2)) / 2
+
+    2 ∈ ℕ       | 2_in_ℕ()
+    x + 2 ∈ ℕ   | Add_in_ℕ(x, 2)
+    G(x + 1) = (((x + 1) ⋅ x) + ((x + 1) ⋅ 2)) / 2  | Distributiv(x, 2, x + 1)
+
+    (x + 1) ⋅ x = (x + 1) ⋅ x
+    let a: a = (x + 1) ⋅ x
+
+    (x + 1) ⋅ 2 = (x + 1) ⋅ 2
+    let b: b = (x + 1) ⋅ 2
+
+    G(x + 1) = (a + b) / 2 
+
+    ∀y( y / 2 = y ⋅ Mult_Inv(2) )   | @/
+    (a + b) / 2 = (a + b) ⋅ Mult_Inv(2)
+    G(x + 1) = (a + b) ⋅ Mult_Inv(2)
+
+    a ∈ ℕ     | Mult_in_ℕ(x + 1, x)
+    b ∈ ℕ     | Mult_in_ℕ(x + 1, 2)
+    a + b ∈ ℕ   | Add_in_ℕ(a, b)
+    G(x + 1) = Mult_Inv(2) ⋅ (a + b)    | Mult_Kommutativ(a + b, Mult_Inv(2))
+
+    G(x + 1) = Mult_Inv(2) ⋅ (b + a)    | Add_Kommutativ(a, b)
+
+    G(x + 1) = (Mult_Inv(2) ⋅ b) + (Mult_Inv(2) ⋅ a)    | Distributiv(b, a, Mult_Inv(2))
+
+
+    Mult_Inv(2) ⋅ a = a ⋅ Mult_Inv(2)   | Mult_Kommutativ(Mult_Inv(2), a)
+
+    a / 2 = a ⋅ Mult_Inv(2)
+    Mult_Inv(2) ⋅ a = a / 2
+
+    Mult_Inv(2) ⋅ a = ((x + 1) ⋅ x) / 2
+
+    Mult_Inv(2) ⋅ a = (x ⋅ (x + 1)) / 2 | Mult_Kommutativ(x + 1, x)
+
+    x ∈ ℕ ⇒ G(x) = (x ⋅ (x + 1)) / 2    | @G
+    G(x) = (x ⋅ (x + 1)) / 2
+    Mult_Inv(2) ⋅ a = G(x)
+
+    Mult_Inv(2) ⋅ a = S(x)
+
+
+    Mult_Inv(2) ⋅ b = b ⋅ Mult_Inv(2)   | Mult_Kommutativ(Mult_Inv(2), b)
+
+    Mult_Inv(2) ⋅ b = ((x + 1) ⋅ 2) ⋅ Mult_Inv(2)
+
+    Mult_Inv(2) ⋅ b = (x + 1) ⋅ (2 ⋅ Mult_Inv(2))   | Mult_Assoziativ(x + 1, 2, Mult_Inv(2))
+
+    2 ∈ ℕ ⇒ 2 ⋅ Mult_Inv(2) = 1     | @Mult_Inv
+    2 ⋅ Mult_Inv(2) = 1
+    Mult_Inv(2) ⋅ b = (x + 1) ⋅ 1                   
+
+    Mult_Inv(2) ⋅ b = 1 ⋅ (x + 1)   | Mult_Kommutativ(x + 1, 1)
+
+    Mult_Inv(2) ⋅ b = x + 1     | Mult_1(x + 1)
+
+    G(x + 1) = (x + 1) + S(x)
+    
+    x ∈ ℕ ⇒ S(x + 1) = (x + 1) + S(x)   | @S
+    S(x + 1) = (x + 1) + S(x)
+    
+    G(x + 1) = S(x + 1)
+}
+
+theorem KleinerGauss():
+⇒ ∀n( n ∈ ℕ ⇒ S(n) = G(n) )
+{
+    G(0) = S(0)                                         | Induktionsanfang()
+    ∀n( n ∈ ℕ ∧ G(n) = S(n) ⇒ G(n + 1) = S(n + 1) )     | Induktionsschritt(n)
+
     
 }

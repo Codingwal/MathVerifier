@@ -1,0 +1,201 @@
+// Definition der natürlichen Zahlen mithilfe der Peano-Axiome
+// Da diese Definition ohne ZFC-Mengenlehre auskommen muss, können
+// wir die Existenz der natürlichen Zahlen leider nicht beweisen.
+// Stattdessen ist sie quasi das Axiom
+
+
+// Zusammenfassung der Definitionen und Sätze:
+
+// 0                        => Keine Eigenschaften
+// Succ(n)                  => Nachfolger einer natürlichen Zahl
+// ℕ                        => Die natürlichen Zahlen
+
+// +                        => Addition in ℕ
+// Add_in_ℕ                 => Abgeschlossenheit der Addition
+// Add_Kommutativ(a, b)     => a + b = b + a                (a, b ∈ ℕ)
+// Add_Assoziativ(a, b)     => a + (b + c) = (a + b) + c    (a, b, c ∈ ℕ)
+
+// ⋅                        => Multiplikation in ℕ
+// Mult_in_ℕ                 => Abgeschlossenheit der Multiplikation
+// Mult_Kommutativ(a, b)    => a ⋅ b = b ⋅ a                (a, b ∈ ℕ)
+// Mult_Assoziativ(a, b)    => a ⋅ (b ⋅ c) = (a ⋅ b) ⋅ c    (a, b, c ∈ ℕ)
+// Distributiv(a, b, k)     => k ⋅ (a + b) = k ⋅ a + k ⋅ b  (a, b, k ∈ ℕ)
+
+// 1                        => 1 = Succ(0)  (Nachfolger der 0)
+// 1_in_ℕ                   => 1 ∈ ℕ
+// Mult_1(n)                => 1 ⋅ n = n                    (n ∈ ℕ)
+// Mult_0(n)                => 0 ⋅ n = 0                    (n ∈ ℕ)
+// Add_0(n)                 => 0 + n = n                    (n ∈ ℕ)
+
+
+// Wir definieren 0 als ein beliebiges Objekt. Bei einer Herleitung
+// mithilfe der ZFC-Mengenlehre würden wir 0 als ein Synonym für die
+// leere Menge definieren
+define 0:
+{
+}
+
+// Succ(n) gibt den Nachfolger von n an. In den Peano-Axiomen wird dieser
+// häufig mit n' beschrieben. Bei einer Definition mithilfe der Mengenlehre
+// gilt für jede Menge M: Succ(M) = {∅, M}. Daraus folgen auch offensichtlich
+// die zwei hier beschriebenen Eigenschaften
+define Succ:
+    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))   // Succ ist induktiv
+    ¬∃n(Succ(n) = 0)    // Kein Element wird auf 0 abgebildet (0 ist der "Start der Kette")
+{
+    sorry
+}
+
+// Die zentrale Definition der natürlichen Zahlen (inklusive 0). Die drei
+// zentralen Axiome sind hier die Eigenschaften der Menge. Das letzte wird
+// auch Induktionsaxiom genannt und ist für die Konstruktion der Menge nicht
+// wichtig. Allerdings wird es für fast alle darauf aufbauenden Sätze als
+// Teil der Herleitung benötigt (z.B: Beweis der Kommutativität).
+define ℕ:
+    0 ∈ ℕ   // 0 ist eine natürliche Zahl
+    ∀n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)     // Alle Nachfolger von natürlichen Zahlen sind natürliche Zahlen
+    ∀ϕ((ϕ(0) ∧ ∀n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀n(ϕ(n))) // Induktionsaxiom
+{
+    sorry
+}
+
+
+// Wir definieren die Addition rekursiv:
+// 1. n + 0 = 0 ("Base case")
+// 2. a + b' = (a + b)'
+define +:
+    ∀n(n ∈ ℕ ⇒ n + 0 = n)
+    ∀a(∀b( a ∈ ℕ ∧ b ∈ ℕ ⇒ a + Succ(b) = Succ(a + b) ))
+{
+    sorry
+}
+
+theorem Add_in_ℕ(a, b):
+    a ∈ ℕ
+    b ∈ ℕ
+⇒ a + b ∈ ℕ
+{
+    sorry
+}
+
+theorem Add_Kommutativ(a, b):
+    a ∈ ℕ
+    b ∈ ℕ
+⇒ a + b = b + a
+{
+    sorry
+}
+theorem Add_Assoziativ(a, b, c):
+    a ∈ ℕ
+    b ∈ ℕ
+    c ∈ ℕ
+⇒ a + (b + c) = (a + b) + c
+{
+    sorry
+}
+
+
+// Wir definieren die Multiplikation rekursiv:
+// 1. 0 ⋅ n = 0
+// 2. k' ⋅ n = n + k ⋅ n
+define ⋅:
+    ∀n(n ∈ ℕ ⇒ n ⋅ 0 = 0)
+    ∀k(∀n( k ∈ ℕ ∧ n ∈ ℕ ⇒ n ⋅ Succ(k) = n + (n ⋅ k) ))
+{
+    sorry
+}
+
+theorem Mult_in_ℕ(a, b):
+    a ∈ ℕ
+    b ∈ ℕ
+⇒ a ⋅ b ∈ ℕ
+{
+    sorry
+}
+
+theorem Mult_Kommutativ(a, b):
+    a ∈ ℕ
+    b ∈ ℕ
+⇒ a ⋅ b = b ⋅ a
+{
+    sorry
+}
+theorem Mult_Assoziativ(a, b, c):
+    a ∈ ℕ
+    b ∈ ℕ
+    c ∈ ℕ
+⇒ a ⋅ (b ⋅ c) = (a ⋅ b) ⋅ c
+{
+    sorry
+}
+
+theorem Distributiv(a, b, k):
+    a ∈ ℕ
+    b ∈ ℕ
+    k ∈ ℕ
+⇒ k ⋅ (a + b) = (k ⋅ a) + (k ⋅ b)
+{
+    sorry
+}
+
+
+// Wir definieren 1 als Nachfolger von 0.
+define 1:
+    1 = Succ(0)
+{
+    Succ(0) = Succ(0)
+}
+
+// Beweis, dass 1 eine natürliche Zahl ist. Das folgt einerseits aus der
+// Definition von 1 als Nachfolger von 0 und von der zweiten Eigenschaft
+// der natürlichen Zahlen.
+theorem 1_in_ℕ():
+⇒ 1 ∈ ℕ
+{
+    0 ∈ ℕ                   | @ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ     | @ℕ
+    1 ∈ ℕ                   | @1
+}
+
+theorem Mult_1(n):
+    n ∈ ℕ
+⇒ 1 ⋅ n = n
+{
+    ∀x( 0 ∈ ℕ ∧ x ∈ ℕ ⇒ x ⋅ Succ(0) = x + (x ⋅ 0) )     | @⋅
+    0 ∈ ℕ ∧ n ∈ ℕ ⇒ n ⋅ Succ(0) = n + (n ⋅ 0)
+
+    0 ∈ ℕ   | @ℕ
+    n ⋅ Succ(0) = n + (n ⋅ 0)
+
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ         | @ℕ
+    Succ(0) ⋅ n = n + (n ⋅ 0)   | Mult_Kommutativ(n, Succ(0))
+
+    1 ⋅ n = Succ(0) ⋅ n     | @1
+    1 ⋅ n = n + (n ⋅ 0)
+
+    n ∈ ℕ ⇒ n ⋅ 0 = 0           | @⋅
+    n ⋅ 0 = 0
+    1 ⋅ n = n + 0
+
+    n ∈ ℕ ⇒ n + 0 = n           | @+
+    n + 0 = n
+    1 ⋅ n = n
+}
+
+theorem Add_0(n):
+    n ∈ ℕ
+⇒ 0 + n = n
+{
+    0 ∈ ℕ           | @ℕ
+    0 + n = n + 0   | Add_Kommutativ(0, n)
+    0 + n = n       | @+
+}
+
+theorem Mult_0(n):
+    n ∈ ℕ
+⇒ 0 ⋅ n = 0
+{
+    0 ∈ ℕ           | @ℕ
+    0 ⋅ n = n ⋅ 0   | Mult_Kommutativ(0, n)
+    0 ⋅ n = 0       | @⋅
+}

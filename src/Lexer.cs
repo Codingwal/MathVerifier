@@ -77,12 +77,12 @@ public static class Lexer
             {
                 i++;
             }
-            else if (str[i] == '/' && str[i + 1] == '*') // Multi-line comment
+            else if (str[i] == '/' && i + 1 < str.Length && str[i + 1] == '*') // Multi-line comment
             {
                 i += 2;
                 inMultiLineComment = true;
             }
-            else if (str[i] == '/' && str[i + 1] == '/') // Comment
+            else if (str[i] == '/' && i + 1 < str.Length && str[i + 1] == '/') // Comment
             {
                 break;
             }
