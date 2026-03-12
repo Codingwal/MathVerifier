@@ -114,8 +114,15 @@ theorem Induktionsschritt(x):
 theorem KleinerGauss():
 ⇒ ∀n( n ∈ ℕ ⇒ S(n) = G(n) )
 {
-    G(0) = S(0)                                         | Induktionsanfang()
-    ∀n( n ∈ ℕ ∧ G(n) = S(n) ⇒ G(n + 1) = S(n + 1) )     | Induktionsschritt(n)
-
+    G(0) = S(0)     | Induktionsanfang()
     
+    let a: a ∈ ℕ ∧ G(a) = S(a)  | sorry
+    a ∈ ℕ
+    G(a) = S(a)
+
+    G(a + 1) = S(a + 1)         | Induktionsschritt(a)
+
+    ∀n( n ∈ ℕ ∧ G(n) = S(n) ⇒ G(n + 1) = S(n + 1) )
+
+    ∀n( n ∈ ℕ ⇒ S(n) = G(n) )       | Induktion(G(_0) = S(_0))
 }

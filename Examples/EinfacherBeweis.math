@@ -1,0 +1,66 @@
+#include Examples/Prequel.math
+
+define Gerade:
+    ∀n( Gerade(n) ⇔ n ∈ ℕ ∧ ∃k( k ∈ ℕ ∧ 2 ⋅ k = n ))
+{
+    sorry
+}
+
+define Ungerade:
+    ∀n( Ungerade(n) ⇔ n ∈ ℕ ∧ ∃k( k ∈ ℕ ∧ 2 ⋅ k + 1 = n ))
+{
+    sorry
+}
+
+theorem UnendlichPrimzahlen(a, b):
+    Ungerade(a)
+    Ungerade(b)
+⇒ Gerade(a + b)
+{
+    a ∈ ℕ ∧ ∃k( k ∈ ℕ ∧ 2 ⋅ k + 1 = a )     | @Ungerade
+    let k1: k1 ∈ ℕ ∧ (2 ⋅ k1) + 1 = a
+    k1 ∈ ℕ
+    2 ⋅ k1 + 1 = a
+
+    b ∈ ℕ ∧ ∃k( k ∈ ℕ ∧ 2 ⋅ k + 1 = b )     | @Ungerade
+    let k2: k2 ∈ ℕ ∧ (2 ⋅ k2) + 1 = b
+    k2 ∈ ℕ
+    2 ⋅ k2 + 1 = b
+
+    a + b = ((2 ⋅ k1) + 1) + ((2 ⋅ k2) + 1)
+
+    2 ∈ ℕ       | 2_in_ℕ()
+    2 ⋅ k1 ∈ ℕ  | Mult_in_ℕ(2, k1)
+    1 ∈ ℕ       | 1_in_ℕ()
+    2 ⋅ k2 ∈ ℕ          | Mult_in_ℕ(2, k2)
+    (2 ⋅ k2) + 1 ∈ ℕ    | Add_in_ℕ(2 ⋅ k2, 1)
+    a + b = (2 ⋅ k1) + (1 + ((2 ⋅ k2) + 1))     | Add_Assoziativ(2 ⋅ k1, 1, (2 ⋅ k2) + 1)
+
+    a + b = (2 ⋅ k1) + (1 + (1 + (2 ⋅ k2)))     | Add_Kommutativ(2 ⋅ k2, 1)
+
+    a + b = (2 ⋅ k1) + ((1 + 1) + (2 ⋅ k2))     | Add_Assoziativ(1, 1, 2 ⋅ k2)
+
+    a + b = (2 ⋅ k1) + (2 + (2 ⋅ k2))           | Add_1_1_is_2()
+
+    a + b = (2 ⋅ k1) + ((1 ⋅ 2) + (2 ⋅ k2))     | Mult_1(2)
+
+    a + b = (2 ⋅ k1) + ((2 ⋅ 1) + (2 ⋅ k2))     | Mult_Kommutativ(1, 2)
+
+    a + b = (2 ⋅ k1) + (2 ⋅ (1 + k2))   | Distributiv(1, k2, 2)
+
+    1 + k2 ∈ ℕ      | Add_in_ℕ(1, k2)
+    a + b = 2 ⋅ (k1 + (1 + k2))     | Distributiv(k1, 1 + k2, 2)
+
+    let x: x = k1 + (1 + k2)    | sorry
+    x ∈ ℕ   | Add_in_ℕ(k1, 1 + k2)
+
+    a + b = 2 ⋅ x
+    x ∈ ℕ ∧ 2 ⋅ x = a + b
+    ∃k( k ∈ ℕ ∧ 2 ⋅ k = a + b )
+
+    a + b ∈ ℕ   | Add_in_ℕ(a, b)
+
+    Gerade(a + b) ⇔ a + b ∈ ℕ ∧ ∃k( k ∈ ℕ ∧ 2 ⋅ k = a + b )     | @Gerade
+
+    Gerade(a + b)
+}

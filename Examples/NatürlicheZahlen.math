@@ -16,7 +16,7 @@
 // Add_Assoziativ(a, b)     => a + (b + c) = (a + b) + c    (a, b, c ∈ ℕ)
 
 // ⋅                        => Multiplikation in ℕ
-// Mult_in_ℕ                 => Abgeschlossenheit der Multiplikation
+// Mult_in_ℕ                => Abgeschlossenheit der Multiplikation
 // Mult_Kommutativ(a, b)    => a ⋅ b = b ⋅ a                (a, b ∈ ℕ)
 // Mult_Assoziativ(a, b)    => a ⋅ (b ⋅ c) = (a ⋅ b) ⋅ c    (a, b, c ∈ ℕ)
 // Distributiv(a, b, k)     => k ⋅ (a + b) = k ⋅ a + k ⋅ b  (a, b, k ∈ ℕ)
@@ -26,6 +26,8 @@
 // Mult_1(n)                => 1 ⋅ n = n                    (n ∈ ℕ)
 // Mult_0(n)                => 0 ⋅ n = 0                    (n ∈ ℕ)
 // Add_0(n)                 => 0 + n = n                    (n ∈ ℕ)
+
+// Induktion(P)             => Induktionssatz (folgt aus dem 3. Axiom von ℕ)
 
 
 // Wir definieren 0 als ein beliebiges Objekt. Bei einer Herleitung
@@ -54,7 +56,7 @@ define Succ:
 define ℕ:
     0 ∈ ℕ   // 0 ist eine natürliche Zahl
     ∀n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)     // Alle Nachfolger von natürlichen Zahlen sind natürliche Zahlen
-    ∀ϕ((ϕ(0) ∧ ∀n(ϕ(n) ⇒ ϕ(Succ(n)))) ⇒ ∀n(ϕ(n))) // Induktionsaxiom
+    ∀ϕ((ϕ(0) ∧ ∀n( n ∈ ℕ ⇒ (ϕ(n) ⇒ ϕ(Succ(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ ϕ(n))) // Induktionsaxiom
 {
     sorry
 }
@@ -198,4 +200,25 @@ theorem Mult_0(n):
     0 ∈ ℕ           | @ℕ
     0 ⋅ n = n ⋅ 0   | Mult_Kommutativ(0, n)
     0 ⋅ n = 0       | @⋅
+}
+
+theorem Induktion(P):
+    P(0)
+    ∀n (n ∈ ℕ ⇒ ( P(n) ⇒ P(Succ(n)) ))
+⇒ ∀n (n ∈ ℕ ⇒ P(n))
+{ 
+    (P(0) ∧ ∀n( n ∈ ℕ ⇒ (P(n) ⇒ P(Succ(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ P(n))   | @ℕ
+    ∀n(n ∈ ℕ ⇒ P(n))
+}
+
+define >:
+    ∀a(∀b( a > b ⇔ ∃n( n ∈ ℕ ∧ b + n = a ) ))
+{
+    sorry
+}
+
+define <:
+    ∀a(∀b( a < b ⇔ b > a ))
+{
+    sorry
 }

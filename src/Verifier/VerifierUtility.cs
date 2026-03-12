@@ -122,7 +122,10 @@ public partial class Verifier
         }
         else if (a is FuncCall funcCallA)
         {
-            if (funcCallA.name != ((FuncCall)b).name) return false;
+            FuncCall funcCallB = (FuncCall)b;
+            bool namesEqual = CompareExpressions(new Variable(funcCallA.name), new Variable(funcCallB.name), compareUsingStatements, callback);
+            if (!namesEqual) return false;
+
             return CompareList(funcCallA.args, ((FuncCall)b).args);
         }
         else if (a is QuantifiedStatement qStmtA)
