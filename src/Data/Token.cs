@@ -1,6 +1,8 @@
-global using TokenType = Token.TokenType;
-
+global using TokenType = MathVerifier.Tokens.Token.TokenType;
 using System.Diagnostics;
+
+namespace MathVerifier.Tokens;
+
 
 public struct Token : ICustomFormatting
 {
@@ -56,7 +58,6 @@ public struct Token : ICustomFormatting
         BOTH,
 
         // Commands
-        CHECK,
         SORRY,
     };
 
@@ -105,7 +106,6 @@ public struct Token : ICustomFormatting
         {"both", TokenType.BOTH},
 
         // Commands
-        {"check", TokenType.CHECK},
         {"sorry", TokenType.SORRY},
     };
 

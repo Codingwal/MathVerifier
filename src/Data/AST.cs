@@ -1,105 +1,39 @@
-// Miscellaneous
-public enum Command
-{
-    NONE,
-    CHECK,
-    SORRY,
-}
+using MathVerifier.Tokens;
+
+namespace MathVerifier.AST;
 
 // Expressions
-public interface IExpression { }
-public interface IObjectCtor : IExpression { }
+public abstract record Expression : Statement;
+public abstract record ObjectCtor : Expression;
 
-public struct BinExpr : IExpression
-{
-    public IExpression lhs;
-    public Token op;
-    public IExpression rhs;
-}
-public struct UnaryExpr : IExpression
-{
-    public Token op;
-    public IExpression expr;
-}
-public struct FuncCall() : IExpression
-{
-    public string name = "";
-    public List<IExpression> args = [];
-}
-public struct QuantifiedStatement : IExpression
-{
-    public TokenType op;
-    public string obj;
-    public IExpression stmt;
-}
-public struct Tuple() : IObjectCtor
-{
-    public List<IExpression> elements = [];
-}
-public struct SetEnumNotation() : IObjectCtor
-{
-    public List<IExpression> elements = [];
-}
-public struct SetBuilder : IObjectCtor
-{
-    public string obj;
-    public IExpression requirement;
-}
+public record BinExpr(Expression Lhs, Token Op, Expression Rhs) : Expression;
+public record UnaryExpr(Token Op, Expression Expr) : Expression;
+public record FuncCall(string Name, List<Expression> Args) : Expression, IProof;
+public record QuantifiedStatement(TokenType Op, string Obj, Expression Stmt) : Expression;
+public record Tuple(List<Expression> Elements) : ObjectCtor;
+public record SetEnumNotation(List<Expression> Elements) : ObjectCtor;
+public record SetBuilder(string Obj, Expression Requirement) : ObjectCtor;
+public record Variable(string Str) : Expression;
 
-public struct DefinitionStatement
-{
-    public string obj;
-    public IExpression stmt;
-}
-public struct Variable(string _str) : IExpression
-{
-    public string str = _str;
-}
 
 // High-level
+public abstract record Statement;
+public record ExpressionLine(Expression Expr, LineInfo LineInfo);
+public record Scope(List<StatementLine> Statements);
+public record DefinitionStatement(string Obj, Expression Stmt) : Statement;
+public record ConditionalStatement(ExpressionLine Condition, Scope If, Scope Else, Scope Both) : Statement;
 
-public struct ExpressionLine
-{
-    public IExpression expr;
-    public LineInfo lineInfo;
-}
-public struct Scope()
-{
-    public List<StatementLine> statements = [];
-}
-public struct ConditionalStatement
-{
-    public ExpressionLine condition;
-    public Scope ifScope;
-    public Scope elseScope;
-    public Scope bothScope;
-}
-public struct StatementLine
-{
-    public LineInfo lineInfo;
-    public Variant<IExpression, Command, DefinitionStatement, ConditionalStatement> stmt;
-    public Variant<FuncCall, string, Command>? proof; // <theorem ref, definition ref, "sorry">
-}
+public interface IProof;
+public record DefinitionReference(string Name) : IProof;
+public record SorryStatement : Statement, IProof;
 
-public struct Theorem()
-{
-    public string name = "";
-    public List<string> parameters = [];
-    public List<ExpressionLine> requirements = [];
-    public ExpressionLine hypothesis = new();
-    public Scope proof = new();
-    public LineInfo lineInfo = default;
-}
+public record StatementLine(Statement Stmt, IProof? Proof, LineInfo LineInfo);
 
-public struct Definition()
-{
-    public string name = "";
-    public List<ExpressionLine> rules = [];
-    public LineInfo lineInfo = default;
-    public Scope proof = new(); // Proof that such an object exists
-}
+public record Theorem(string Name, List<string> Params, List<ExpressionLine> Requirements, ExpressionLine Hypothesis, Scope Proof, LineInfo LineInfo);
 
-public struct Data()
+public record Definition(string Name, List<ExpressionLine> Rules, Scope Proof, LineInfo LineInfo);
+
+public record Data()
 {
     public List<Variant<Theorem, Definition>> data = [];
 }

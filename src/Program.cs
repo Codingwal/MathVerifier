@@ -1,3 +1,7 @@
+namespace MathVerifier;
+
+using MathVerifier.Services;
+
 public static class Program
 {
     public static void Main(string[] args)
@@ -23,20 +27,20 @@ public static class Program
         Console.WriteLine("Finished parsing");
 
         // Print AST
-        // Console.WriteLine("\n-------------------------");
-        // Console.Write(Formatter.Format(ast));
-        // Console.WriteLine("-------------------------\n");
+        Console.WriteLine("\n-------------------------");
+        Console.Write(Formatter.Format(ast));
+        Console.WriteLine("-------------------------\n");
 
         // Check syntax
-        Console.WriteLine("Checking syntax...");
-        SyntaxChecker checker = new(ast);
-        checker.Check();
-        Console.WriteLine("Finished checking syntax");
+        // Console.WriteLine("Checking syntax...");
+        // SyntaxChecker checker = new(ast);
+        // checker.Check();
+        // Console.WriteLine("Finished checking syntax");
 
         // Verify
-        Console.WriteLine("Verifying...");
-        Verifier verifier = new(ast);
-        verifier.Verify();
-        Console.WriteLine("Finished verifying");
+        // Console.WriteLine("Verifying...");
+        // Verifier verifier = new(ast);
+        // verifier.Verify();
+        // Console.WriteLine("Finished verifying");
     }
 }

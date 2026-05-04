@@ -38,10 +38,16 @@ public static class Formatter
             string str = "";
             foreach (FieldInfo field in obj.GetType().GetFields())
             {
-                if (field.IsStatic)
-                    continue;
+                if (field.IsStatic) continue;
                 str += prefix + field.Name + ":\n";
                 str += Format(field.GetValue(obj)!, AddToPrefix(prefix));
+            }
+            foreach (PropertyInfo property in obj.GetType().GetProperties())
+            {
+                if (IsStatic(property)) continue;
+                object? value = property.GetValue(obj);
+                str += prefix + property.Name + ":\n";
+                str += (value != null) ? Format(value, AddToPrefix(prefix)) : "null";
             }
             return str;
         }
@@ -52,5 +58,12 @@ public static class Formatter
             return prefix + " | ";
         else
             return prefix + " : ";
+    }
+
+    private static bool IsStatic(PropertyInfo property)
+    {
+        var getMethod = property.GetGetMethod();
+        if (getMethod == null) return false;
+        return getMethod.IsStatic;
     }
 }

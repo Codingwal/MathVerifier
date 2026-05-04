@@ -1,3 +1,7 @@
+using MathVerifier.Tokens;
+
+namespace MathVerifier.Services;
+
 public static class Lexer
 {
     public static List<TokenLine> Tokenize(string fileName)
