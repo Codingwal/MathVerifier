@@ -14,7 +14,7 @@ public class ScopeStack<T>
 
     public ScopeStack()
     {
-        scopes = new();
+        scopes = [];
         EnterScope("Global");
     }
 
@@ -43,9 +43,20 @@ public class ScopeStack<T>
                 yield return scope.statements[j];
         }
     }
+    public IEnumerable<T> GetAllGlobal()
+    {
+        foreach (var value in scopes[0].statements)
+            yield return value;
+    }
     public bool Contains(T value)
     {
         foreach (T e in GetAll())
+            if (e!.Equals(value)) return true;
+        return false;
+    }
+    public bool IsGlobal(T value)
+    {
+        foreach (T e in GetAllGlobal())
             if (e!.Equals(value)) return true;
         return false;
     }
