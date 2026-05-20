@@ -1,0 +1,47 @@
+define 0:
+{
+}
+
+define Succ:
+    ∀n(∀m(Succ(n) = Succ(m) ⇒ n = m))   // Succ ist induktiv
+    ¬∃n(Succ(n) = 0)    // Kein Element wird auf 0 abgebildet (0 ist der "Start der Kette")
+{
+    sorry
+}
+
+define ℕ:
+    0 ∈ ℕ   // 0 ist eine natürliche Zahl
+    ∀n(n ∈ ℕ ⇒ Succ(n) ∈ ℕ)     // Alle Nachfolger von natürlichen Zahlen sind natürliche Zahlen
+    ∀ϕ((ϕ(0) ∧ ∀n( n ∈ ℕ ⇒ (ϕ(n) ⇒ ϕ(Succ(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ ϕ(n))) // Induktionsaxiom
+{
+    sorry
+}
+
+define +:
+    ∀n(n ∈ ℕ ⇒ n + 0 = n)
+    ∀a(∀b( a ∈ ℕ ∧ b ∈ ℕ ⇒ a + Succ(b) = Succ(a + b) ))
+{
+    sorry
+}
+
+theorem Add_in_ℕ(a, b):
+    a ∈ ℕ
+    b ∈ ℕ
+⇒ a + b ∈ ℕ
+{
+    sorry
+}
+
+define 1:
+    1 = Succ(0)
+{
+    Succ(0) = Succ(0)
+}
+
+theorem 1_in_ℕ():
+⇒ 1 ∈ ℕ
+{
+    0 ∈ ℕ                   | @ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ     | @ℕ
+    1 ∈ ℕ                   | @1
+}

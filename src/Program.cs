@@ -1,3 +1,7 @@
+namespace MathVerifier;
+
+using MathVerifier.Services;
+
 public static class Program
 {
     public static void Main(string[] args)
@@ -27,16 +31,14 @@ public static class Program
         // Console.Write(Formatter.Format(ast));
         // Console.WriteLine("-------------------------\n");
 
-        // Check syntax
-        Console.WriteLine("Checking syntax...");
-        SyntaxChecker checker = new(ast);
-        checker.Check();
-        Console.WriteLine("Finished checking syntax");
+        // Flatten
+        Console.WriteLine("Flattening...");
+        var ir = Flatter.Flatten(ast);
+        Console.WriteLine("Finished flattening");
 
-        // Verify
-        Console.WriteLine("Verifying...");
-        Verifier verifier = new(ast);
-        verifier.Verify();
-        Console.WriteLine("Finished verifying");
+        // Print IR
+        Console.WriteLine("\n---------------------------\n");
+        Console.WriteLine(IRPrinter.Data2Str(ir));
+        Console.WriteLine("-------------------------\n");
     }
 }

@@ -1,3 +1,7 @@
+namespace MathVerifier;
+
+using MathVerifier.Tokens;
+
 public struct LineInfo(int _line, string _fileName)
 {
     public int line = _line;

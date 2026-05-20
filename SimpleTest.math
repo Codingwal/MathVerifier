@@ -1,0 +1,16 @@
+theorem 1_in_ℕ():
+⇒ 1 ∈ ℕ
+{
+    0 ∈ ℕ                   | @ℕ
+    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ     | @ℕ
+    1 ∈ ℕ                   | @1
+}
+
+theorem Add_0(n):
+    n ∈ ℕ
+⇒ 0 + n = n
+{
+    0 ∈ ℕ           | @ℕ
+    0 + n = n + 0   | Add_Kommutativ(0, n)
+    0 + n = n       | @+
+}

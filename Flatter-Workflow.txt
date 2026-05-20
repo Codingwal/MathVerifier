@@ -1,0 +1,60 @@
+
+
+Var:
+    VarId       // Reference to already defined var
+    UserVar     // User defined var, such as "0" or "≠"
+    GenericVar  // .1, .2, ...
+    StandardVar // "∧", "⇒", ...
+
+
+Var FlattenLine(line):
+    FlattenExpr(expr)
+    assert: generic args = 0
+
+Var FlattenExpr(expr, context):
+    if BinExpr or UnExpr or FuncCall:
+        FlattenFuncCall(expr)
+    if QuantifiedStmt:
+        FlattenQuantifiedStmt(expr)
+    if Variable:
+        FlattenVariable(expr)
+
+
+Var FlattenFuncCall(func, args):
+    // TODO
+
+Var FlattenQuantifiedStmt(qStmt):
+    var = FlattenExpr(qStmt.stmt)
+    // replace generic of this qStmt with "all"
+
+Var FlattenVariable(var):
+    if context.IsGeneric(var.Str)
+            return GenericVar 
+    else
+        return UserVar(var.Str)
+
+
+Zuerst:
+
+VarInfo für "Succ(n) = Succ(m)":
+    VarInfo für "Succ(n)":
+        VarInfo für "n":
+            Generisch =>
+            v = Neu: ".1"
+            RETURN: v; {(n, .1)}
+        VarInfo für "Succ":
+            Definitions-Variable => t0; {}
+        RETURN: t0; {(n, .1)}
+    VarInfo für "Succ(m)":
+        ...
+        => t0; {(m, .1)}
+    VarInfo für "=":
+        StandardVar EQUALS
+        RETURN: EQUALS; {}
+    => "= t0[.1], t0[.2]"; {(n, .1), {m, .2}} 
+
+
+Später:
+In einem eigenen Pass wird jede UserVar durch einm generic ersetzt. Die "is_≠"/"is_0"/... Terme werden geladen und
+mit ∧ kombiniert. Diese Aussage ist dann die linke Hälfte und die eigentliche Aussage die rechte hälfte von einem ⇒. Das
+ganze wird dann in einen All-Quantor verpackt. "∧", "⇒", "=", ... sind StandardVars
