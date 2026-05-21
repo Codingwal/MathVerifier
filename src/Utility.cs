@@ -44,14 +44,14 @@ public static class IRPrinter
             if (block.TryAs<IR.Theorem>(out var theorem))
                 str += Theorem2Str(theorem);
             else
-                throw new NotImplementedException();
+                str += Definition2Str(block.As<IR.Definition>());
         }
         return str;
     }
 
     private static string Theorem2Str(IR.Theorem theorem)
     {
-        string str = $"theorem {theorem.Name}:\n";
+        string str = $"theorem {theorem.Name}({Params2Str(theorem.ParamCount)}):\n";
 
         for (int i = 0; i < theorem.Defs.Count; i++)
             str += $"    {VarDef2Str(theorem.Defs[i], i)}\n";
@@ -66,6 +66,19 @@ public static class IRPrinter
 
         str += "  hypothesis:\n";
         str += $"    {Var2Str(theorem.Hypothesis)}\n";
+
+        return str + "\n";
+    }
+
+    private static string Definition2Str(IR.Definition definition)
+    {
+        string str = $"define {definition.Name}({Params2Str(definition.ParamCount)}):\n";
+
+        for (int i = 0; i < definition.Defs.Count; i++)
+            str += $"    {VarDef2Str(definition.Defs[i], i)}\n";
+
+        str += "  def:\n";
+        str += $"    {Var2Str(definition.Def)}\n";
 
         return str + "\n";
     }
@@ -86,7 +99,7 @@ public static class IRPrinter
                 foreach (var genericArg in arg.Args)
                 {
                     str += Var2Str(genericArg);
-                    if (genericArg != arg.Args.Last()) str += ',';
+                    if (genericArg != arg.Args.Last()) str += ", ";
                 }
                 if (arg.Args.Count != 0) str += ']';
                 str += ' ';
@@ -110,4 +123,26 @@ public static class IRPrinter
             _ => throw new NotImplementedException()
         };
     }
+
+    private static string Params2Str(int paramCount)
+    {
+        string str = "";
+        for (int i = 0; i < paramCount; i++)
+        {
+            str += $"t{i}";
+            if (i < paramCount - 1) str += ", ";
+        }
+        return str;
+    }
+
+    // private static string Enumerable2Str<T>(IEnumerable<T> enumerable, Func<T, string> element2Str)
+    // {
+    //     string str = "";
+    //     foreach (var item in enumerable)
+    //     {
+    //         str += element2Str(item);
+    //         if (!item!.Equals(enumerable.Last())) str += ", ";
+    //     }
+    //     return str;
+    // }
 }

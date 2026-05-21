@@ -19,6 +19,7 @@ public record LoadVarDef(string Origin, int ArgsCount) : VarDef(ArgsCount);
 
 public record Theorem(
     string Name,
+    int ParamCount,
     List<VarDef> Defs,
     List<VarId> Requirements,
     List<VarId> ProofStmts,
@@ -27,6 +28,7 @@ public record Theorem(
 
 public record Definition(
     string Name,
+    int ParamCount,
     List<VarDef> Defs,
     VarId Def
 );

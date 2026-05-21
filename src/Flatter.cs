@@ -11,6 +11,7 @@ public static class Flatter
         public List<VarDef> Definitions = [];
         public List<VarId> Statements = [];
         public Stack<string> QStmtVars = [];
+        public List<string> Params = [];
 
         public VarId AddDefinition(VarDef def)
         {
@@ -20,7 +21,19 @@ public static class Flatter
             Definitions.Add(def);
             return new VarId((uint)Definitions.Count - 1);
         }
+        public void AddParam(string name)
+        {
+            Logger.Assert(!Params.Contains(name), $"Duplicate param name {name}");
+            Params.Add(name);
+            Definitions.Add(new FuncVarDef(new UserVar(name), [], 0));
+        }
 
+        public VarId? GetParam(string name)
+        {
+            int index = Params.FindIndex(p => p == name);
+            if (index == -1) return null;
+            return new VarId((uint)index);
+        }
         public bool IsGeneric(string var)
         {
             return QStmtVars.Contains(var);
@@ -35,7 +48,7 @@ public static class Flatter
             if (block.TryAs<AST.Theorem>(out var theorem))
                 blocks.Add(FlattenTheorem(theorem));
             else
-                throw new NotImplementedException();
+                blocks.Add(FlattenDefinition(block.As<AST.Definition>()));
         }
 
         return new IR.Data(blocks);
@@ -43,6 +56,9 @@ public static class Flatter
     private static IR.Theorem FlattenTheorem(AST.Theorem theorem)
     {
         Context context = new();
+
+        foreach (var param in theorem.Params)
+            context.AddParam(param);
 
         List<VarId> requirements = [];
         foreach (var req in theorem.Requirements)
@@ -54,10 +70,27 @@ public static class Flatter
 
         return new IR.Theorem(
             theorem.Name,
+            theorem.Params.Count,
             context.Definitions,
             requirements,
             context.Statements,
             hypothesis
+        );
+    }
+    private static IR.Definition FlattenDefinition(AST.Definition definition)
+    {
+        Context context = new();
+
+        foreach (var param in definition.Params)
+            context.AddParam(param);
+
+        VarId expr = FlattenExprStmt(definition.Expr, context);
+
+        return new IR.Definition(
+            definition.Name,
+            definition.Params.Count,
+            context.Definitions,
+            expr
         );
     }
     private static void FlattenScope(Scope scope, Context context)
@@ -196,10 +229,16 @@ public static class Flatter
 
     private static VarInfo FlattenVar(Variable var, Context context)
     {
+        // Handle generics
         if (context.IsGeneric(var.Str))
             return new VarInfo(new GenericVar(0), [var.Str]);
-        else
-            return new VarInfo(new UserVar(var.Str), []);
+
+        // Handle params
+        VarId? param = context.GetParam(var.Str);
+        if (param != null) return new VarInfo(param, []);
+
+        // Handle user vars
+        return new VarInfo(new UserVar(var.Str), []);
     }
 
     private record VarInfo(Var Var, List<string> ArgMapping);

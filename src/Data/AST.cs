@@ -31,7 +31,7 @@ public record StatementLine(Statement Stmt, IProof? Proof, LineInfo LineInfo);
 
 public record Theorem(string Name, List<string> Params, List<ExpressionLine> Requirements, ExpressionLine Hypothesis, Scope Proof, LineInfo LineInfo);
 
-public record Definition(string Name, List<ExpressionLine> Rules, Scope Proof, LineInfo LineInfo);
+public record Definition(string Name, List<string> Params, Expression Expr, LineInfo LineInfo);
 
 public record Data()
 {

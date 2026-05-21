@@ -75,25 +75,25 @@ public class Parser(List<TokenLine> _tokens)
     {
         ConsumeExpect(TokenType.DEFINE);
         string name = ConsumeExpect(TokenType.STRING).GetString();
+
+        // Parameters
+        List<string> parameters = [];
+        ConsumeExpect(TokenType.BRACKET_OPEN);
+        while (Peek().type == TokenType.STRING)
+        {
+            string paramName = ConsumeExpect(TokenType.STRING).GetString();
+            parameters.Add(paramName);
+
+            if (Peek().type != TokenType.BRACKET_CLOSE)
+                ConsumeExpect(TokenType.COMMA);
+        }
+        ConsumeExpect(TokenType.BRACKET_CLOSE);
         ConsumeExpect(TokenType.COLON);
         ConsumeExpect(TokenType.NEWLINE);
 
-        // Rules
-        List<ExpressionLine> rules = [];
-        while (Peek().type != TokenType.CURLY_OPEN)
-        {
-            rules.Add(ParseExpressionLine());
-        }
+        ExpressionLine expressionLine = ParseExpressionLine();
 
-        // Proof of existence
-        Scope proof = ParseScope();
-
-        return new Definition(
-            Name: name,
-            Rules: rules,
-            Proof: proof,
-            LineInfo: lineInfo
-        );
+        return new Definition(name, parameters, expressionLine.Expr, expressionLine.LineInfo);
     }
     private Theorem ParseTheorem()
     {
