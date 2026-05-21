@@ -257,6 +257,9 @@ public class Parser(List<TokenLine> _tokens)
         List<Expression> elements;
         switch (Peek().type)
         {
+            case TokenType.TRUE:
+            case TokenType.FALSE:
+                return new TruthValue(Consume().type == TokenType.TRUE);
             case TokenType.FOR_ALL:
             case TokenType.EXISTS:
                 TokenType op = Consume().type;

@@ -39,13 +39,13 @@ public static class IRPrinter
     public static string Data2Str(IR.Data data)
     {
         string str = "";
-        foreach (var block in data.Blocks)
-        {
-            if (block.TryAs<IR.Theorem>(out var theorem))
-                str += Theorem2Str(theorem);
-            else
-                str += Definition2Str(block.As<IR.Definition>());
-        }
+        
+        foreach (var def in data.Defs)
+            str += Definition2Str(def);
+
+        foreach (var theorem in data.Theorems)
+            str += Theorem2Str(theorem);
+
         return str;
     }
 
@@ -62,7 +62,12 @@ public static class IRPrinter
 
         str += "  proof statements:\n";
         foreach (var stmt in theorem.ProofStmts)
-            str += $"    {Var2Str(stmt)}\n";
+        {
+            if (stmt.TryAs<VarId>(out var varId))
+                str += $"    {Var2Str(varId)}\n";
+            else if (stmt.TryAs<TheoremRef>(out var theoremRef))
+                str += $"    {theoremRef.Name}{Enumerable2Str(theoremRef.Args, Var2Str, alwaysBrackets: true)}\n";
+        }
 
         str += "  hypothesis:\n";
         str += $"    {Var2Str(theorem.Hypothesis)}\n";
@@ -94,20 +99,10 @@ public static class IRPrinter
             string str = $"{Var2Str(funcVarDef.Function)} ";
             foreach (var arg in funcVarDef.Args)
             {
-                str += $"{Var2Str(arg.Var)}";
-                if (arg.Args.Count != 0) str += '[';
-                foreach (var genericArg in arg.Args)
-                {
-                    str += Var2Str(genericArg);
-                    if (genericArg != arg.Args.Last()) str += ", ";
-                }
-                if (arg.Args.Count != 0) str += ']';
-                str += ' ';
+                str += $"{Var2Str(arg.Var)}{Enumerable2Str(arg.Args, Var2Str, '[', ']')} ";
             }
             return str;
         }
-        else if (varDef is LoadVarDef loadVarDef)
-            return $"load {loadVarDef.Origin}";
         else
             throw new NotImplementedException();
     }
@@ -135,14 +130,17 @@ public static class IRPrinter
         return str;
     }
 
-    // private static string Enumerable2Str<T>(IEnumerable<T> enumerable, Func<T, string> element2Str)
-    // {
-    //     string str = "";
-    //     foreach (var item in enumerable)
-    //     {
-    //         str += element2Str(item);
-    //         if (!item!.Equals(enumerable.Last())) str += ", ";
-    //     }
-    //     return str;
-    // }
+    private static string Enumerable2Str<T>(IEnumerable<T> enumerable, Func<T, string> element2Str, char start = '(', char end = ')', bool alwaysBrackets = false)
+    {
+        if (!enumerable.Any()) return "";
+
+        string str = start.ToString();
+        foreach (var item in enumerable)
+        {
+            if (item == null) continue;
+            str += element2Str(item);
+            if (!item.Equals(enumerable.Last())) str += ", ";
+        }
+        return str + end;
+    }
 }

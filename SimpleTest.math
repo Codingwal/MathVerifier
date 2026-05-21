@@ -1,5 +1,17 @@
+define is_∅(M):
+    ∀x(¬(x ∈ M))
+
+define is_0(0):
+    is_∅(0)
+
 define is_Succ(s):
-    ∀n,m( s(n) = s(m) ⇒ n = m ) ∧ ∀n( s(n) ≠ 0)
+    ∀n,m( s(n) = s(m) ⇒ n = m ) \
+    ∧ ∀n( s(n) ≠ 0)
+
+define is_ℕ(ℕ):
+    0 ∈ ℕ \
+    ∧ ∀n,s(n ∈ ℕ ∧ is_Succ(s) ⇒ s(n) ∈ ℕ) \
+    ∧ ∀ϕ(( ϕ(0) ∧ ∀n,s( n ∈ ℕ ∧ is_Succ(s) ⇒ (ϕ(n) ⇒ ϕ(s(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ ϕ(n) ))
 
 theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ

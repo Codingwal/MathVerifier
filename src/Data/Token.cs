@@ -37,6 +37,9 @@ public struct Token : ICustomFormatting
         AND,
         OR,
 
+        TRUE,
+        FALSE,
+
         // Quantified statements
         EXISTS,
         FOR_ALL,
@@ -84,6 +87,9 @@ public struct Token : ICustomFormatting
         {"⇔", TokenType.EQUIVALENT},
         {"∧", TokenType.AND},
         {"∨", TokenType.OR},
+
+        {"true", TokenType.TRUE},
+        {"false", TokenType.FALSE},
 
         // Quantified operators
         {"∃", TokenType.EXISTS},

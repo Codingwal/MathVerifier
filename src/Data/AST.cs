@@ -14,6 +14,7 @@ public record Tuple(List<Expression> Elements) : ObjectCtor;
 public record SetEnumNotation(List<Expression> Elements) : ObjectCtor;
 public record SetBuilder(string Obj, Expression Requirement) : ObjectCtor;
 public record Variable(string Str) : Expression;
+public record TruthValue(bool Value) : Expression;
 
 
 // High-level

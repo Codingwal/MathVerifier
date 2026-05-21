@@ -8,10 +8,10 @@ public static class Flatter
 {
     public class Context
     {
-        public List<VarDef> Definitions = [];
-        public List<VarId> Statements = [];
-        public Stack<string> QStmtVars = [];
-        public List<string> Params = [];
+        public readonly List<VarDef> Definitions = [];
+        public readonly List<Variant<VarId, TheoremRef>> Statements = [];
+        private readonly Stack<string> QStmtVars = [];
+        private readonly List<string> Params = [];
 
         public VarId AddDefinition(VarDef def)
         {
@@ -38,20 +38,24 @@ public static class Flatter
         {
             return QStmtVars.Contains(var);
         }
+
+        public void PushQStmtVar(string var) => QStmtVars.Push(var);
+        public void PopQStmtVar() => QStmtVars.Pop();
     }
 
     public static IR.Data Flatten(AST.Data data)
     {
-        List<Variant<IR.Theorem, IR.Definition>> blocks = [];
+        List<IR.Definition> definitions = [];
+        List<IR.Theorem> theorems = [];
         foreach (var block in data.data)
         {
             if (block.TryAs<AST.Theorem>(out var theorem))
-                blocks.Add(FlattenTheorem(theorem));
+                theorems.Add(FlattenTheorem(theorem));
             else
-                blocks.Add(FlattenDefinition(block.As<AST.Definition>()));
+                definitions.Add(FlattenDefinition(block.As<AST.Definition>()));
         }
 
-        return new IR.Data(blocks);
+        return new IR.Data(definitions, theorems);
     }
     private static IR.Theorem FlattenTheorem(AST.Theorem theorem)
     {
@@ -97,6 +101,24 @@ public static class Flatter
     {
         foreach (var stmt in scope.Statements)
         {
+            if (stmt.Proof != null)
+            {
+                if (stmt.Proof is FuncCall funcCall)
+                {
+                    List<Var> args = [];
+                    foreach (var arg in funcCall.Args)
+                    {
+                        VarInfo info = FlattenExpr(arg, context);
+                        Logger.Assert(info.ArgMapping.Count == 0, "Theorem reference arguments cannot have generic args");
+                        args.Add(info.Var);
+                    }
+
+                    context.Statements.Add(new TheoremRef(funcCall.Name, args));
+                }
+                // else
+                //     throw new NotImplementedException();
+            }
+
             switch (stmt.Stmt)
             {
                 case Expression expr:
@@ -127,6 +149,8 @@ public static class Flatter
             return FlattenQuantifiedStatement(qStmt, context);
         else if (expr is Variable var)
             return FlattenVar(var, context);
+        else if (expr is TruthValue truthValue)
+            return new(new StandardVar(truthValue.Value ? StandardVar.Values.TRUE : StandardVar.Values.FALSE), []);
         else
             throw new NotImplementedException(); // TODO: Tuple, SetEnumNotation, SetBuilder
     }
@@ -137,12 +161,12 @@ public static class Flatter
             throw new NotImplementedException();
 
         foreach (var obj in qStmt.Objs)
-            context.QStmtVars.Push(obj);
+            context.PushQStmtVar(obj);
 
         VarInfo info = FlattenExpr(qStmt.Stmt, context);
 
         for (int i = 0; i < qStmt.Objs.Count; i++)
-            context.QStmtVars.Pop();
+            context.PopQStmtVar();
 
         List<VarRef> args = [];
         List<string> argMapping = [];
@@ -178,6 +202,7 @@ public static class Flatter
                 TokenType.OR => StandardVar.Values.OR,
                 TokenType.EQUALS => StandardVar.Values.EQUALS,
                 TokenType.ELEMENT_OF => StandardVar.Values.ELEMENT_OF,
+                TokenType.NOT => StandardVar.Values.NOT,
                 _ => null
             };
             Logger.Assert(stdFunc != null, $"Unknown operator {nameToken}");
@@ -249,49 +274,4 @@ public static class Flatter
     }
 
     private record VarInfo(Var Var, List<string> ArgMapping);
-
-
-    private static class Comparer
-    {
-        public static bool IsEqual(Var a, Var b)
-        {
-            if (a.GetType() != b.GetType()) return false;
-
-            return a switch
-            {
-                VarId varIdA => varIdA.Value == ((VarId)b).Value,
-                UserVar userVarA => userVarA.Name == ((UserVar)b).Name,
-                GenericVar genericVarA => genericVarA.Value == ((GenericVar)b).Value,
-                StandardVar stdVarA => stdVarA.Value == ((StandardVar)b).Value,
-                _ => throw new()
-            };
-        }
-        public static bool IsEqual(VarRef a, VarRef b)
-        {
-            if (!IsEqual(a.Var, b.Var)) return false;
-            if (a.Args.Count != b.Args.Count) return false;
-            for (int i = 0; i < a.Args.Count; i++)
-                if (!IsEqual(a.Args[i], b.Args[i])) return false;
-            return true;
-        }
-        public static bool IsEqual(VarDef a, VarDef b)
-        {
-            if (a.GetType() != b.GetType()) return false;
-
-            return a switch
-            {
-                FuncVarDef funcDefA => IsEqual(funcDefA, (FuncVarDef)b),
-                LoadVarDef loadDefA => loadDefA.Origin == ((LoadVarDef)b).Origin,
-                _ => throw new()
-            };
-        }
-        public static bool IsEqual(FuncVarDef a, FuncVarDef b)
-        {
-            if (!IsEqual(a.Function, b.Function)) return false;
-            if (a.Args.Count != b.Args.Count) return false;
-            for (int i = 0; i < a.Args.Count; i++)
-                if (!IsEqual(a.Args[i], b.Args[i])) return false;
-            return true;
-        }
-    }
 }

@@ -36,7 +36,17 @@ public static class Program
         var ir = Flatter.Flatten(ast);
         Console.WriteLine("Finished flattening");
 
-        // Print IR
+        // Print IR1
+        Console.WriteLine("\n---------------------------\n");
+        Console.WriteLine(IRPrinter.Data2Str(ir));
+        Console.WriteLine("-------------------------\n");
+
+        // Run loader
+        Console.WriteLine("Executing loader...");
+        Loader.Update(ir);
+        Console.WriteLine("Finished loader");
+
+        // Print IR2
         Console.WriteLine("\n---------------------------\n");
         Console.WriteLine(IRPrinter.Data2Str(ir));
         Console.WriteLine("-------------------------\n");
