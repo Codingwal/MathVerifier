@@ -260,11 +260,21 @@ public class Parser(List<TokenLine> _tokens)
             case TokenType.FOR_ALL:
             case TokenType.EXISTS:
                 TokenType op = Consume().type;
-                string obj = ConsumeExpect(TokenType.STRING).GetString();
+
+                List<string> objs = [];
+                while (true)
+                {
+                    objs.Add(ConsumeExpect(TokenType.STRING).GetString());
+                    if (Peek().type != TokenType.COMMA) break;
+                    ConsumeExpect(TokenType.COMMA);
+                }
+
                 ConsumeExpect(TokenType.BRACKET_OPEN);
                 expr = ParseExpression();
                 ConsumeExpect(TokenType.BRACKET_CLOSE);
-                return new QuantifiedStatement(op, obj, expr);
+
+                return new QuantifiedStatement(op, objs, expr);
+
             case TokenType.STRING:
                 string str = Consume().GetString();
                 if (Peek().type == TokenType.BRACKET_OPEN)

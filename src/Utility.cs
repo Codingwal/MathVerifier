@@ -23,7 +23,7 @@ public static class Utility
         {
             BinExpr binExpr => $"({Expr2Str(binExpr.Lhs)} {binExpr.Op.ToSymbol()} {Expr2Str(binExpr.Rhs)})",
             FuncCall funcCall => $"{funcCall.Name}({ExprList2Str(funcCall.Args)})",
-            QuantifiedStatement qStmt => $"{new Token(qStmt.Op).ToSymbol()}{qStmt.Obj}({Expr2Str(qStmt.Stmt)})",
+            QuantifiedStatement qStmt => $"{new Token(qStmt.Op).ToSymbol()}{string.Join(",", qStmt.Objs)}({Expr2Str(qStmt.Stmt)})",
             UnaryExpr unExpr => $"{unExpr.Op.ToSymbol()}({Expr2Str(unExpr.Expr)})",
             Variable var => var.Str,
             AST.Tuple tuple => $"[{ExprList2Str(tuple.Elements)}]",

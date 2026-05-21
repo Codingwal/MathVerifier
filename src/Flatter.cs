@@ -133,15 +133,22 @@ public static class Flatter
 
     private static VarInfo FlattenQuantifiedStatement(QuantifiedStatement qStmt, Context context)
     {
-        context.QStmtVars.Push(qStmt.Obj);
+        if (qStmt.Op == TokenType.EXISTS)
+            throw new NotImplementedException();
+
+        foreach (var obj in qStmt.Objs)
+            context.QStmtVars.Push(obj);
+
         VarInfo info = FlattenExpr(qStmt.Stmt, context);
-        context.QStmtVars.Pop();
+
+        for (int i = 0; i < qStmt.Objs.Count; i++)
+            context.QStmtVars.Pop();
 
         List<VarRef> args = [];
         List<string> argMapping = [];
         foreach (var arg in info.ArgMapping)
         {
-            if (arg == qStmt.Obj)
+            if (qStmt.Objs.Contains(arg))
             {
                 args.Add(new VarRef(new StandardVar(StandardVar.Values.ALL), []));
             }

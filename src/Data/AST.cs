@@ -9,7 +9,7 @@ public abstract record ObjectCtor : Expression;
 public record BinExpr(Expression Lhs, Token Op, Expression Rhs) : Expression;
 public record UnaryExpr(Token Op, Expression Expr) : Expression;
 public record FuncCall(string Name, List<Expression> Args) : Expression, IProof;
-public record QuantifiedStatement(TokenType Op, string Obj, Expression Stmt) : Expression;
+public record QuantifiedStatement(TokenType Op, List<string> Objs, Expression Stmt) : Expression;
 public record Tuple(List<Expression> Elements) : ObjectCtor;
 public record SetEnumNotation(List<Expression> Elements) : ObjectCtor;
 public record SetBuilder(string Obj, Expression Requirement) : ObjectCtor;

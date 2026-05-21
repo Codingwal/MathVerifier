@@ -1,5 +1,5 @@
 define is_Succ(s):
-    ∀n(∀m( s(n) = s(m) ⇒ n = m )) ∧ ∀n( s(n) ≠ 0 )
+    ∀n,m( s(n) = s(m) ⇒ n = m ) ∧ ∀n( s(n) ≠ 0)
 
 theorem 1_in_ℕ():
 ⇒ 1 ∈ ℕ
