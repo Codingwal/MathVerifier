@@ -1,33 +1,43 @@
+define ≠(a, b):
+    ¬(a = b)
+
 define is_∅(M):
     ∀x(¬(x ∈ M))
 
 define is_0(0):
     is_∅(0)
 
-/*
 define is_Succ(s):
     ∀n,m( s(n) = s(m) ⇒ n = m ) \
-    ∧ ∀n( s(n) ≠ 0)
+    ∧ ∀n,z( is_0(z) ⇒ s(n) ≠ z)
 
 define is_ℕ(ℕ):
-    0 ∈ ℕ \
+    ∀z(is_0(z) ⇒ z ∈ ℕ) \
     ∧ ∀n,s(n ∈ ℕ ∧ is_Succ(s) ⇒ s(n) ∈ ℕ) \
-    ∧ ∀ϕ(( ϕ(0) ∧ ∀n,s( n ∈ ℕ ∧ is_Succ(s) ⇒ (ϕ(n) ⇒ ϕ(s(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ ϕ(n) ))
+    ∧ ∀ϕ(( ∀z(is_0(z) ⇒ ϕ(z)) ∧ ∀n,s( n ∈ ℕ ∧ is_Succ(s) ⇒ (ϕ(n) ⇒ ϕ(s(n))) )) ⇒ ∀n(n ∈ ℕ ⇒ ϕ(n) ))
 
-theorem 1_in_ℕ():
+define is_1(1):
+    ∀s,z(is_Succ(s) ∧ is_0(z) ⇒ s(z) = 1)
+
+theorem 1_in_ℕ(0, 1, ℕ, s):
+    is_0(0)
+    is_1(1)
+    is_ℕ(ℕ)
+    is_Succ(s)
 ⇒ 1 ∈ ℕ
 {
-    0 ∈ ℕ                   | @ℕ
-    0 ∈ ℕ ⇒ Succ(0) ∈ ℕ     | @ℕ
-    1 ∈ ℕ                   | @1
+    0 ∈ ℕ
+    0 ∈ ℕ ⇒ s(0) ∈ ℕ
+    1 ∈ ℕ
 }
 
+/*
 theorem Add_0(n):
     n ∈ ℕ
 ⇒ 0 + n = n
 {
-    0 ∈ ℕ           | @ℕ
+    0 ∈ ℕ
     0 + n = n + 0   | Add_Kommutativ(0, n)
-    0 + n = n       | @+
+    0 + n = n
 }
 */

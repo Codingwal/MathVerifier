@@ -51,21 +51,18 @@ public static class IRPrinter
 
     private static string Theorem2Str(IR.Theorem theorem)
     {
-        string str = $"theorem {theorem.Name}({Params2Str(theorem.ParamCount)}):\n";
+        string str = $"theorem {theorem.Name}:\n";
 
         for (int i = 0; i < theorem.Defs.Count; i++)
             str += $"    {VarDef2Str(theorem.Defs[i], i)}\n";
 
-        str += "  requirements:\n";
-        foreach (var req in theorem.Requirements)
-            str += $"    {Var2Str(req)}\n";
 
         str += "  proof statements:\n";
         foreach (var stmt in theorem.ProofStmts)
         {
-            if (stmt.TryAs<VarId>(out var varId))
+            if (stmt is VarId varId)
                 str += $"    {Var2Str(varId)}\n";
-            else if (stmt.TryAs<TheoremRef>(out var theoremRef))
+            else if (stmt is TheoremRef theoremRef)
                 str += $"    {theoremRef.Name}{Enumerable2Str(theoremRef.Args, Var2Str, alwaysBrackets: true)}\n";
         }
 
@@ -91,7 +88,7 @@ public static class IRPrinter
     private static string VarDef2Str(VarDef? varDef, int varId)
     {
         if (varDef == null) return $"t{varId}: - ";
-        
+
         return $"t{varId}: {VarDef2StrHelper(varDef)}    <{varDef.ArgsCount}>";
     }
     private static string VarDef2StrHelper(VarDef varDef)

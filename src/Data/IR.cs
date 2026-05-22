@@ -1,8 +1,10 @@
 namespace MathVerifier.IR;
 
+public interface IStatement;
+
 public abstract record Var();
 
-public record VarId(uint Value) : Var;
+public record VarId(uint Value) : Var, IStatement;
 public record UserVar(string Name) : Var;
 public record GenericVar(uint Value) : Var;
 public record StandardVar(StandardVar.Values Value) : Var
@@ -15,22 +17,21 @@ public record VarRef(Var Var, List<GenericVar> Args);
 public abstract record VarDef(int ArgsCount);
 public record FuncVarDef(Var Function, List<VarRef> Args, int ArgsCount) : VarDef(ArgsCount);
 
-public record TheoremRef(string Name, List<Var> Args);
+// TODO: A theorem call doesn't need args (?)
+public record TheoremRef(string Name, List<Var> Args) : IStatement;
 
 
 public record Theorem(
     string Name,
-    int ParamCount,
-    List<VarDef?> Defs,
-    List<VarId> Requirements,
-    List<Variant<VarId, TheoremRef>> ProofStmts,
+    List<VarDef> Defs,
+    List<IStatement> ProofStmts,
     VarId Hypothesis
 );
 
 public record Definition(
     string Name,
     int ParamCount,
-    List<VarDef?> Defs,
+    List<VarDef> Defs,
     VarId Def
 );
 
