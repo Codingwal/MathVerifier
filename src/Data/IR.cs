@@ -21,7 +21,7 @@ public record TheoremRef(string Name, List<Var> Args);
 public record Theorem(
     string Name,
     int ParamCount,
-    List<VarDef> Defs,
+    List<VarDef?> Defs,
     List<VarId> Requirements,
     List<Variant<VarId, TheoremRef>> ProofStmts,
     VarId Hypothesis
@@ -30,7 +30,7 @@ public record Theorem(
 public record Definition(
     string Name,
     int ParamCount,
-    List<VarDef> Defs,
+    List<VarDef?> Defs,
     VarId Def
 );
 

@@ -8,14 +8,14 @@ public static class Flatter
 {
     public class Context
     {
-        public readonly List<VarDef> Definitions = [];
+        public readonly List<VarDef?> Definitions = [];
         public readonly List<Variant<VarId, TheoremRef>> Statements = [];
         private readonly Stack<string> QStmtVars = [];
         private readonly List<string> Params = [];
 
         public VarId AddDefinition(VarDef def)
         {
-            int index = Definitions.FindIndex(d => Comparer.IsEqual(d, def));
+            int index = Definitions.FindIndex(d => d != null && Comparer.IsEqual(d, def));
             if (index != -1) return new VarId((uint)index);
 
             Definitions.Add(def);
@@ -25,7 +25,7 @@ public static class Flatter
         {
             Logger.Assert(!Params.Contains(name), $"Duplicate param name {name}");
             Params.Add(name);
-            Definitions.Add(new FuncVarDef(new UserVar(name), [], 0));
+            Definitions.Add(null);
         }
 
         public VarId? GetParam(string name)

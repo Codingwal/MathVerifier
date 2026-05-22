@@ -4,6 +4,7 @@ define is_∅(M):
 define is_0(0):
     is_∅(0)
 
+/*
 define is_Succ(s):
     ∀n,m( s(n) = s(m) ⇒ n = m ) \
     ∧ ∀n( s(n) ≠ 0)
@@ -29,3 +30,4 @@ theorem Add_0(n):
     0 + n = n + 0   | Add_Kommutativ(0, n)
     0 + n = n       | @+
 }
+*/

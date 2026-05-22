@@ -43,7 +43,7 @@ public static class Program
 
         // Run loader
         Console.WriteLine("Executing loader...");
-        Loader.Update(ir);
+        ir = Loader.Update(ir);
         Console.WriteLine("Finished loader");
 
         // Print IR2

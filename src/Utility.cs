@@ -39,7 +39,7 @@ public static class IRPrinter
     public static string Data2Str(IR.Data data)
     {
         string str = "";
-        
+
         foreach (var def in data.Defs)
             str += Definition2Str(def);
 
@@ -88,8 +88,10 @@ public static class IRPrinter
         return str + "\n";
     }
 
-    private static string VarDef2Str(VarDef varDef, int varId)
+    private static string VarDef2Str(VarDef? varDef, int varId)
     {
+        if (varDef == null) return $"t{varId}: - ";
+        
         return $"t{varId}: {VarDef2StrHelper(varDef)}    <{varDef.ArgsCount}>";
     }
     private static string VarDef2StrHelper(VarDef varDef)
