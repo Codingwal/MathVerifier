@@ -41,10 +41,10 @@ public static class Program
         Console.WriteLine(IRPrinter.Data2Str(ir));
         Console.WriteLine("-------------------------\n");
 
-        // Run loader
-        Console.WriteLine("Executing loader...");
-        ir = Loader.Update(ir);
-        Console.WriteLine("Finished loader");
+        // Run reference resolver
+        Console.WriteLine("Executing reference resolver...");
+        ir = ReferenceResolver.Resolve(ir);
+        Console.WriteLine("Finished reference resolver");
 
         // Print IR2
         Console.WriteLine("\n---------------------------\n");
