@@ -12,6 +12,8 @@ public class ScopeStack<T>
     }
     private readonly List<Scope> scopes;
 
+    public string CurrentScopeName => scopes[^1].debugName;
+
     public ScopeStack()
     {
         scopes = [];
@@ -34,7 +36,7 @@ public class ScopeStack<T>
     public IEnumerable<T> GetAll()
     {
         // Use for loops instead of foreach iteration because the collection might be modified 
-        // while iterating (for example analysing a P => Q statement while trying to proof with another statement)
+        // while iterating.
         // These modifications will be reverted before the next element is called but C# doesn't know that
         for (int i = 0; i < scopes.Count; i++)
         {

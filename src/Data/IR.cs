@@ -1,5 +1,7 @@
 namespace MathVerifier.IR;
 
+// TODO: Debug info
+
 public interface IStatement;
 
 public abstract record Var();

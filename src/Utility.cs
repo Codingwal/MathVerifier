@@ -85,7 +85,7 @@ public static class IRPrinter
         return str + "\n";
     }
 
-    private static string VarDef2Str(VarDef? varDef, int varId)
+    public static string VarDef2Str(VarDef? varDef, int varId)
     {
         if (varDef == null) return $"t{varId}: - ";
 
